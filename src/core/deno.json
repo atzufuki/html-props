@@ -1,0 +1,26 @@
+{
+  "name": "@html-props/core",
+  "version": "0.0.1",
+  "imports": {
+    "@open-wc/dedupe-mixin": "npm:@open-wc/dedupe-mixin@^1.4.0",
+    "jsdom": "npm:jsdom@^26.0.0"
+  },
+  "exports": {
+    ".": "./mod.ts"
+  },
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "deno.window",
+      "DOM.Iterable",
+      "DOM.AsyncIterable"
+    ],
+    "strict": true,
+    "strictFunctionTypes": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": false
+  }
+}

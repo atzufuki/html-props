@@ -1,0 +1,28 @@
+{
+  "workspace": [
+    "./src/core",
+    "./src/demo/static"
+  ],
+  "tasks": {
+    "dev": "deno run --watch main.ts",
+    "test": " deno test --allow-env --no-check",
+    "demo:bundle": {
+      "command": "deno run -A src/demo/bundle.ts"
+    },
+    "demo:server": {
+      "dependencies": ["demo:bundle"],
+      "command": "deno run --allow-net --allow-read --watch src/demo/server.ts"
+    }
+  },
+  "imports": {
+    "@luca/esbuild-deno-loader": "jsr:@luca/esbuild-deno-loader@^0.11.1",
+    "@std/assert": "jsr:@std/assert@^1.0.11",
+    "esbuild": "npm:esbuild@^0.25.0"
+  },
+  "fmt": {
+    "useTabs": false,
+    "semiColons": true,
+    "singleQuote": true,
+    "indentWidth": 2
+  }
+}
