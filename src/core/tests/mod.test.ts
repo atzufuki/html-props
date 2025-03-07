@@ -1,0 +1,54 @@
+import { assert } from '@std/assert';
+import { HTMLPropsMixin } from '../mod.ts';
+import { JSDOM } from 'jsdom';
+
+const dom = new JSDOM(`<!DOCTYPE html><body></body>`);
+
+self.window = dom.window;
+self.document = dom.window.document;
+self.customElements = dom.window.customElements;
+self.DOMParser = dom.window.DOMParser;
+self.Node = dom.window.Node;
+self.HTMLElement = dom.window.HTMLElement;
+self.HTMLButtonElement = dom.window.HTMLButtonElement;
+
+Deno.test('html props mixin test', () => {
+  class MyElement extends HTMLPropsMixin(HTMLElement) {}
+  customElements.define('my-element', MyElement);
+
+  const element = new MyElement({ textContent: 'Hello, World!' });
+  document.body.appendChild(element);
+
+  assert(element instanceof HTMLElement);
+  assert(element instanceof MyElement);
+  assert(typeof element.build === 'function');
+  assert(element.textContent === 'Hello, World!');
+});
+
+Deno.test('direct built in element test', () => {
+  const MyButton = HTMLPropsMixin(HTMLButtonElement);
+  customElements.define('my-direct-button', MyButton, { extends: 'button' });
+
+  const element = new MyButton({ textContent: 'Click me!' });
+  document.body.appendChild(element);
+
+  assert(element instanceof HTMLElement);
+  assert(element instanceof HTMLButtonElement);
+  assert(element instanceof MyButton);
+  assert(typeof element.build === 'function');
+  assert(element.textContent === 'Click me!');
+});
+
+Deno.test('custom built in element test', () => {
+  class MyButton extends HTMLPropsMixin(HTMLButtonElement) {}
+  customElements.define('my-custom-button', MyButton, { extends: 'button' });
+
+  const element = new MyButton({ textContent: 'Click me!' });
+  document.body.appendChild(element);
+
+  assert(element instanceof HTMLElement);
+  assert(element instanceof HTMLButtonElement);
+  assert(element instanceof MyButton);
+  assert(typeof element.build === 'function');
+  assert(element.textContent === 'Click me!');
+});
