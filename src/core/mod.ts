@@ -4,19 +4,14 @@ import type { IncomingProps, RenderObject } from './types.ts';
 export type HTMLProps<T = unknown> = IncomingProps<HTMLElement, T>;
 
 export const HTMLPropsMixin = dedupeMixin(
-  <T extends Constructor<HTMLElement>>(SuperClass: T) => {
+  <T extends unknown = unknown>(SuperClass: Constructor<HTMLElement>) => {
     class HTMLPropsMixin extends SuperClass {
       static get observedAttributes(): string[] {
         return [];
       }
 
-      static define(name: string) {
-        const defined = customElements.get(name) ??
-          customElements.getName(this);
-
-        if (!defined) {
-          customElements.define(name, this);
-        }
+      static define(name: string, options?: ElementDefinitionOptions) {
+        customElements.define(name, this, options);
       }
 
       static getName() {
@@ -27,7 +22,7 @@ export const HTMLPropsMixin = dedupeMixin(
         return this.getName();
       }
 
-      props: HTMLProps<T>;
+      props: Partial<HTMLProps<T>> = {};
 
       // deno-lint-ignore no-explicit-any
       constructor(...rest: any[]) {
@@ -94,7 +89,7 @@ export const HTMLPropsMixin = dedupeMixin(
 
       /**
        * Define default props for this component.
-       * @returns {Partial<HTMLProps>} Partial props.
+       * @returns {Partial<HTMLProps<T>>} Partial props.
        */
       getDefaultProps(): Partial<HTMLProps<T>> {
         return {};
@@ -163,8 +158,12 @@ export const HTMLPropsMixin = dedupeMixin(
       update(): void {}
     }
 
-    return HTMLPropsMixin as unknown as {
-      new (props?: HTMLProps): HTMLPropsMixin;
+    return HTMLPropsMixin as {
+      new (props?: HTMLPropsMixin['props']): HTMLPropsMixin;
+      observedAttributes: string[];
+      define(name: string, options?: ElementDefinitionOptions): void;
+      getName(): string;
+      getSelector(): string;
     };
   },
 );
