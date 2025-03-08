@@ -38,7 +38,8 @@ import HTMLProps from '@html-props/core';
 
 ### Defining a Custom Element with Props
 
-You can create a custom element by extending the `HTMLPropsMixin` mixin.
+You can create a custom element by extending the `HTMLPropsMixin` mixin and pass
+in HTMLElement.
 
 ```ts
 import { HTMLPropsMixin } from '@html-props/core';
@@ -51,7 +52,19 @@ class MyElement extends HTMLPropsMixin<MyElement>(HTMLElement) {
   }
 }
 
-customElements.define('my-element', MyElement);
+MyElement.define('my-element');
+```
+
+You can also convert existing custom elements, like built-in elements to support
+props.
+
+```ts
+const Button = HTMLPropsMixin<HTMLButtonElement>(HTMLButtonElement).define(
+  'html-button',
+  {
+    extends: 'button', // This is required for built-in elements
+  },
+);
 ```
 
 ### Using the Custom Element
@@ -60,7 +73,7 @@ You can use the custom element declaratively as follows:
 
 ```ts
 const element = new MyElement({ text: 'Hello world!' });
-document.body.appendChild(element);
+document.body.appendChild(element); // <my-element>Hello world!</my-element>
 ```
 
 ### Defining Default Props
@@ -71,12 +84,13 @@ You can define default properties for your custom element by overriding the
 ```ts
 class MyElement extends HTMLPropsMixin<MyElement>(HTMLElement) {
   text?: string;
+  textColor?: string;
 
-  getDefaultProps() {
+  getDefaultProps(props: this['props']): this['props'] {
     return {
-      text: 'This is a default.',
+      text: 'Default text',
       style: {
-        color: '#555555',
+        color: props.textColor ?? 'blue',
       },
     };
   }
@@ -85,6 +99,11 @@ class MyElement extends HTMLPropsMixin<MyElement>(HTMLElement) {
     return this.text ?? '-';
   }
 }
+
+MyElement.define('my-element');
+
+new MyElement({ text: 'Hello world!', textColor: 'red' }); // <my-element style="color: red;">Hello world!</my-element>
+new MyElement({}); // <my-element style="color: blue;">Default text</my-element>
 ```
 
 ### Defining a custom Props Interface
@@ -103,10 +122,10 @@ class MyElement extends HTMLPropsMixin<MyElementProps>(HTMLElement) {
   text: string;
   textColor?: string;
 
-  getDefaultProps() {
+  getDefaultProps(props: this['props']): this['props'] {
     return {
       style: {
-        color: this.textColor ?? '#555555',
+        color: props.textColor ?? 'blue',
       },
     };
   }
@@ -116,7 +135,7 @@ class MyElement extends HTMLPropsMixin<MyElementProps>(HTMLElement) {
   }
 }
 
-customElements.define('my-element', MyElement);
+MyElement.define('my-element');
 ```
 
 ## License

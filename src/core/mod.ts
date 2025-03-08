@@ -24,7 +24,7 @@ export const HTMLPropsMixin = dedupeMixin(
       extends Constructor<HTMLPropsInterface> {
       new (props?: HTMLPropsInterface['props']): HTMLPropsInterface;
       observedAttributes: string[];
-      define(name: string, options?: ElementDefinitionOptions): void;
+      define(name: string, options?: ElementDefinitionOptions): this;
       getName(): string;
       getSelector(): string;
     }
@@ -34,8 +34,12 @@ export const HTMLPropsMixin = dedupeMixin(
         return [];
       }
 
-      static define(name: string, options?: ElementDefinitionOptions): void {
+      static define(
+        name: string,
+        options?: ElementDefinitionOptions,
+      ): typeof this {
         customElements.define(name, this, options);
+        return this;
       }
 
       static getName() {
