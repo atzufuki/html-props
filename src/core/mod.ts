@@ -1,16 +1,40 @@
+// deno-lint-ignore-file
 import { type Constructor, dedupeMixin } from '@open-wc/dedupe-mixin';
-import type { IncomingProps, RenderObject } from './types.ts';
-
-export type HTMLProps<T = unknown> = IncomingProps<HTMLElement, T>;
+import type { HTMLProps, RenderObject } from './types.ts';
 
 export const HTMLPropsMixin = dedupeMixin(
   <T extends unknown = unknown>(SuperClass: Constructor<HTMLElement>) => {
-    class HTMLPropsMixin extends SuperClass {
+    interface HTMLPropsInterface extends HTMLElement {
+      props: HTMLProps<T>;
+      connectedCallback(): void;
+      disconnectedCallback(): void;
+      adoptedCallback(): void;
+      attributeChangedCallback(
+        name: string,
+        oldValue: string,
+        newValue: string,
+      ): void;
+      getDefaultProps(props: this['props']): this['props'];
+      render(): RenderObject;
+      build(): void;
+      update(): void;
+    }
+
+    interface HTMLPropsInterfaceConstructor
+      extends Constructor<HTMLPropsInterface> {
+      new (props?: HTMLPropsInterface['props']): HTMLPropsInterface;
+      observedAttributes: string[];
+      define(name: string, options?: ElementDefinitionOptions): void;
+      getName(): string;
+      getSelector(): string;
+    }
+
+    class HTMLPropsMixin extends SuperClass implements HTMLPropsInterface {
       static get observedAttributes(): string[] {
         return [];
       }
 
-      static define(name: string, options?: ElementDefinitionOptions) {
+      static define(name: string, options?: ElementDefinitionOptions): void {
         customElements.define(name, this, options);
       }
 
@@ -22,7 +46,7 @@ export const HTMLPropsMixin = dedupeMixin(
         return this.getName();
       }
 
-      props: Partial<HTMLProps<T>> = {};
+      props: HTMLProps<T>;
 
       // deno-lint-ignore no-explicit-any
       constructor(...rest: any[]) {
@@ -35,20 +59,15 @@ export const HTMLPropsMixin = dedupeMixin(
        */
       connectedCallback(): void {
         const {
-          // deno-lint-ignore no-unused-vars
           children,
-          // deno-lint-ignore no-unused-vars
           child,
-          // deno-lint-ignore no-unused-vars
           textContent,
-          // deno-lint-ignore no-unused-vars
           innerHTML,
-          // deno-lint-ignore no-unused-vars
           innerText,
           style,
           dataset,
           ...rest
-        } = merge(this.getDefaultProps(), this.props);
+        } = merge(this.getDefaultProps(this.props), this.props);
 
         if (style) {
           Object.assign(this.style, style);
@@ -79,19 +98,16 @@ export const HTMLPropsMixin = dedupeMixin(
        * Called each time any attributes that are listed in the observedAttributes static property are changed, added, removed, or replaced.
        */
       attributeChangedCallback(
-        // deno-lint-ignore no-unused-vars
         name: string,
-        // deno-lint-ignore no-unused-vars
         oldValue: string,
-        // deno-lint-ignore no-unused-vars
         newValue: string,
       ): void {}
 
       /**
        * Define default props for this component.
-       * @returns {Partial<HTMLProps<T>>} Partial props.
+       * @returns {this['props']}
        */
-      getDefaultProps(): Partial<HTMLProps<T>> {
+      getDefaultProps(props: this['props']): this['props'] {
         return {};
       }
 
@@ -141,14 +157,23 @@ export const HTMLPropsMixin = dedupeMixin(
           innerHTML ??
           innerText;
 
-        if (content instanceof Array) {
-          this.replaceChildren(...content.map(convert));
-        } else {
-          if (typeof content === 'string' && isHTML(content)) {
-            this.innerHTML = content;
-          } else {
+        switch (true) {
+          case content instanceof Array:
+            this.replaceChildren(...content.map(convert));
+            break;
+          case content instanceof Node:
             this.replaceChildren(convert(content));
-          }
+            break;
+          case typeof content === 'string':
+            if (isHTML(content)) {
+              this.innerHTML = content;
+            } else {
+              this.replaceChildren(content);
+            }
+            break;
+          default:
+            this.replaceChildren();
+            break;
         }
       }
 
@@ -158,13 +183,7 @@ export const HTMLPropsMixin = dedupeMixin(
       update(): void {}
     }
 
-    return HTMLPropsMixin as {
-      new (props?: HTMLPropsMixin['props']): HTMLPropsMixin;
-      observedAttributes: string[];
-      define(name: string, options?: ElementDefinitionOptions): void;
-      getName(): string;
-      getSelector(): string;
-    };
+    return HTMLPropsMixin as unknown as HTMLPropsInterfaceConstructor;
   },
 );
 

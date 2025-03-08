@@ -15,8 +15,6 @@ assignment, rendering, and updates.
   `disconnectedCallback`, `adoptedCallback`, and `attributeChangedCallback`.
 - **TypeScript Support**: Written in TypeScript for type safety and better
   developer experience.
-- **Testing**: Unit tests provided to ensure the mixin works correctly with
-  custom and built-in elements.
 
 ## Installation
 
@@ -62,7 +60,7 @@ You can use the custom element declaratively as follows:
 
 ```ts
 const element = new MyElement({ text: 'Hello world!' });
-document.body.append(element);
+document.body.appendChild(element);
 ```
 
 ### Defining Default Props

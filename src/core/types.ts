@@ -231,9 +231,16 @@ export type IncomingProps<E = unknown, P = unknown> =
   >
   & P;
 
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
+export type HTMLProps<T = unknown> = DeepPartial<IncomingProps<HTMLElement, T>>;
+
 export type RenderObject =
   | Array<Node | string | null | undefined>
   | Node
   | string
+  | false
   | null
   | undefined;
