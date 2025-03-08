@@ -3,7 +3,7 @@ import { type Constructor, dedupeMixin } from '@open-wc/dedupe-mixin';
 import type { HTMLProps, RenderObject } from './types.ts';
 
 export const HTMLPropsMixin = dedupeMixin(
-  <T extends unknown = unknown>(SuperClass: Constructor<HTMLElement>) => {
+  <T>(superclass: Constructor<HTMLElement>) => {
     interface HTMLPropsInterface extends HTMLElement {
       props: HTMLProps<T>;
       connectedCallback(): void;
@@ -29,7 +29,7 @@ export const HTMLPropsMixin = dedupeMixin(
       getSelectors(selector: string): string;
     }
 
-    class HTMLPropsMixin extends SuperClass implements HTMLPropsInterface {
+    class HTMLPropsMixin extends superclass implements HTMLPropsInterface {
       static get observedAttributes(): string[] {
         return [];
       }
@@ -203,11 +203,9 @@ export const HTMLPropsMixin = dedupeMixin(
       update(): void {}
     }
 
-    return HTMLPropsMixin as unknown as HTMLPropsInterfaceConstructor;
+    return HTMLPropsMixin as HTMLPropsInterfaceConstructor;
   },
 );
-
-export default HTMLPropsMixin;
 
 // deno-lint-ignore no-explicit-any
 function merge(...objects: any[]) {
