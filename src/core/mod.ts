@@ -25,8 +25,8 @@ export const HTMLPropsMixin = dedupeMixin(
       new (props?: HTMLPropsInterface['props']): HTMLPropsInterface;
       observedAttributes: string[];
       define(name: string, options?: ElementDefinitionOptions): this;
-      getName(): string;
-      getSelector(): string;
+      getName(): string | null;
+      getSelectors(selector: string): string;
     }
 
     class HTMLPropsMixin extends SuperClass implements HTMLPropsInterface {
@@ -42,12 +42,19 @@ export const HTMLPropsMixin = dedupeMixin(
         return this;
       }
 
-      static getName() {
+      static getName(): string | null {
         return customElements.getName(this);
       }
 
-      static getSelector() {
-        return this.getName();
+      static getSelectors(selectors: string = ''): string {
+        const name = this.getName();
+        const localName = new this().localName;
+
+        if (name !== localName) {
+          return `${localName}[is="${name}"]${selectors}`;
+        }
+
+        return `${name}${selectors}`;
       }
 
       props: HTMLProps<T>;
@@ -62,6 +69,15 @@ export const HTMLPropsMixin = dedupeMixin(
        * Called each time the element is added to the document.
        */
       connectedCallback(): void {
+        // If the element is a built-in element, the is-attribute can be added automatically.
+        if (!customElements.get(this.localName)) {
+          const constructor = this.constructor as typeof HTMLPropsMixin;
+          const name = constructor.getName();
+          if (name) {
+            this.setAttribute('is', name);
+          }
+        }
+
         const {
           children,
           child,
