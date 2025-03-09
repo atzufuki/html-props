@@ -1,217 +1,223 @@
-// deno-lint-ignore-file
-import { type Constructor, dedupeMixin } from '@open-wc/dedupe-mixin';
+// deno-lint-ignore-file no-explicit-any
+
 import type { HTMLProps, RenderObject } from './types.ts';
 
-export const HTMLPropsMixin = dedupeMixin(
-  <T>(superclass: Constructor<HTMLElement>) => {
-    interface HTMLPropsInterface extends HTMLElement {
-      props: HTMLProps<T>;
-      connectedCallback(): void;
-      disconnectedCallback(): void;
-      adoptedCallback(): void;
-      attributeChangedCallback(
-        name: string,
-        oldValue: string,
-        newValue: string,
-      ): void;
-      getDefaultProps(props: this['props']): this['props'];
-      render(): RenderObject;
-      build(): void;
-      update(): void;
+type Constructor<T> = new (...args: any[]) => T;
+
+declare global {
+  interface HTMLElement {
+    connectedCallback?(): void;
+    disconnectedCallback?(): void;
+    adoptedCallback?(): void;
+    attributeChangedCallback?(
+      name: string,
+      oldValue: string,
+      newValue: string,
+    ): void;
+  }
+}
+
+export const HTMLPropsMixin = <
+  P,
+  T extends Constructor<HTMLElement> = Constructor<HTMLElement>,
+>(
+  superClass: T,
+) => {
+  type Constructor<T> = new (props?: HTMLProps<P>) => T;
+
+  class HTMLPropsMixinClass extends superClass {
+    props: HTMLProps<P>;
+
+    constructor(...rest: any[]) {
+      super();
+      this.props = rest[0] ?? {};
     }
 
-    interface HTMLPropsInterfaceConstructor
-      extends Constructor<HTMLPropsInterface> {
-      new (props?: HTMLPropsInterface['props']): HTMLPropsInterface;
-      observedAttributes: string[];
-      define(name: string, options?: ElementDefinitionOptions): this;
-      getName(): string | null;
-      getSelectors(selector: string): string;
+    connectedCallback(): void {
+      if (super.connectedCallback) {
+        super.connectedCallback();
+      }
+
+      const {
+        style,
+        dataset,
+        ...rest
+      } = merge(this.getDefaultProps(), this.props);
+
+      if (style) {
+        Object.assign(this.style, style);
+      }
+
+      if (dataset) {
+        Object.assign(this.dataset, dataset);
+      }
+
+      Object.assign(this, rest);
     }
 
-    class HTMLPropsMixin extends superclass implements HTMLPropsInterface {
-      static get observedAttributes(): string[] {
-        return [];
+    /**
+     * Define default props for this component.
+     * @returns {this['props']}
+     */
+    getDefaultProps(): this['props'] {
+      return {};
+    }
+  }
+
+  return HTMLPropsMixinClass as Constructor<HTMLPropsMixinClass>;
+};
+
+export const HTMLRenderMixin = <T extends Constructor<HTMLElement>>(
+  superClass: T,
+) => {
+  class HTMLRenderMixinClass extends superClass {
+    connectedCallback(): void {
+      if (super.connectedCallback) {
+        super.connectedCallback();
       }
 
-      static define(
-        name: string,
-        options?: ElementDefinitionOptions,
-      ): typeof this {
-        customElements.define(name, this, options);
-        return this;
-      }
+      this.build();
+    }
 
-      static getName(): string | null {
-        return customElements.getName(this);
-      }
+    /**
+     * Implement a child tree for this component.
+     * @returns {RenderObject} The rendered object.
+     */
+    render(): RenderObject {
+      return null;
+    }
 
-      static getSelectors(selectors: string = ''): string {
-        const name = this.getName();
-        const localName = new this().localName;
+    /**
+     * Builds a child tree for this element.
+     */
+    build(): void {
+      const isHTML = (string: string) => {
+        const doc = new DOMParser().parseFromString(string, 'text/html');
+        return Array.from(doc.body.childNodes).some(
+          (node) => node.nodeType === 1,
+        );
+      };
 
-        if (name !== localName) {
-          return `${localName}[is="${name}"]${selectors}`;
-        }
+      const convert = (content: Node | string | null | undefined) => {
+        const isNode = content instanceof Node;
+        const isString = typeof content === 'string';
+        const isNull = content === null;
+        const isUndefined = content === undefined;
+        const isSomethingElse = !isNode && !isString && !isNull &&
+          !isUndefined;
 
-        return `${name}${selectors}`;
-      }
-
-      props: HTMLProps<T>;
-
-      // deno-lint-ignore no-explicit-any
-      constructor(...rest: any[]) {
-        super();
-        this.props = rest[0] ?? {};
-      }
-
-      /**
-       * Called each time the element is added to the document.
-       */
-      connectedCallback(): void {
-        // If the element is a built-in element, the is-attribute can be added automatically.
-        if (!customElements.get(this.localName)) {
-          const constructor = this.constructor as typeof HTMLPropsMixin;
-          const name = constructor.getName();
-          if (name) {
-            this.setAttribute('is', name);
-          }
-        }
-
-        const {
-          children,
-          child,
-          textContent,
-          innerHTML,
-          innerText,
-          style,
-          dataset,
-          ...rest
-        } = merge(this.getDefaultProps(this.props), this.props);
-
-        if (style) {
-          Object.assign(this.style, style);
-        }
-
-        if (dataset) {
-          Object.assign(this.dataset, dataset);
-        }
-
-        Object.assign(this, rest);
-
-        this.build();
-
-        this.update();
-      }
-
-      /**
-       * Called each time the element is removed from the document.
-       */
-      disconnectedCallback(): void {}
-
-      /**
-       * Called each time the element is moved to a new document.
-       */
-      adoptedCallback(): void {}
-
-      /**
-       * Called each time any attributes that are listed in the observedAttributes static property are changed, added, removed, or replaced.
-       */
-      attributeChangedCallback(
-        name: string,
-        oldValue: string,
-        newValue: string,
-      ): void {}
-
-      /**
-       * Define default props for this component.
-       * @returns {this['props']}
-       */
-      getDefaultProps(props: this['props']): this['props'] {
-        return {};
-      }
-
-      /**
-       * Implement a child tree for this component.
-       * @returns {RenderObject} The rendered object.
-       */
-      render(): RenderObject {
-        return null;
-      }
-
-      /**
-       * Builds a child tree for this element.
-       */
-      build(): void {
-        const { children, child, textContent, innerHTML, innerText } =
-          this.props;
-
-        const isHTML = (string: string) => {
-          const doc = new DOMParser().parseFromString(string, 'text/html');
-          return Array.from(doc.body.childNodes).some(
-            (node) => node.nodeType === 1,
+        if (isSomethingElse) {
+          throw new Error(
+            'Invalid render type provided. Must follow RenderObject.',
           );
-        };
-
-        const convert = (content: Node | string | null | undefined) => {
-          const isNode = content instanceof Node;
-          const isString = typeof content === 'string';
-          const isNull = content === null;
-          const isUndefined = content === undefined;
-          const isSomethingElse = !isNode && !isString && !isNull &&
-            !isUndefined;
-
-          if (isSomethingElse) {
-            throw new Error(
-              'Invalid render type provided. Must follow RenderObject.',
-            );
-          }
-
-          return content ?? '';
-        };
-
-        const content = this.render() ??
-          children ??
-          child ??
-          textContent ??
-          innerHTML ??
-          innerText;
-
-        switch (true) {
-          case content instanceof Array:
-            this.replaceChildren(...content.map(convert));
-            break;
-          case content instanceof Node:
-            this.replaceChildren(convert(content));
-            break;
-          case typeof content === 'string':
-            if (isHTML(content)) {
-              this.innerHTML = content;
-            } else {
-              this.replaceChildren(content);
-            }
-            break;
-          default:
-            this.replaceChildren();
-            break;
         }
-      }
 
-      /**
-       * Implement side effects according to current properties state.
-       */
-      update(): void {}
+        return content ?? '';
+      };
+
+      const content = this.render();
+
+      switch (true) {
+        case content instanceof Array:
+          this.replaceChildren(...content.map(convert));
+          break;
+        case content instanceof Node:
+          this.replaceChildren(convert(content));
+          break;
+        case typeof content === 'string':
+          if (isHTML(content)) {
+            this.innerHTML = content;
+          } else {
+            this.replaceChildren(content);
+          }
+          break;
+        default:
+          this.replaceChildren();
+          break;
+      }
+    }
+  }
+
+  return HTMLRenderMixinClass;
+};
+
+export const HTMLHelperMixin = <T extends Constructor<HTMLElement>>(
+  superClass: T,
+) => {
+  class HTMLHelperMixinClass extends superClass {
+    static get observedAttributes(): string[] {
+      return [];
     }
 
-    return HTMLPropsMixin as HTMLPropsInterfaceConstructor;
-  },
-);
+    static define(
+      name: string,
+      options?: ElementDefinitionOptions,
+    ): typeof this {
+      customElements.define(name, this, options);
+      return this;
+    }
 
-// deno-lint-ignore no-explicit-any
+    static getName(): string | null {
+      return customElements.getName(this);
+    }
+
+    static getSelectors(selectors: string = ''): string {
+      const name = this.getName();
+      const localName = new this().localName;
+
+      if (name !== localName) {
+        return `${localName}[is="${name}"]${selectors}`;
+      }
+
+      return `${name}${selectors}`;
+    }
+
+    /**
+     * Called each time the element is added to the document.
+     */
+    connectedCallback(): void {
+      if (super.connectedCallback) {
+        super.connectedCallback();
+      }
+    }
+
+    /**
+     * Called each time the element is removed from the document.
+     */
+    disconnectedCallback(): void {
+      if (super.disconnectedCallback) {
+        super.disconnectedCallback();
+      }
+    }
+
+    /**
+     * Called each time the element is moved to a new document.
+     */
+    adoptedCallback(): void {
+      if (super.adoptedCallback) {
+        super.adoptedCallback();
+      }
+    }
+
+    /**
+     * Called each time any attributes that are listed in the observedAttributes static property are changed, added, removed, or replaced.
+     */
+    attributeChangedCallback(
+      name: string,
+      oldValue: string,
+      newValue: string,
+    ): void {
+      if (super.attributeChangedCallback) {
+        super.attributeChangedCallback(name, oldValue, newValue);
+      }
+    }
+  }
+
+  return HTMLHelperMixinClass;
+};
+
 function merge(...objects: any[]) {
-  // deno-lint-ignore no-explicit-any
   const isTruthy = (item: any) => !!item;
-  // deno-lint-ignore no-explicit-any
   const prepped = (objects as any[]).filter(isTruthy);
 
   if (prepped.length === 0) {
@@ -229,3 +235,12 @@ function merge(...objects: any[]) {
     return result;
   });
 }
+
+const HTMLProps = <P>(elementClass: Constructor<HTMLElement>) =>
+  HTMLHelperMixin(
+    HTMLRenderMixin(
+      HTMLPropsMixin<P>(elementClass),
+    ),
+  );
+
+export default HTMLProps;
