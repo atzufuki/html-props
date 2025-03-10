@@ -1,50 +1,44 @@
 # HTML Props - Props API for Web Components
 
-HTML Props is a library that provides a mixin, `HTMLPropsMixin`, to define and
-manage properties for custom HTML elements and web components. This mixin
-simplifies the process of creating web components by handling property
-assignment, rendering, and updates.
+HTML Props is a library that provides a mixin, `HTMLPropsMixin`, to define and manage properties for custom HTML
+elements and web components. This mixin simplifies the process of creating web components by handling props assignment,
+rendering, and updates.
 
 ## Features
 
-- **Property Management**: Easily define and manage properties for custom
-  elements.
-- **Rendering**: Implement a `render` method to create a child tree for the
-  component.
-- **Lifecycle Methods**: Includes lifecycle methods like `connectedCallback`,
-  `disconnectedCallback`, `adoptedCallback`, and `attributeChangedCallback`.
-- **TypeScript Support**: Written in TypeScript for type safety and better
-  developer experience.
+- **Props Management**: Define props for custom elements.
+- **Templating**: Implement a `render` method to create a child tree for the component.
+- **Utilities**: Includes utility methods for defining custom elements, and generating selectors.
+- **TypeScript Support**: Written in TypeScript for type safety.
 
 ## Installation
 
-Add HTML Props to your project.
+Add the package to your project.
 
 ```sh
 deno add jsr:@html-props/core
 ```
 
-Then, import it in your project:
+Then, import it in your project.
 
 ```ts
-import { HTMLPropsMixin } from '@html-props/core';
-
-// OR
-
 import HTMLProps from '@html-props/core';
+
+// Or each mixin separately.
+import { HTMLPropsMixin, HTMLTemplateMixin, HTMLUtilityMixin } from '@html-props/core';
 ```
 
 ## Usage
 
-### Defining a Custom Element with Props
+### Defining a Custom Element
 
-You can create a custom element by extending the `HTMLPropsMixin` mixin and pass
-in HTMLElement.
+The default export gives you a mixin including every feature of `HTMLPropsMixin`, `HTMLTemplateMixin` and
+`HTMLUtilityMixin`. Extend it and pass in HTMLElement to create a custom element enabling all features.
 
 ```ts
-import { HTMLPropsMixin } from '@html-props/core';
+import HTMLProps from '@html-props/core';
 
-class MyElement extends HTMLPropsMixin<MyElement>(HTMLElement) {
+class MyElement extends HTMLProps<MyElement>(HTMLElement) {
   text?: string;
 
   render() {
@@ -55,42 +49,43 @@ class MyElement extends HTMLPropsMixin<MyElement>(HTMLElement) {
 MyElement.define('my-element');
 ```
 
-You can also convert existing custom elements, like built-in elements to support
-props.
-
-```ts
-const Button = HTMLPropsMixin<HTMLButtonElement>(HTMLButtonElement).define(
-  'html-button',
-  {
-    extends: 'button', // This is required for built-in elements
-  },
-);
-```
-
-### Using the Custom Element
-
-You can use the custom element declaratively as follows:
+Finally use the custom element declaratively as follows:
 
 ```ts
 const element = new MyElement({ text: 'Hello world!' });
 document.body.appendChild(element); // <my-element>Hello world!</my-element>
 ```
 
-### Defining Default Props
+### Converting an existing Custom Element
 
-You can define default properties for your custom element by overriding the
-`getDefaultProps` method.
+You can also convert existing custom elements, like built-in elements to support props. In this case it's unnecessary to
+use `HTMLTemplateMixin`, since we are not implementing a child tree using it's render method. Especially if a component
+already implements it's own rendering logic, it's likely to conflict if used.
 
 ```ts
-class MyElement extends HTMLPropsMixin<MyElement>(HTMLElement) {
+const Button = HTMLUtilityMixin(HTMLPropsMixin<HTMLButtonElement>(HTMLButtonElement)).define('html-button', {
+  extends: 'button',
+});
+
+// Or without the utilities
+const Button = HTMLPropsMixin<HTMLButtonElement>(HTMLButtonElement);
+customElements.define('html-button', Button, { extends: 'button' });
+```
+
+### Defining Default Props
+
+You can define default properties for your custom element by overriding the `getDefaultProps` method.
+
+```ts
+class MyElement extends HTMLProps<MyElement>(HTMLElement) {
   text?: string;
   textColor?: string;
 
-  getDefaultProps(props: this['props']): this['props'] {
+  getDefaultProps(): this['props'] {
     return {
       text: 'Default text',
       style: {
-        color: props.textColor ?? 'blue',
+        color: this.props.textColor ?? 'blue',
       },
     };
   }
@@ -108,24 +103,21 @@ new MyElement({}); // <my-element style="color: blue;">Default text</my-element>
 
 ### Defining a custom Props Interface
 
-While it is recommended to expose all properties as prop types and keep them
-optional, you can also define custom interfaces to make specific prop types
-required.
+You can also separate the props interface if you want to specify which properties to expose.
 
 ```ts
 interface MyElementProps {
-  text: string;
   textColor?: string;
 }
 
-class MyElement extends HTMLPropsMixin<MyElementProps>(HTMLElement) {
-  text: string;
+class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
+  text = 'Hello world!';
   textColor?: string;
 
-  getDefaultProps(props: this['props']): this['props'] {
+  getDefaultProps(): this['props'] {
     return {
       style: {
-        color: props.textColor ?? 'blue',
+        color: this.props.textColor ?? 'blue',
       },
     };
   }
@@ -140,10 +132,8 @@ MyElement.define('my-element');
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file
-for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request on
-GitHub.
+Contributions are welcome! Please open an issue or submit a pull request on GitHub.
