@@ -1,6 +1,6 @@
-import HTMLProps, { HTMLHelperMixin, HTMLPropsMixin } from '@html-props/core';
+import HTMLProps, { HTMLPropsMixin, HTMLUtilityMixin } from '@html-props/core';
 
-const Button = HTMLHelperMixin(
+const Button = HTMLUtilityMixin(
   HTMLPropsMixin<HTMLButtonElement>(HTMLButtonElement),
 ).define(
   'html-button',

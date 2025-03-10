@@ -1,5 +1,5 @@
 import { assert } from '@std/assert';
-import HTMLProps, { HTMLHelperMixin, HTMLPropsMixin } from '../mod.ts';
+import HTMLProps, { HTMLPropsMixin, HTMLUtilityMixin } from '../mod.ts';
 import { JSDOM } from 'jsdom';
 
 const dom = new JSDOM(`<!DOCTYPE html><body></body>`);
@@ -32,7 +32,7 @@ Deno.test('html props mixin test', () => {
 });
 
 Deno.test('direct built in element test', () => {
-  const MyButton = HTMLHelperMixin(
+  const MyButton = HTMLUtilityMixin(
     HTMLPropsMixin<HTMLButtonElement>(HTMLButtonElement),
   );
 

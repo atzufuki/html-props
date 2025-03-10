@@ -98,16 +98,16 @@ export const HTMLPropsMixin = <
 };
 
 /**
- * A mixin that adds rendering capabilities to a custom element.
+ * A mixin that adds template rendering capabilities to a custom element.
  *
  * @template T - The type of the custom element.
  * @param {T} superClass - The base class to extend.
- * @returns {Constructor<HTMLRenderMixinClass>} The extended class with rendering capabilities.
+ * @returns {Constructor<HTMLTemplateMixinClass>} The extended class with template rendering capabilities.
  */
-export const HTMLRenderMixin = <T extends Constructor<HTMLElement>>(
+export const HTMLTemplateMixin = <T extends Constructor<HTMLElement>>(
   superClass: T,
 ) => {
-  class HTMLRenderMixinClass extends superClass {
+  class HTMLTemplateMixinClass extends superClass {
     connectedCallback(): void {
       if (super.connectedCallback) {
         super.connectedCallback();
@@ -119,7 +119,7 @@ export const HTMLRenderMixin = <T extends Constructor<HTMLElement>>(
     /**
      * Renders the content of the component.
      *
-     * This method should be overridden by subclasses to provide the specific rendering logic.
+     * This method should be overridden by subclasses to provide the specific template rendering logic.
      * The return value can be a Node, a string, an array of Nodes, or null/undefined.
      *
      * @returns {RenderObject} The rendered content of the component.
@@ -185,20 +185,20 @@ export const HTMLRenderMixin = <T extends Constructor<HTMLElement>>(
     }
   }
 
-  return HTMLRenderMixinClass;
+  return HTMLTemplateMixinClass;
 };
 
 /**
- * A mixin that adds helper methods and lifecycle callbacks to a custom element.
+ * A mixin that adds utility methods and lifecycle callbacks to a custom element.
  *
  * @template T - The type of the custom element.
  * @param {T} superClass - The base class to extend.
- * @returns {Constructor<HTMLHelperMixinClass>} The extended class with helper methods and lifecycle callbacks.
+ * @returns {Constructor<HTMLUtilityMixinClass>} The extended class with utility methods and lifecycle callbacks.
  */
-export const HTMLHelperMixin = <T extends Constructor<HTMLElement>>(
+export const HTMLUtilityMixin = <T extends Constructor<HTMLElement>>(
   superClass: T,
 ) => {
-  class HTMLHelperMixinClass extends superClass {
+  class HTMLUtilityMixinClass extends superClass {
     /**
      * Returns an array of attribute names to be observed for changes.
      * This method is used by the browser to determine which attributes
@@ -298,19 +298,19 @@ export const HTMLHelperMixin = <T extends Constructor<HTMLElement>>(
     }
   }
 
-  return HTMLHelperMixinClass;
+  return HTMLUtilityMixinClass;
 };
 
 /**
- * Combines HTMLPropsMixin, HTMLRenderMixin and HTMLHelperMixin to create a custom element with HTML props, rendering, and helper methods.
+ * Combines HTMLPropsMixin, HTMLTemplateMixin and HTMLUtilityMixin to create a custom element with props API, template rendering, and utilities.
  *
  * @template P - The type of the props.
  * @param {Constructor<HTMLElement>} elementClass - The base class to extend.
  * @returns {Constructor<HTMLElement>} The extended class with combined mixins.
  */
 const HTMLProps = <P>(elementClass: Constructor<HTMLElement>) =>
-  HTMLHelperMixin(
-    HTMLRenderMixin(
+  HTMLUtilityMixin(
+    HTMLTemplateMixin(
       HTMLPropsMixin<P>(elementClass),
     ),
   );
