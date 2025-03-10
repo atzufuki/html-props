@@ -17,6 +17,14 @@ declare global {
   }
 }
 
+/**
+ * A mixin that adds HTML props handling to a custom element.
+ *
+ * @template P - The type of the props.
+ * @template T - The type of the custom element.
+ * @param {T} superClass - The base class to extend.
+ * @returns {Constructor<HTMLPropsMixinClass>} The extended class with HTML props handling.
+ */
 export const HTMLPropsMixin = <
   P,
   T extends Constructor<HTMLElement> = Constructor<HTMLElement>,
@@ -69,6 +77,13 @@ export const HTMLPropsMixin = <
   return HTMLPropsMixinClass as Constructor<HTMLPropsMixinClass>;
 };
 
+/**
+ * A mixin that adds rendering capabilities to a custom element.
+ *
+ * @template T - The type of the custom element.
+ * @param {T} superClass - The base class to extend.
+ * @returns {Constructor<HTMLRenderMixinClass>} The extended class with rendering capabilities.
+ */
 export const HTMLRenderMixin = <T extends Constructor<HTMLElement>>(
   superClass: T,
 ) => {
@@ -152,6 +167,13 @@ export const HTMLRenderMixin = <T extends Constructor<HTMLElement>>(
   return HTMLRenderMixinClass;
 };
 
+/**
+ * A mixin that adds helper methods and lifecycle callbacks to a custom element.
+ *
+ * @template T - The type of the custom element.
+ * @param {T} superClass - The base class to extend.
+ * @returns {Constructor<HTMLHelperMixinClass>} The extended class with helper methods and lifecycle callbacks.
+ */
 export const HTMLHelperMixin = <T extends Constructor<HTMLElement>>(
   superClass: T,
 ) => {
@@ -278,6 +300,13 @@ function merge(...objects: any[]) {
   });
 }
 
+/**
+ * Combines HTMLPropsMixin, HTMLRenderMixin and HTMLHelperMixin to create a custom element with HTML props, rendering, and helper methods.
+ *
+ * @template P - The type of the props.
+ * @param {Constructor<HTMLElement>} elementClass - The base class to extend.
+ * @returns {Constructor<HTMLElement>} The extended class with combined mixins.
+ */
 const HTMLProps = <P>(elementClass: Constructor<HTMLElement>) =>
   HTMLHelperMixin(
     HTMLRenderMixin(
