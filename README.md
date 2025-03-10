@@ -1,8 +1,8 @@
 # HTML Props - Props API for Web Components
 
-HTML Props is a library that provides a mixin, `HTMLPropsMixin`, to define and manage properties for custom HTML
-elements and web components. This mixin simplifies the process of creating web components by handling props assignment,
-rendering, and updates.
+HTML Props is a JavaScript library that provides a set of mixins for building web components with declarative props and
+nested child trees. This library simplifies the process of templating and enables passing complex properties via custom
+element's constructor.
 
 ## Features
 
