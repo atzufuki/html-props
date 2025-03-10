@@ -6,9 +6,27 @@ type Constructor<T> = new (...args: any[]) => T;
 
 declare global {
   interface HTMLElement {
+    /**
+     * Called when the element is inserted into a document.
+     * This can be useful for initializing the element's state or setting up event listeners.
+     */
     connectedCallback?(): void;
+    /**
+     * Called when the element is removed from a document.
+     * This can be useful for cleaning up any resources or event listeners that were set up in connectedCallback.
+     */
     disconnectedCallback?(): void;
+    /**
+     * Called when the element is moved to a new document.
+     * This can be useful for reinitializing the element's state or setting up event listeners in the new document.
+     */
     adoptedCallback?(): void;
+    /**
+     * Called when one of the element's attributes is added, removed, or changed.
+     * @param name - The name of the attribute that was changed.
+     * @param oldValue - The previous value of the attribute.
+     * @param newValue - The new value of the attribute.
+     */
     attributeChangedCallback?(
       name: string,
       oldValue: string,
@@ -189,11 +207,11 @@ export const HTMLTemplateMixin = <T extends Constructor<HTMLElement>>(
 };
 
 /**
- * A mixin that adds utility methods and lifecycle callbacks to a custom element.
+ * A mixin that adds utility methods to a custom element.
  *
  * @template T - The type of the custom element.
  * @param {T} superClass - The base class to extend.
- * @returns {Constructor<HTMLUtilityMixinClass>} The extended class with utility methods and lifecycle callbacks.
+ * @returns {Constructor<HTMLUtilityMixinClass>} The extended class with utility methods.
  */
 export const HTMLUtilityMixin = <T extends Constructor<HTMLElement>>(
   superClass: T,
@@ -249,52 +267,6 @@ export const HTMLUtilityMixin = <T extends Constructor<HTMLElement>>(
       }
 
       return `${name}${selectors}`;
-    }
-
-    /**
-     * Called when the element is inserted into a document.
-     * This can be useful for initializing the element's state or setting up event listeners.
-     */
-    connectedCallback(): void {
-      if (super.connectedCallback) {
-        super.connectedCallback();
-      }
-    }
-
-    /**
-     * Called when the element is removed from a document.
-     * This can be useful for cleaning up any resources or event listeners that were set up in connectedCallback.
-     */
-    disconnectedCallback(): void {
-      if (super.disconnectedCallback) {
-        super.disconnectedCallback();
-      }
-    }
-
-    /**
-     * Called when the element is moved to a new document.
-     * This can be useful for reinitializing the element's state or setting up event listeners in the new document.
-     */
-    adoptedCallback(): void {
-      if (super.adoptedCallback) {
-        super.adoptedCallback();
-      }
-    }
-
-    /**
-     * Called when one of the element's attributes is added, removed, or changed.
-     * @param name - The name of the attribute that was changed.
-     * @param oldValue - The previous value of the attribute.
-     * @param newValue - The new value of the attribute.
-     */
-    attributeChangedCallback(
-      name: string,
-      oldValue: string,
-      newValue: string,
-    ): void {
-      if (super.attributeChangedCallback) {
-        super.attributeChangedCallback(name, oldValue, newValue);
-      }
     }
   }
 
