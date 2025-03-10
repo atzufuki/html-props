@@ -144,12 +144,13 @@ export const HTMLRenderMixin = <T extends Constructor<HTMLElement>>(
         );
       };
 
-      const convert = (render: Node | string | null | undefined) => {
+      const convert = (render: Node | string | null | false | undefined) => {
         const isNode = render instanceof Node;
         const isString = typeof render === 'string';
         const isNull = render === null;
+        const isFalse = render === false;
         const isUndefined = render === undefined;
-        const isSomethingElse = !isNode && !isString && !isNull &&
+        const isSomethingElse = !isNode && !isString && !isNull && !isFalse &&
           !isUndefined;
 
         if (isSomethingElse) {
@@ -158,7 +159,7 @@ export const HTMLRenderMixin = <T extends Constructor<HTMLElement>>(
           );
         }
 
-        return render ?? '';
+        return render || '';
       };
 
       const render = this.render();
@@ -174,7 +175,7 @@ export const HTMLRenderMixin = <T extends Constructor<HTMLElement>>(
           if (isHTML(render)) {
             this.innerHTML = render;
           } else {
-            this.replaceChildren(render);
+            this.replaceChildren(convert(render));
           }
           break;
         default:
