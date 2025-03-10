@@ -45,11 +45,24 @@ declare global {
  */
 export const HTMLPropsMixin = <
   P,
-  T extends Constructor<HTMLElement> = Constructor<HTMLElement>,
+  T extends Constructor<HTMLElement> = Constructor<
+    HTMLElement
+  >,
 >(
   superClass: T,
 ) => {
-  type Constructor<T> = new (props?: HTMLProps<P>) => T;
+  interface Constructor<T> {
+    /**
+     * Constructor signature for the custom element.
+     * @param props - The properties to be mapped to the custom element.
+     * @returns The custom element instance.
+     * @example
+     * ```ts
+     * const element = new MyElement({ foo: 'bar' });
+     * ```
+     */
+    new (props?: HTMLProps<P>): T;
+  }
 
   class HTMLPropsMixinClass extends superClass {
     props: HTMLProps<P>;
@@ -216,17 +229,6 @@ export const HTMLUtilityMixin = <T extends Constructor<HTMLElement>>(
   superClass: T,
 ) => {
   class HTMLUtilityMixinClass extends superClass {
-    /**
-     * Returns an array of attribute names to be observed for changes.
-     * This method is used by the browser to determine which attributes
-     * should trigger the `attributeChangedCallback` when they are modified.
-     *
-     * @returns An array of attribute names to observe.
-     */
-    static get observedAttributes(): string[] {
-      return [];
-    }
-
     /**
      * Defines a custom element with the specified name and options.
      *
