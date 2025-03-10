@@ -142,9 +142,7 @@ export const HTMLTemplateMixin = <T extends Constructor<HTMLElement>>(
      *
      * @returns {RenderObject} The rendered content of the component.
      */
-    render(): RenderObject {
-      return null;
-    }
+    render?(): RenderObject;
 
     /**
      * Builds the component by rendering its content based on the output of the `render` method.
@@ -155,50 +153,51 @@ export const HTMLTemplateMixin = <T extends Constructor<HTMLElement>>(
      * @throws {Error} If the render result is of an invalid type.
      */
     build(): void {
-      const isHTML = (string: string) => {
-        const doc = new DOMParser().parseFromString(string, 'text/html');
-        return Array.from(doc.body.childNodes).some(
-          (node) => node.nodeType === 1,
-        );
-      };
-
-      const convert = (render: Node | string | null | false | undefined) => {
-        const isNode = render instanceof Node;
-        const isString = typeof render === 'string';
-        const isNull = render === null;
-        const isFalse = render === false;
-        const isUndefined = render === undefined;
-        const isSomethingElse = !isNode && !isString && !isNull && !isFalse &&
-          !isUndefined;
-
-        if (isSomethingElse) {
-          throw new Error(
-            'Invalid render type provided. Must follow RenderObject.',
+      if (this.render) {
+        const isHTML = (string: string) => {
+          const doc = new DOMParser().parseFromString(string, 'text/html');
+          return Array.from(doc.body.childNodes).some(
+            (node) => node.nodeType === 1,
           );
-        }
+        };
 
-        return render || '';
-      };
+        const convert = (render: Node | string | null | false | undefined) => {
+          const isNode = render instanceof Node;
+          const isString = typeof render === 'string';
+          const isNull = render === null;
+          const isFalse = render === false;
+          const isUndefined = render === undefined;
+          const isSomethingElse = !isNode && !isString && !isNull && !isFalse &&
+            !isUndefined;
 
-      const render = this.render();
-
-      switch (true) {
-        case render instanceof Array:
-          this.replaceChildren(...render.map(convert));
-          break;
-        case render instanceof Node:
-          this.replaceChildren(convert(render));
-          break;
-        case typeof render === 'string':
-          if (isHTML(render)) {
-            this.innerHTML = render;
-          } else {
-            this.replaceChildren(convert(render));
+          if (isSomethingElse) {
+            throw new Error(
+              'Invalid render type provided. Must follow RenderObject.',
+            );
           }
-          break;
-        default:
-          this.replaceChildren();
-          break;
+
+          return render || '';
+        };
+
+        const render = this.render();
+        switch (true) {
+          case render instanceof Array:
+            this.replaceChildren(...render.map(convert));
+            break;
+          case render instanceof Node:
+            this.replaceChildren(convert(render));
+            break;
+          case typeof render === 'string':
+            if (isHTML(render)) {
+              this.innerHTML = render;
+            } else {
+              this.replaceChildren(convert(render));
+            }
+            break;
+          default:
+            this.replaceChildren();
+            break;
+        }
       }
     }
   }

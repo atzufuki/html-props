@@ -32,11 +32,7 @@ class MyElement extends HTMLProps<{
 
 MyElement.define('my-element');
 
-class MyButton extends HTMLProps(HTMLButtonElement) {
-  render() {
-    return this.textContent ?? '-';
-  }
-}
+class MyButton extends HTMLProps(HTMLButtonElement) {}
 
 MyButton.define('my-custom-button', { extends: 'button' });
 

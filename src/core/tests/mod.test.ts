@@ -49,15 +49,13 @@ Deno.test('direct built in element test', () => {
 });
 
 Deno.test('custom built in element test', () => {
-  class MyButton extends HTMLProps(HTMLButtonElement) {
-    render() {
-      return this.textContent ?? '-';
-    }
-  }
+  class MyButton extends HTMLProps(HTMLButtonElement) {}
 
   MyButton.define('my-custom-button', { extends: 'button' });
 
-  const element = new MyButton({ textContent: 'Click me!' });
+  const element = new MyButton({
+    textContent: 'Click me!',
+  });
 
   document.body.appendChild(element);
 
