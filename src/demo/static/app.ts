@@ -1,21 +1,26 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import HTMLProps, { HTMLPropsMixin, HTMLUtilityMixin } from '@html-props/core';
 
-const Button = HTMLPropsMixin<HTMLButtonElement>(HTMLButtonElement).define(
+const Button = HTMLUtilityMixin(
+  HTMLPropsMixin<HTMLButtonElement>(HTMLButtonElement),
+).define(
   'html-button',
   {
     extends: 'button',
   },
 );
 
-class MyElement extends HTMLPropsMixin<MyElement>(HTMLElement) {
+class MyElement extends HTMLProps<{
+  text?: string;
+  textColor?: string;
+}>(HTMLElement) {
   text?: string;
   textColor?: string;
 
-  getDefaultProps(props: this['props']): this['props'] {
+  getDefaultProps(): this['props'] {
     return {
       text: 'Default text',
       style: {
-        color: props.textColor ?? 'blue',
+        color: this.props.textColor ?? 'blue',
       },
     };
   }
@@ -27,8 +32,14 @@ class MyElement extends HTMLPropsMixin<MyElement>(HTMLElement) {
 
 MyElement.define('my-element');
 
+class MyButton extends HTMLProps(HTMLButtonElement) {}
+
+MyButton.define('my-custom-button', { extends: 'button' });
+
 const element = new MyElement({ text: 'Hello world!', textColor: 'red' });
 const button = new Button({ textContent: 'Click me!', type: 'button' });
+const myButton = new MyButton({ textContent: 'Click me!' });
 
 document.body.appendChild(element);
 document.body.appendChild(button);
+document.body.appendChild(myButton);

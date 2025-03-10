@@ -1,151 +1,172 @@
-// deno-lint-ignore-file
-import { type Constructor, dedupeMixin } from '@open-wc/dedupe-mixin';
+// deno-lint-ignore-file no-explicit-any
+
 import type { HTMLProps, RenderObject } from './types.ts';
 
-export const HTMLPropsMixin = dedupeMixin(
-  <T>(superclass: Constructor<HTMLElement>) => {
-    interface HTMLPropsInterface extends HTMLElement {
-      props: HTMLProps<T>;
-      connectedCallback(): void;
-      disconnectedCallback(): void;
-      adoptedCallback(): void;
-      attributeChangedCallback(
-        name: string,
-        oldValue: string,
-        newValue: string,
-      ): void;
-      getDefaultProps(props: this['props']): this['props'];
-      render(): RenderObject;
-      build(): void;
-      update(): void;
+type Constructor<T> = new (...args: any[]) => T;
+
+declare global {
+  interface HTMLElement {
+    /**
+     * Called when the element is inserted into a document.
+     * This can be useful for initializing the element's state or setting up event listeners.
+     */
+    connectedCallback?(): void;
+    /**
+     * Called when the element is removed from a document.
+     * This can be useful for cleaning up any resources or event listeners that were set up in connectedCallback.
+     */
+    disconnectedCallback?(): void;
+    /**
+     * Called when the element is moved to a new document.
+     * This can be useful for reinitializing the element's state or setting up event listeners in the new document.
+     */
+    adoptedCallback?(): void;
+    /**
+     * Called when one of the element's attributes is added, removed, or changed.
+     * @param name - The name of the attribute that was changed.
+     * @param oldValue - The previous value of the attribute.
+     * @param newValue - The new value of the attribute.
+     */
+    attributeChangedCallback?(
+      name: string,
+      oldValue: string,
+      newValue: string,
+    ): void;
+  }
+}
+
+/**
+ * A mixin that adds HTML props handling to a custom element.
+ *
+ * @template P - The type of the props.
+ * @template T - The type of the custom element.
+ * @param {T} superClass - The base class to extend.
+ * @returns {Constructor<HTMLPropsMixinClass>} The extended class with HTML props handling.
+ */
+export const HTMLPropsMixin = <
+  P,
+  T extends Constructor<HTMLElement> = Constructor<
+    HTMLElement
+  >,
+>(
+  superClass: T,
+) => {
+  interface Constructor<T> {
+    /**
+     * Constructor signature for the custom element.
+     * @param props - The properties to be mapped to the custom element.
+     * @returns The custom element instance.
+     * @example
+     * ```ts
+     * const element = new MyElement({ foo: 'bar' });
+     * ```
+     */
+    new (props?: HTMLProps<P>): T;
+  }
+
+  class HTMLPropsMixinClass extends superClass {
+    props: HTMLProps<P>;
+
+    constructor(...rest: any[]) {
+      super();
+      this.props = rest[0] ?? {};
     }
 
-    interface HTMLPropsInterfaceConstructor
-      extends Constructor<HTMLPropsInterface> {
-      new (props?: HTMLPropsInterface['props']): HTMLPropsInterface;
-      observedAttributes: string[];
-      define(name: string, options?: ElementDefinitionOptions): this;
-      getName(): string | null;
-      getSelectors(selector: string): string;
+    connectedCallback(): void {
+      if (super.connectedCallback) {
+        super.connectedCallback();
+      }
+
+      const merge = (...objects: any[]) => {
+        const isTruthy = (item: any) => !!item;
+        const prepped = (objects as any[]).filter(isTruthy);
+
+        if (prepped.length === 0) {
+          return;
+        }
+
+        return prepped.reduce((result, current) => {
+          Object.entries(current).forEach(([key, value]) => {
+            if (typeof value === 'object') {
+              result[key] = merge(result[key], current[key]);
+            } else {
+              result[key] = current[key];
+            }
+          });
+          return result;
+        });
+      };
+
+      const {
+        style,
+        dataset,
+        ...rest
+      } = merge(this.getDefaultProps(), this.props);
+
+      if (style) {
+        Object.assign(this.style, style);
+      }
+
+      if (dataset) {
+        Object.assign(this.dataset, dataset);
+      }
+
+      Object.assign(this, rest);
     }
 
-    class HTMLPropsMixin extends superclass implements HTMLPropsInterface {
-      static get observedAttributes(): string[] {
-        return [];
+    /**
+     * Returns the default properties for the component.
+     * This method can be overridden by subclasses to provide default values for properties.
+     *
+     * @returns {this['props']} An object containing the default properties.
+     */
+    getDefaultProps(): this['props'] {
+      return {};
+    }
+  }
+
+  return HTMLPropsMixinClass as Constructor<HTMLPropsMixinClass>;
+};
+
+/**
+ * A mixin that adds template rendering capabilities to a custom element.
+ *
+ * @template T - The type of the custom element.
+ * @param {T} superClass - The base class to extend.
+ * @returns {Constructor<HTMLTemplateMixinClass>} The extended class with template rendering capabilities.
+ */
+export const HTMLTemplateMixin = <T extends Constructor<HTMLElement>>(
+  superClass: T,
+) => {
+  class HTMLTemplateMixinClass extends superClass {
+    connectedCallback(): void {
+      if (super.connectedCallback) {
+        super.connectedCallback();
       }
 
-      static define(
-        name: string,
-        options?: ElementDefinitionOptions,
-      ): typeof this {
-        customElements.define(name, this, options);
-        return this;
-      }
+      this.build();
+    }
 
-      static getName(): string | null {
-        return customElements.getName(this);
-      }
+    /**
+     * Renders the content of the component.
+     *
+     * This method should be overridden by subclasses to provide the specific template rendering logic.
+     * The return value can be a Node, a string, an array of Nodes, or null/undefined.
+     *
+     * @returns {RenderObject} The rendered content of the component.
+     */
+    render?(): RenderObject;
 
-      static getSelectors(selectors: string = ''): string {
-        const name = this.getName();
-        const localName = new this().localName;
-
-        if (name !== localName) {
-          return `${localName}[is="${name}"]${selectors}`;
-        }
-
-        return `${name}${selectors}`;
-      }
-
-      props: HTMLProps<T>;
-
-      // deno-lint-ignore no-explicit-any
-      constructor(...rest: any[]) {
-        super();
-        this.props = rest[0] ?? {};
-      }
-
-      /**
-       * Called each time the element is added to the document.
-       */
-      connectedCallback(): void {
-        // If the element is a built-in element, the is-attribute can be added automatically.
-        if (!customElements.get(this.localName)) {
-          const constructor = this.constructor as typeof HTMLPropsMixin;
-          const name = constructor.getName();
-          if (name) {
-            this.setAttribute('is', name);
-          }
-        }
-
-        const {
-          children,
-          child,
-          textContent,
-          innerHTML,
-          innerText,
-          style,
-          dataset,
-          ...rest
-        } = merge(this.getDefaultProps(this.props), this.props);
-
-        if (style) {
-          Object.assign(this.style, style);
-        }
-
-        if (dataset) {
-          Object.assign(this.dataset, dataset);
-        }
-
-        Object.assign(this, rest);
-
-        this.build();
-
-        this.update();
-      }
-
-      /**
-       * Called each time the element is removed from the document.
-       */
-      disconnectedCallback(): void {}
-
-      /**
-       * Called each time the element is moved to a new document.
-       */
-      adoptedCallback(): void {}
-
-      /**
-       * Called each time any attributes that are listed in the observedAttributes static property are changed, added, removed, or replaced.
-       */
-      attributeChangedCallback(
-        name: string,
-        oldValue: string,
-        newValue: string,
-      ): void {}
-
-      /**
-       * Define default props for this component.
-       * @returns {this['props']}
-       */
-      getDefaultProps(props: this['props']): this['props'] {
-        return {};
-      }
-
-      /**
-       * Implement a child tree for this component.
-       * @returns {RenderObject} The rendered object.
-       */
-      render(): RenderObject {
-        return null;
-      }
-
-      /**
-       * Builds a child tree for this element.
-       */
-      build(): void {
-        const { children, child, textContent, innerHTML, innerText } =
-          this.props;
-
+    /**
+     * Builds the component by rendering its content based on the output of the `render` method.
+     *
+     * The `build` method processes the result of the `render` method, which can be a Node, a string,
+     * an array of Nodes, or null/undefined. It then updates the component's children accordingly.
+     *
+     * @throws {Error} If the render result is of an invalid type.
+     */
+    build(): void {
+      if (this.render) {
         const isHTML = (string: string) => {
           const doc = new DOMParser().parseFromString(string, 'text/html');
           return Array.from(doc.body.childNodes).some(
@@ -153,12 +174,13 @@ export const HTMLPropsMixin = dedupeMixin(
           );
         };
 
-        const convert = (content: Node | string | null | undefined) => {
-          const isNode = content instanceof Node;
-          const isString = typeof content === 'string';
-          const isNull = content === null;
-          const isUndefined = content === undefined;
-          const isSomethingElse = !isNode && !isString && !isNull &&
+        const convert = (render: Node | string | null | false | undefined) => {
+          const isNode = render instanceof Node;
+          const isString = typeof render === 'string';
+          const isNull = render === null;
+          const isFalse = render === false;
+          const isUndefined = render === undefined;
+          const isSomethingElse = !isNode && !isString && !isNull && !isFalse &&
             !isUndefined;
 
           if (isSomethingElse) {
@@ -167,28 +189,22 @@ export const HTMLPropsMixin = dedupeMixin(
             );
           }
 
-          return content ?? '';
+          return render || '';
         };
 
-        const content = this.render() ??
-          children ??
-          child ??
-          textContent ??
-          innerHTML ??
-          innerText;
-
+        const render = this.render();
         switch (true) {
-          case content instanceof Array:
-            this.replaceChildren(...content.map(convert));
+          case render instanceof Array:
+            this.replaceChildren(...render.map(convert));
             break;
-          case content instanceof Node:
-            this.replaceChildren(convert(content));
+          case render instanceof Node:
+            this.replaceChildren(convert(render));
             break;
-          case typeof content === 'string':
-            if (isHTML(content)) {
-              this.innerHTML = content;
+          case typeof render === 'string':
+            if (isHTML(render)) {
+              this.innerHTML = render;
             } else {
-              this.replaceChildren(content);
+              this.replaceChildren(convert(render));
             }
             break;
           default:
@@ -196,36 +212,80 @@ export const HTMLPropsMixin = dedupeMixin(
             break;
         }
       }
-
-      /**
-       * Implement side effects according to current properties state.
-       */
-      update(): void {}
     }
-
-    return HTMLPropsMixin as HTMLPropsInterfaceConstructor;
-  },
-);
-
-// deno-lint-ignore no-explicit-any
-function merge(...objects: any[]) {
-  // deno-lint-ignore no-explicit-any
-  const isTruthy = (item: any) => !!item;
-  // deno-lint-ignore no-explicit-any
-  const prepped = (objects as any[]).filter(isTruthy);
-
-  if (prepped.length === 0) {
-    return;
   }
 
-  return prepped.reduce((result, current) => {
-    Object.entries(current).forEach(([key, value]) => {
-      if (typeof value === 'object') {
-        result[key] = merge(result[key], current[key]);
-      } else {
-        result[key] = current[key];
+  return HTMLTemplateMixinClass;
+};
+
+/**
+ * A mixin that adds utility methods to a custom element.
+ *
+ * @template T - The type of the custom element.
+ * @param {T} superClass - The base class to extend.
+ * @returns {Constructor<HTMLUtilityMixinClass>} The extended class with utility methods.
+ */
+export const HTMLUtilityMixin = <T extends Constructor<HTMLElement>>(
+  superClass: T,
+) => {
+  class HTMLUtilityMixinClass extends superClass {
+    /**
+     * Defines a custom element with the specified name and options.
+     *
+     * @param name - The name of the custom element to define.
+     * @param options - Optional configuration options for the custom element.
+     * @returns The class itself, allowing for method chaining.
+     */
+    static define(
+      name: string,
+      options?: ElementDefinitionOptions,
+    ): typeof this {
+      customElements.define(name, this, options);
+      return this;
+    }
+
+    /**
+     * Retrieves the name of the custom element.
+     *
+     * @returns The name of the custom element as a string, or null if the element is not defined.
+     */
+    static getName(): string | null {
+      return customElements.getName(this);
+    }
+
+    /**
+     * Generates a selector string for the custom element.
+     *
+     * @param selectors - Additional selectors to append to the element's selector.
+     * @returns The complete selector string for the custom element.
+     */
+    static getSelectors(selectors: string = ''): string {
+      const name = this.getName();
+      const localName = new this().localName;
+
+      if (name !== localName) {
+        return `${localName}[is="${name}"]${selectors}`;
       }
-    });
-    return result;
-  });
-}
+
+      return `${name}${selectors}`;
+    }
+  }
+
+  return HTMLUtilityMixinClass;
+};
+
+/**
+ * Combines HTMLPropsMixin, HTMLTemplateMixin and HTMLUtilityMixin to create a custom element with props API, template rendering, and utilities.
+ *
+ * @template P - The type of the props.
+ * @param {Constructor<HTMLElement>} elementClass - The base class to extend.
+ * @returns {Constructor<HTMLElement>} The extended class with combined mixins.
+ */
+const HTMLProps = <P>(elementClass: Constructor<HTMLElement>) =>
+  HTMLUtilityMixin(
+    HTMLTemplateMixin(
+      HTMLPropsMixin<P>(elementClass),
+    ),
+  );
+
+export default HTMLProps;
