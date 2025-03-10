@@ -56,8 +56,10 @@ export const HTMLPropsMixin = <
     }
 
     /**
-     * Define default props for this component.
-     * @returns {this['props']}
+     * Returns the default properties for the component.
+     * This method can be overridden by subclasses to provide default values for properties.
+     *
+     * @returns {this['props']} An object containing the default properties.
      */
     getDefaultProps(): this['props'] {
       return {};
@@ -80,15 +82,24 @@ export const HTMLRenderMixin = <T extends Constructor<HTMLElement>>(
     }
 
     /**
-     * Implement a child tree for this component.
-     * @returns {RenderObject} The rendered object.
+     * Renders the content of the component.
+     *
+     * This method should be overridden by subclasses to provide the specific rendering logic.
+     * The return value can be a Node, a string, an array of Nodes, or null/undefined.
+     *
+     * @returns {RenderObject} The rendered content of the component.
      */
     render(): RenderObject {
       return null;
     }
 
     /**
-     * Builds a child tree for this element.
+     * Builds the component by rendering its content based on the output of the `render` method.
+     *
+     * The `build` method processes the result of the `render` method, which can be a Node, a string,
+     * an array of Nodes, or null/undefined. It then updates the component's children accordingly.
+     *
+     * @throws {Error} If the render result is of an invalid type.
      */
     build(): void {
       const isHTML = (string: string) => {
@@ -98,11 +109,11 @@ export const HTMLRenderMixin = <T extends Constructor<HTMLElement>>(
         );
       };
 
-      const convert = (content: Node | string | null | undefined) => {
-        const isNode = content instanceof Node;
-        const isString = typeof content === 'string';
-        const isNull = content === null;
-        const isUndefined = content === undefined;
+      const convert = (render: Node | string | null | undefined) => {
+        const isNode = render instanceof Node;
+        const isString = typeof render === 'string';
+        const isNull = render === null;
+        const isUndefined = render === undefined;
         const isSomethingElse = !isNode && !isString && !isNull &&
           !isUndefined;
 
@@ -112,23 +123,23 @@ export const HTMLRenderMixin = <T extends Constructor<HTMLElement>>(
           );
         }
 
-        return content ?? '';
+        return render ?? '';
       };
 
-      const content = this.render();
+      const render = this.render();
 
       switch (true) {
-        case content instanceof Array:
-          this.replaceChildren(...content.map(convert));
+        case render instanceof Array:
+          this.replaceChildren(...render.map(convert));
           break;
-        case content instanceof Node:
-          this.replaceChildren(convert(content));
+        case render instanceof Node:
+          this.replaceChildren(convert(render));
           break;
-        case typeof content === 'string':
-          if (isHTML(content)) {
-            this.innerHTML = content;
+        case typeof render === 'string':
+          if (isHTML(render)) {
+            this.innerHTML = render;
           } else {
-            this.replaceChildren(content);
+            this.replaceChildren(render);
           }
           break;
         default:
@@ -145,10 +156,24 @@ export const HTMLHelperMixin = <T extends Constructor<HTMLElement>>(
   superClass: T,
 ) => {
   class HTMLHelperMixinClass extends superClass {
+    /**
+     * Returns an array of attribute names to be observed for changes.
+     * This method is used by the browser to determine which attributes
+     * should trigger the `attributeChangedCallback` when they are modified.
+     *
+     * @returns An array of attribute names to observe.
+     */
     static get observedAttributes(): string[] {
       return [];
     }
 
+    /**
+     * Defines a custom element with the specified name and options.
+     *
+     * @param name - The name of the custom element to define.
+     * @param options - Optional configuration options for the custom element.
+     * @returns The class itself, allowing for method chaining.
+     */
     static define(
       name: string,
       options?: ElementDefinitionOptions,
@@ -157,10 +182,21 @@ export const HTMLHelperMixin = <T extends Constructor<HTMLElement>>(
       return this;
     }
 
+    /**
+     * Retrieves the name of the custom element.
+     *
+     * @returns The name of the custom element as a string, or null if the element is not defined.
+     */
     static getName(): string | null {
       return customElements.getName(this);
     }
 
+    /**
+     * Generates a selector string for the custom element.
+     *
+     * @param selectors - Additional selectors to append to the element's selector.
+     * @returns The complete selector string for the custom element.
+     */
     static getSelectors(selectors: string = ''): string {
       const name = this.getName();
       const localName = new this().localName;
@@ -173,7 +209,8 @@ export const HTMLHelperMixin = <T extends Constructor<HTMLElement>>(
     }
 
     /**
-     * Called each time the element is added to the document.
+     * Called when the element is inserted into a document.
+     * This can be useful for initializing the element's state or setting up event listeners.
      */
     connectedCallback(): void {
       if (super.connectedCallback) {
@@ -182,7 +219,8 @@ export const HTMLHelperMixin = <T extends Constructor<HTMLElement>>(
     }
 
     /**
-     * Called each time the element is removed from the document.
+     * Called when the element is removed from a document.
+     * This can be useful for cleaning up any resources or event listeners that were set up in connectedCallback.
      */
     disconnectedCallback(): void {
       if (super.disconnectedCallback) {
@@ -191,7 +229,8 @@ export const HTMLHelperMixin = <T extends Constructor<HTMLElement>>(
     }
 
     /**
-     * Called each time the element is moved to a new document.
+     * Called when the element is moved to a new document.
+     * This can be useful for reinitializing the element's state or setting up event listeners in the new document.
      */
     adoptedCallback(): void {
       if (super.adoptedCallback) {
@@ -200,7 +239,10 @@ export const HTMLHelperMixin = <T extends Constructor<HTMLElement>>(
     }
 
     /**
-     * Called each time any attributes that are listed in the observedAttributes static property are changed, added, removed, or replaced.
+     * Called when one of the element's attributes is added, removed, or changed.
+     * @param name - The name of the attribute that was changed.
+     * @param oldValue - The previous value of the attribute.
+     * @param newValue - The new value of the attribute.
      */
     attributeChangedCallback(
       name: string,
