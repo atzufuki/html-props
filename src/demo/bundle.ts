@@ -8,8 +8,8 @@ await esbuild.build({
   bundle: true,
   format: 'esm',
   jsxFactory: 'JSX.createElement',
-  jsxImportSource: '@html-props/jsx',
-  inject: ['@html-props/jsx/jsx-runtime'],
+  jsxImportSource: 'jsr:@html-props/jsx@^0.1.0',
+  inject: ['jsr:@html-props/jsx@^0.1.0/jsx-runtime'],
 });
 
 esbuild.stop();
