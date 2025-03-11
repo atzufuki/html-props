@@ -130,6 +130,51 @@ class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
 MyElement.define('my-element');
 ```
 
+### Can I use JSX syntax for templating?
+
+Yes you can! Add this package to your project
+
+```sh
+deno add jsr:@html-props/jsx
+```
+
+Configurate your compiler options like so to enable JSX typings.
+
+```jsonc
+"compilerOptions": {
+  // ...
+  "jsx": "react-jsx",
+  "jsxImportSource": "@html-props/jsx"
+}
+```
+
+Finally configurate your transpiler to enable the JSX runtime.
+
+```ts
+esbuild.build({
+  // ...
+  jsxFactory: 'JSX.createElement',
+  jsxImportSource: '@html-props/jsx',
+  inject: ['@html-props/jsx/jsx-runtime'],
+});
+```
+
+You can now start writing render methods with JSX syntax.
+
+```tsx
+const Button = HTMLUtilityMixin(HTMLPropsMixin<HTMLButtonElement>(HTMLButtonElement)).define('html-button', {
+  extends: 'button',
+});
+
+class MyElement extends HTMLProps<MyElement>(HTMLElement) {
+  text?: string;
+
+  render() {
+    return <Button>{this.text ?? '-'}</Button>;
+  }
+}
+```
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

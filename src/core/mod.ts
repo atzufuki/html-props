@@ -98,6 +98,8 @@ export const HTMLPropsMixin = <
       };
 
       const {
+        children,
+        child,
         style,
         dataset,
         ...rest
@@ -109,6 +111,12 @@ export const HTMLPropsMixin = <
 
       if (dataset) {
         Object.assign(this.dataset, dataset);
+      }
+
+      if (children) {
+        this.replaceChildren(...children);
+      } else if (child) {
+        this.replaceChildren(child);
       }
 
       Object.assign(this, rest);

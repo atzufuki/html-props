@@ -1,11 +1,10 @@
 {
-  "name": "@html-props/demo",
+  "name": "@html-props/jsx",
   "version": "0.0.1",
   "imports": {
-    "@html-props/core/**/*": "../../../src/core"
   },
   "exports": {
-    ".": "./app.ts"
+    "./jsx-runtime": "./jsx-runtime.ts"
   },
   "compilerOptions": {
     "lib": [
@@ -20,8 +19,6 @@
     "noUnusedParameters": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "noImplicitOverride": false,
-    "jsx": "react-jsx",
-    "jsxImportSource": "@html-props/jsx"
+    "noImplicitOverride": false
   }
 }
