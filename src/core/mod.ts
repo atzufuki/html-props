@@ -4,36 +4,54 @@ import type { HTMLProps, RenderObject } from './types.ts';
 
 type Constructor<T> = new (...args: any[]) => T;
 
-declare global {
-  interface HTMLElement {
-    /**
-     * Called when the element is inserted into a document.
-     * This can be useful for initializing the element's state or setting up event listeners.
-     */
-    connectedCallback?(): void;
-    /**
-     * Called when the element is removed from a document.
-     * This can be useful for cleaning up any resources or event listeners that were set up in connectedCallback.
-     */
-    disconnectedCallback?(): void;
-    /**
-     * Called when the element is moved to a new document.
-     * This can be useful for reinitializing the element's state or setting up event listeners in the new document.
-     */
-    adoptedCallback?(): void;
-    /**
-     * Called when one of the element's attributes is added, removed, or changed.
-     * @param name - The name of the attribute that was changed.
-     * @param oldValue - The previous value of the attribute.
-     * @param newValue - The new value of the attribute.
-     */
-    attributeChangedCallback?(
-      name: string,
-      oldValue: string,
-      newValue: string,
-    ): void;
-  }
+interface ExtendedHTMLElement extends HTMLElement {
+  /**
+   * Called when the element is inserted into a document.
+   * This can be useful for initializing the element's state or setting up event listeners.
+   */
+  connectedCallback?(): void;
+  /**
+   * Called when the element is removed from a document.
+   * This can be useful for cleaning up any resources or event listeners that were set up in connectedCallback.
+   */
+  disconnectedCallback?(): void;
+  /**
+   * Called when the element is moved to a new document.
+   * This can be useful for reinitializing the element's state or setting up event listeners in the new document.
+   */
+  adoptedCallback?(): void;
+  /**
+   * Called when one of the element's attributes is added, removed, or changed.
+   * @param name - The name of the attribute that was changed.
+   * @param oldValue - The previous value of the attribute.
+   * @param newValue - The new value of the attribute.
+   */
+  attributeChangedCallback?(
+    name: string,
+    oldValue: string,
+    newValue: string,
+  ): void;
 }
+
+interface HTMLPropsMixinClass<P = {}> extends ExtendedHTMLElement {
+  props: HTMLProps<P>;
+  getDefaultProps(): this['props'];
+}
+
+interface HTMLPropsMixinClassContructor<P, T> {
+  /**
+   * Constructor signature for the custom element.
+   * @param props - The properties to be mapped to the custom element.
+   * @returns The custom element instance.
+   * @example
+   * ```ts
+   * const element = new MyElement({ foo: 'bar' });
+   * ```
+   */
+  new (props?: HTMLProps<P>): T;
+}
+
+type HTMLPropsMixinReturnType<P> = HTMLPropsMixinClassContructor<P, HTMLPropsMixinClass<P>>;
 
 /**
  * A mixin that adds HTML props handling to a custom element.
@@ -45,25 +63,12 @@ declare global {
  */
 export const HTMLPropsMixin = <
   P,
-  T extends Constructor<HTMLElement> = Constructor<
-    HTMLElement
+  T extends Constructor<ExtendedHTMLElement> = Constructor<
+    ExtendedHTMLElement
   >,
 >(
   superClass: T,
-) => {
-  interface Constructor<T> {
-    /**
-     * Constructor signature for the custom element.
-     * @param props - The properties to be mapped to the custom element.
-     * @returns The custom element instance.
-     * @example
-     * ```ts
-     * const element = new MyElement({ foo: 'bar' });
-     * ```
-     */
-    new (props?: HTMLProps<P>): T;
-  }
-
+): HTMLPropsMixinReturnType<P> => {
   class HTMLPropsMixinClass extends superClass {
     props: HTMLProps<P>;
 
@@ -133,8 +138,17 @@ export const HTMLPropsMixin = <
     }
   }
 
-  return HTMLPropsMixinClass as Constructor<HTMLPropsMixinClass>;
+  return HTMLPropsMixinClass;
 };
+
+interface HTMLTemplateMixinClass extends ExtendedHTMLElement {
+  render?(): RenderObject;
+  build(): void;
+}
+
+type HTMLTemplateMixinType = <T extends Constructor<ExtendedHTMLElement>>(superClass: T) => {
+  new (...args: any[]): HTMLTemplateMixinClass;
+} & T;
 
 /**
  * A mixin that adds template rendering capabilities to a custom element.
@@ -143,7 +157,7 @@ export const HTMLPropsMixin = <
  * @param {T} superClass - The base class to extend.
  * @returns {Constructor<HTMLTemplateMixinClass>} The extended class with template rendering capabilities.
  */
-export const HTMLTemplateMixin = <T extends Constructor<HTMLElement>>(
+export const HTMLTemplateMixin: HTMLTemplateMixinType = <T extends Constructor<ExtendedHTMLElement>>(
   superClass: T,
 ) => {
   class HTMLTemplateMixinClass extends superClass {
@@ -226,6 +240,16 @@ export const HTMLTemplateMixin = <T extends Constructor<HTMLElement>>(
   return HTMLTemplateMixinClass;
 };
 
+interface HTMLUtilityMixinClass extends ExtendedHTMLElement {
+}
+
+type HTMLUtilityMixinType = <T extends Constructor<ExtendedHTMLElement>>(superClass: T) => {
+  new (...args: any[]): HTMLUtilityMixinClass;
+  define(name: string, options?: ElementDefinitionOptions): T;
+  getName(): string | null;
+  getSelectors(selectors?: string): string;
+} & T;
+
 /**
  * A mixin that adds utility methods to a custom element.
  *
@@ -233,7 +257,7 @@ export const HTMLTemplateMixin = <T extends Constructor<HTMLElement>>(
  * @param {T} superClass - The base class to extend.
  * @returns {Constructor<HTMLUtilityMixinClass>} The extended class with utility methods.
  */
-export const HTMLUtilityMixin = <T extends Constructor<HTMLElement>>(
+export const HTMLUtilityMixin: HTMLUtilityMixinType = <T extends Constructor<ExtendedHTMLElement>>(
   superClass: T,
 ) => {
   class HTMLUtilityMixinClass extends superClass {
@@ -282,14 +306,27 @@ export const HTMLUtilityMixin = <T extends Constructor<HTMLElement>>(
   return HTMLUtilityMixinClass;
 };
 
+type HTMLPropsType = <P>(elementClass: Constructor<ExtendedHTMLElement>) =>
+  & {
+    new (...args: any[]): HTMLUtilityMixinClass;
+    define(
+      name: string,
+      options?: ElementDefinitionOptions,
+    ): (new (...args: any[]) => HTMLTemplateMixinClass) & HTMLPropsMixinReturnType<P>;
+    getName(): string | null;
+    getSelectors(selectors?: string): string;
+  }
+  & (new (...args: any[]) => HTMLTemplateMixinClass)
+  & HTMLPropsMixinReturnType<P>;
+
 /**
  * Combines HTMLPropsMixin, HTMLTemplateMixin and HTMLUtilityMixin to create a custom element with props API, template rendering, and utilities.
  *
  * @template P - The type of the props.
- * @param {Constructor<HTMLElement>} elementClass - The base class to extend.
- * @returns {Constructor<HTMLElement>} The extended class with combined mixins.
+ * @param {Constructor<ExtendedHTMLElement>} elementClass - The base class to extend.
+ * @returns {Constructor<ExtendedHTMLElement>} The extended class with combined mixins.
  */
-const HTMLProps = <P>(elementClass: Constructor<HTMLElement>) =>
+const HTMLProps: HTMLPropsType = <P>(elementClass: Constructor<ExtendedHTMLElement>) =>
   HTMLUtilityMixin(
     HTMLTemplateMixin(
       HTMLPropsMixin<P>(elementClass),
