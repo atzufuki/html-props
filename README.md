@@ -140,7 +140,7 @@ deno add jsr:@html-props/jsx
 
 Configurate your compiler options like so to enable JSX typings.
 
-```json
+```jsonc
 "compilerOptions": {
   // ...
   "jsx": "react-jsx",
