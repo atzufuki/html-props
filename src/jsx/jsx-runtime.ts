@@ -11,7 +11,7 @@ declare global {
 globalThis.JSX = {
   createElement: (type: Constructor<any> | string, props: any, ...children: any[]) => {
     if (typeof type === 'function') {
-      return new type({ ...props, children });
+      return new type({ ...props, children: children.flat() });
     }
 
     return { type, props, children };

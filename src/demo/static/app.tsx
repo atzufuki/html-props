@@ -8,6 +8,14 @@ const Button = HTMLUtilityMixin(
     extends: 'button',
   },
 );
+const Div = HTMLUtilityMixin(
+  HTMLPropsMixin<HTMLDivElement>(HTMLDivElement),
+).define(
+  'html-div',
+  {
+    extends: 'div',
+  },
+);
 
 class MyElement extends HTMLProps<{
   text?: string;
@@ -20,11 +28,20 @@ class MyElement extends HTMLProps<{
     return {
       text: 'Default text',
       style: {
+        display: 'block',
         padding: '1rem',
         backgroundColor: 'lightgray',
         color: this.props.textColor ?? 'blue',
       },
     };
+  }
+
+  render() {
+    return (
+      <Div>
+        {this.props.children}
+      </Div>
+    );
   }
 }
 
