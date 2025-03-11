@@ -1,0 +1,11 @@
+{
+  "workspace": [
+    "./src/core",
+    "./src/jsx"
+  ],
+  "lint": {
+    "rules": {
+      "tags": ["jsr"]
+    }
+  }
+}
