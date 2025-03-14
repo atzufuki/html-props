@@ -2,6 +2,10 @@
 
 import type { HTMLProps, RenderObject } from './types.ts';
 
+import { createRef, type RefObject } from './ref.ts';
+
+export { createRef, type RefObject };
+
 type Constructor<T> = new (...args: any[]) => T;
 
 interface ExtendedHTMLElement extends HTMLElement {
@@ -43,6 +47,7 @@ interface ExtendedHTMLElement extends HTMLElement {
 
 interface HTMLPropsMixinClass<P = {}> extends ExtendedHTMLElement {
   props: HTMLProps<P>;
+  ref?: RefObject<this>;
   getDefaultProps(): this['props'];
 }
 
@@ -88,7 +93,10 @@ export const HTMLPropsMixin = <
   superClass: T,
 ): HTMLPropsMixinReturnType<P> => {
   class HTMLPropsMixinClass extends superClass {
-    props: HTMLProps<P>;
+    props: HTMLProps<
+      P
+    >;
+    ref?: RefObject<this>;
 
     constructor(...rest: any[]) {
       super();
@@ -99,7 +107,6 @@ export const HTMLPropsMixin = <
       if (super.connectedCallback) {
         super.connectedCallback();
       }
-
       const constructor = this.constructor as HTMLPropsMixinReturnType<P>;
 
       // If the element is a built-in element, the is-attribute can be added automatically.
@@ -151,12 +158,18 @@ export const HTMLPropsMixin = <
       };
 
       const {
+        ref,
         children,
         child,
         style,
         dataset,
         ...rest
       } = merge(this.getDefaultProps(), this.props);
+
+      this.ref = ref;
+      if (this.ref) {
+        this.ref.current = this;
+      }
 
       if (style) {
         Object.assign(this.style, style);
@@ -166,10 +179,12 @@ export const HTMLPropsMixin = <
         Object.assign(this.dataset, dataset);
       }
 
-      if (children) {
-        this.replaceChildren(...children);
-      } else if (child) {
-        this.replaceChildren(child);
+      if (!('render' in this)) {
+        if (children) {
+          this.replaceChildren(...children);
+        } else if (child) {
+          this.replaceChildren(child);
+        }
       }
 
       Object.assign(this, rest);
