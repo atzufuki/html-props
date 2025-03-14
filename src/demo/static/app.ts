@@ -1,6 +1,12 @@
-import HTMLProps, { HTMLPropsMixin, HTMLUtilityMixin } from '@html-props/core';
+import HTMLProps, { createRef, HTMLPropsMixin, HTMLUtilityMixin, type RefObject } from '@html-props/core';
 
-const Div = HTMLUtilityMixin(HTMLPropsMixin<{}>(HTMLDivElement));
+interface DivProps {
+  ref?: RefObject<any>;
+  child: any;
+  children: any[];
+}
+
+const Div = HTMLUtilityMixin(HTMLPropsMixin<DivProps>(HTMLDivElement));
 
 Div.define('html-div', {
   extends: 'div',
@@ -76,6 +82,7 @@ class MyButton extends HTMLProps<MyButton & HTMLButtonElement>(HTMLButtonElement
   text?: string;
   color?: string;
   textColor?: string;
+  containerRef = createRef<any>(null);
 
   getDefaultProps(): this['props'] {
     return {
@@ -114,9 +121,8 @@ class MyButton extends HTMLProps<MyButton & HTMLButtonElement>(HTMLButtonElement
   propertyChangedCallback(name: string, oldValue: any, newValue: any) {
     switch (name) {
       case 'text':
-        const div = this.querySelector<HTMLDivElement>(Div.getSelectors());
-        if (div) {
-          div.textContent = newValue;
+        if (this.containerRef.current) {
+          this.containerRef.current.textContent = newValue;
         }
         break;
 
@@ -135,6 +141,7 @@ class MyButton extends HTMLProps<MyButton & HTMLButtonElement>(HTMLButtonElement
 
   render() {
     return new Div({
+      ref: this.containerRef,
       style: {
         display: 'block',
         padding: '10px',
