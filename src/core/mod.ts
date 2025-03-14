@@ -31,6 +31,14 @@ interface ExtendedHTMLElement extends HTMLElement {
     oldValue: string,
     newValue: string,
   ): void;
+
+  /**
+   * Called when a property is added, removed, or changed.
+   * @param name - The name of the property that was changed.
+   * @param oldValue - The previous value of the property.
+   * @param newValue - The new value of the property.
+   */
+  propertyChangedCallback?(name: string, oldValue: any, newValue: any): void;
 }
 
 interface HTMLPropsMixinClass<P = {}> extends ExtendedHTMLElement {
@@ -49,6 +57,16 @@ interface HTMLPropsMixinClassContructor<P, T> {
    * ```
    */
   new (props?: HTMLProps<P>): T;
+
+  /**
+   * The observed attributes for the custom element.
+   */
+  observedAttributes?: string[];
+
+  /**
+   * The observed properties for the custom element.
+   */
+  observedProperties?: string[];
 }
 
 type HTMLPropsMixinReturnType<P> = HTMLPropsMixinClassContructor<P, HTMLPropsMixinClass<P>>;
@@ -80,6 +98,28 @@ export const HTMLPropsMixin = <
     connectedCallback(): void {
       if (super.connectedCallback) {
         super.connectedCallback();
+      }
+
+      const constructor = this.constructor as HTMLPropsMixinReturnType<P>;
+
+      // If the element has observed properties, define getters and setters for them.
+      if (constructor.observedProperties) {
+        for (const propertyName of constructor.observedProperties) {
+          if (propertyName in this) {
+            let oldValue = this[propertyName as keyof this];
+            const getter = () => oldValue;
+            const setter = (newValue: any) => {
+              this.propertyChangedCallback?.(propertyName, oldValue, newValue);
+              oldValue = newValue;
+            };
+            Object.defineProperty(this, propertyName, {
+              get: getter,
+              set: setter,
+              enumerable: true,
+              configurable: true,
+            });
+          }
+        }
       }
 
       const merge = (...objects: any[]) => {
