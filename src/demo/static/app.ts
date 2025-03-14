@@ -177,9 +177,13 @@ class App extends HTMLProps<App>(HTMLElement) {
         onclick: (event) => {
           const button = event.currentTarget as MyButton & HTMLButtonElement;
           button.text = 'Clicked!';
+          button.color = '#50ad6d';
+          button.textColor = '#ffffff';
           button.disabled = true;
           setTimeout(() => {
             button.text = 'Click me!';
+            button.color = '#3d3d95';
+            button.textColor = '#f78787';
             button.disabled = false;
           }, 3000);
         },
