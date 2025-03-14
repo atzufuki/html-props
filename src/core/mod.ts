@@ -102,6 +102,14 @@ export const HTMLPropsMixin = <
 
       const constructor = this.constructor as HTMLPropsMixinReturnType<P>;
 
+      // If the element is a built-in element, the is-attribute can be added automatically.
+      if (!customElements.get(this.localName)) {
+        const name = customElements.getName(constructor);
+        if (name) {
+          this.setAttribute('is', name);
+        }
+      }
+
       // If the element has observed properties, define getters and setters for them.
       if (constructor.observedProperties) {
         for (const propertyName of constructor.observedProperties) {
