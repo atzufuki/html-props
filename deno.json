@@ -5,15 +5,17 @@
     "./src/demo/static"
   ],
   "tasks": {
-    "dev": "deno run --watch main.ts",
-    "test": " deno test --allow-env --no-check",
     "demo:bundle": {
       "command": "deno run -A src/demo/bundle.ts"
     },
     "demo:server": {
       "dependencies": ["demo:bundle"],
       "command": "deno run --allow-net --allow-read --watch src/demo/server.ts"
-    }
+    },
+    "dev": {
+      "dependencies": ["demo:bundle", "demo:server"]
+    },
+    "test": " deno test --allow-env --no-check"
   },
   "imports": {
     "@luca/esbuild-deno-loader": "jsr:@luca/esbuild-deno-loader@^0.11.1",
