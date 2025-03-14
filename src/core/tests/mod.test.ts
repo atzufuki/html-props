@@ -7,6 +7,10 @@ const dom = new JSDOM(`<!DOCTYPE html><body></body>`);
 self.window = dom.window;
 self.document = dom.window.document;
 self.customElements = dom.window.customElements;
+// JSDOM does not getName at this point. See https://github.com/jsdom/jsdom/issues/3640.
+self.customElements.getName = () => {
+  return null;
+};
 self.DOMParser = dom.window.DOMParser;
 self.Node = dom.window.Node;
 self.HTMLElement = dom.window.HTMLElement;
