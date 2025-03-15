@@ -374,11 +374,11 @@ type HTMLPropsType = <P>(elementClass: Constructor<ExtendedHTMLElement>) =>
  * @param {Constructor<ExtendedHTMLElement>} elementClass - The base class to extend.
  * @returns {Constructor<ExtendedHTMLElement>} The extended class with combined mixins.
  */
-const HTMLProps: HTMLPropsType = <P>(elementClass: Constructor<ExtendedHTMLElement>) =>
+const HTMLAllMixin: HTMLPropsType = <P>(elementClass: Constructor<ExtendedHTMLElement>) =>
   HTMLUtilityMixin(
     HTMLTemplateMixin(
       HTMLPropsMixin<P>(elementClass),
     ),
   );
 
-export default HTMLProps;
+export default HTMLAllMixin;
