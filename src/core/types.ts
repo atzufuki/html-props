@@ -206,9 +206,16 @@ type OmittableKeys =
   | FormMethods
   | FormReadOnly;
 
+export type Content =
+  | Node
+  | string
+  | null
+  | undefined
+  | false
+  | Array<Content>;
+
 type ParseableProps = {
-  content?: Array<Node | string | null | undefined | false>;
-  child?: Node | string | null | undefined;
+  content?: Content;
   style?: Partial<CSSStyleDeclaration>;
   dataset?: Partial<DOMStringMap>;
 };
@@ -236,11 +243,3 @@ type DeepPartial<T> = {
 };
 
 export type HTMLProps<T = unknown> = DeepPartial<IncomingProps<HTMLElement, T>>;
-
-export type RenderObject =
-  | Array<Node | string | null | undefined>
-  | Node
-  | string
-  | false
-  | null
-  | undefined;

@@ -60,7 +60,7 @@ class MyElement extends HTMLProps<MyElement>(HTMLElement) {
       },
       content: [
         this.text,
-        this.props.child,
+        this.content,
       ],
     });
   }
@@ -134,8 +134,6 @@ class MyButton extends HTMLProps<MyButton & HTMLButtonElement>(HTMLButtonElement
   }
 
   render() {
-    console.log(1, this.text);
-
     return new Div({
       style: {
         display: 'block',
@@ -174,11 +172,11 @@ class App extends HTMLProps<App>(HTMLElement) {
     return new MyElement({
       text: 'Hello world!',
       textColor: '#ffffff',
-      child: new MyButton({
+      content: new MyButton({
         text: 'Click me!',
         onclick: (event) => {
           const button = event.currentTarget as MyButton & HTMLButtonElement;
-          button.content = [new Div({ textContent: 'Clicked!' })];
+          button.content = new Div({ textContent: 'Clicked!' });
           button.text = 'Clicked!';
           button.color = '#50ad6d';
           button.textColor = '#ffffff';
