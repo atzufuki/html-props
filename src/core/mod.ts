@@ -43,6 +43,8 @@ interface ExtendedHTMLElement extends HTMLElement {
 
 interface HTMLPropsMixinClass<P = {}> extends ExtendedHTMLElement {
   props: HTMLProps<P>;
+  contentItem?: ContentItem;
+  content?: ContentItem[];
   getDefaultProps(): this['props'];
 }
 
@@ -70,6 +72,7 @@ interface HTMLPropsMixinClassContructor<P, T> {
 }
 
 type HTMLPropsMixinReturnType<P> = HTMLPropsMixinClassContructor<P, HTMLPropsMixinClass<P>>;
+type ContentItem = Node | string | false | null | undefined;
 
 /**
  * A mixin that adds HTML props handling to a custom element.
@@ -89,6 +92,8 @@ export const HTMLPropsMixin = <
 ): HTMLPropsMixinReturnType<P> => {
   class HTMLPropsMixinClass extends superClass {
     props: HTMLProps<P>;
+    contentItem?: ContentItem;
+    content?: ContentItem[];
 
     constructor(...rest: any[]) {
       super();
@@ -151,8 +156,6 @@ export const HTMLPropsMixin = <
       };
 
       const {
-        children,
-        child,
         style,
         dataset,
         ...rest
@@ -166,13 +169,30 @@ export const HTMLPropsMixin = <
         Object.assign(this.dataset, dataset);
       }
 
-      if (children) {
+      Object.assign(this, rest);
+
+      const convertItem = (item: ContentItem) => {
+        if (item instanceof Node) {
+          return item;
+        }
+
+        if (typeof item === 'string') {
+          return item;
+        }
+
+        return '';
+      };
+
+      const hasRenderMethod = 'render' in this;
+
+      if (!hasRenderMethod && this.content) {
+        const children = this.content.map(convertItem);
         this.replaceChildren(...children);
-      } else if (child) {
-        this.replaceChildren(child);
       }
 
-      Object.assign(this, rest);
+      if (!hasRenderMethod && this.contentItem) {
+        this.replaceChildren(convertItem(this.contentItem));
+      }
     }
 
     /**

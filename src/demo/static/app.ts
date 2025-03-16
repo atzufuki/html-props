@@ -58,7 +58,7 @@ class MyElement extends HTMLProps<MyElement>(HTMLElement) {
         boxSizing: 'inherit',
         overflow: 'inherit',
       },
-      children: [
+      content: [
         this.text,
         this.props.child,
       ],
@@ -134,6 +134,8 @@ class MyButton extends HTMLProps<MyButton & HTMLButtonElement>(HTMLButtonElement
   }
 
   render() {
+    console.log(1, this.text);
+
     return new Div({
       style: {
         display: 'block',
@@ -176,6 +178,7 @@ class App extends HTMLProps<App>(HTMLElement) {
         text: 'Click me!',
         onclick: (event) => {
           const button = event.currentTarget as MyButton & HTMLButtonElement;
+          button.content = [new Div({ textContent: 'Clicked!' })];
           button.text = 'Clicked!';
           button.color = '#50ad6d';
           button.textColor = '#ffffff';

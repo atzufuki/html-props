@@ -207,7 +207,7 @@ type OmittableKeys =
   | FormReadOnly;
 
 type ParseableProps = {
-  children?: Array<Node | string | null | undefined>;
+  content?: Array<Node | string | null | undefined | false>;
   child?: Node | string | null | undefined;
   style?: Partial<CSSStyleDeclaration>;
   dataset?: Partial<DOMStringMap>;
