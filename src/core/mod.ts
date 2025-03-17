@@ -1,12 +1,62 @@
 // deno-lint-ignore-file no-explicit-any
 
-import type { HTMLProps, RenderObject } from './types.ts';
+import type { Content, HTMLProps } from './types.ts';
 
 import { createRef, type RefObject } from './ref.ts';
 
 export { createRef, type RefObject };
 
 type Constructor<T> = new (...args: any[]) => T;
+
+function insertContent(element: HTMLElement, content: Content) {
+  const isHTML = (string: string) => {
+    const doc = new DOMParser().parseFromString(string, 'text/html');
+    return Array.from(doc.body.childNodes).some(
+      (node) => node.nodeType === 1,
+    );
+  };
+
+  const createFragmentFromHTML = (html: string) => {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    const fragment = document.createDocumentFragment();
+    Array.from(tempDiv.childNodes).forEach((node) => fragment.appendChild(node));
+    return fragment;
+  };
+
+  const convertContent = (contentItem: Node | string | unknown): Node | string => {
+    if (contentItem instanceof Node) {
+      return contentItem;
+    }
+
+    if (typeof contentItem === 'string') {
+      return contentItem;
+    }
+
+    if (Array.isArray(contentItem)) {
+      const fragment = document.createDocumentFragment();
+      contentItem.forEach((item) => {
+        const child = convertContent(item);
+        if (typeof child === 'string') {
+          fragment.appendChild(createFragmentFromHTML(child));
+        } else {
+          fragment.appendChild(child);
+        }
+      });
+      return fragment;
+    }
+
+    return '';
+  };
+
+  const child = convertContent(content);
+
+  if (typeof child === 'string' && isHTML(child)) {
+    element.innerHTML = child;
+  } else if (child instanceof DocumentFragment || child instanceof Node) {
+    element.replaceChildren(child);
+  }
+}
 
 interface ExtendedHTMLElement extends HTMLElement {
   /**
@@ -48,6 +98,7 @@ interface ExtendedHTMLElement extends HTMLElement {
 interface HTMLPropsMixinClass<P = {}> extends ExtendedHTMLElement {
   props: HTMLProps<P>;
   ref?: RefObject<this>;
+  content?: Content;
   getDefaultProps(): this['props'];
 }
 
@@ -93,10 +144,9 @@ export const HTMLPropsMixin = <
   superClass: T,
 ): HTMLPropsMixinReturnType<P> => {
   class HTMLPropsMixinClass extends superClass {
-    props: HTMLProps<
-      P
-    >;
+    props: HTMLProps<P>;
     ref?: RefObject<this>;
+    content?: Content;
 
     constructor(...rest: any[]) {
       super();
@@ -124,8 +174,8 @@ export const HTMLPropsMixin = <
             let oldValue = this[propertyName as keyof this];
             const getter = () => oldValue;
             const setter = (newValue: any) => {
-              this.propertyChangedCallback?.(propertyName, oldValue, newValue);
               oldValue = newValue;
+              this.propertyChangedCallback?.(propertyName, oldValue, newValue);
             };
             Object.defineProperty(this, propertyName, {
               get: getter,
@@ -159,8 +209,6 @@ export const HTMLPropsMixin = <
 
       const {
         ref,
-        children,
-        child,
         style,
         dataset,
         ...rest
@@ -179,15 +227,13 @@ export const HTMLPropsMixin = <
         Object.assign(this.dataset, dataset);
       }
 
-      if (!('render' in this)) {
-        if (children) {
-          this.replaceChildren(...children);
-        } else if (child) {
-          this.replaceChildren(child);
-        }
-      }
-
       Object.assign(this, rest);
+
+      const hasRenderMethod = 'render' in this;
+
+      if (!hasRenderMethod && this.content) {
+        insertContent(this, this.content);
+      }
     }
 
     /**
@@ -205,7 +251,7 @@ export const HTMLPropsMixin = <
 };
 
 interface HTMLTemplateMixinClass extends ExtendedHTMLElement {
-  render?(): RenderObject;
+  render?(): Content;
   build(): void;
 }
 
@@ -238,9 +284,9 @@ export const HTMLTemplateMixin: HTMLTemplateMixinType = <T extends Constructor<E
      * This method should be overridden by subclasses to provide the specific template rendering logic.
      * The return value can be a Node, a string, an array of Nodes, or null/undefined.
      *
-     * @returns {RenderObject} The rendered content of the component.
+     * @returns {Content} The rendered content of the component.
      */
-    render?(): RenderObject;
+    render?(): Content;
 
     /**
      * Builds the component by rendering its content based on the output of the `render` method.
@@ -252,50 +298,8 @@ export const HTMLTemplateMixin: HTMLTemplateMixinType = <T extends Constructor<E
      */
     build(): void {
       if (this.render) {
-        const isHTML = (string: string) => {
-          const doc = new DOMParser().parseFromString(string, 'text/html');
-          return Array.from(doc.body.childNodes).some(
-            (node) => node.nodeType === 1,
-          );
-        };
-
-        const convert = (render: Node | string | null | false | undefined) => {
-          const isNode = render instanceof Node;
-          const isString = typeof render === 'string';
-          const isNull = render === null;
-          const isFalse = render === false;
-          const isUndefined = render === undefined;
-          const isSomethingElse = !isNode && !isString && !isNull && !isFalse &&
-            !isUndefined;
-
-          if (isSomethingElse) {
-            throw new Error(
-              'Invalid render type provided. Must follow RenderObject.',
-            );
-          }
-
-          return render || '';
-        };
-
         const render = this.render();
-        switch (true) {
-          case render instanceof Array:
-            this.replaceChildren(...render.map(convert));
-            break;
-          case render instanceof Node:
-            this.replaceChildren(convert(render));
-            break;
-          case typeof render === 'string':
-            if (isHTML(render)) {
-              this.innerHTML = render;
-            } else {
-              this.replaceChildren(convert(render));
-            }
-            break;
-          default:
-            this.replaceChildren();
-            break;
-        }
+        insertContent(this, render);
       }
     }
   }
@@ -389,11 +393,11 @@ type HTMLPropsType = <P>(elementClass: Constructor<ExtendedHTMLElement>) =>
  * @param {Constructor<ExtendedHTMLElement>} elementClass - The base class to extend.
  * @returns {Constructor<ExtendedHTMLElement>} The extended class with combined mixins.
  */
-const HTMLProps: HTMLPropsType = <P>(elementClass: Constructor<ExtendedHTMLElement>) =>
+const HTMLAllMixin: HTMLPropsType = <P>(elementClass: Constructor<ExtendedHTMLElement>) =>
   HTMLUtilityMixin(
     HTMLTemplateMixin(
       HTMLPropsMixin<P>(elementClass),
     ),
   );
 
-export default HTMLProps;
+export default HTMLAllMixin;
