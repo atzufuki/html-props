@@ -171,10 +171,11 @@ export const HTMLPropsMixin = <
       if (constructor.observedProperties) {
         for (const propertyName of constructor.observedProperties) {
           if (propertyName in this) {
-            let oldValue = this[propertyName as keyof this];
-            const getter = () => oldValue;
+            let property = this[propertyName as keyof this];
+            const getter = () => property;
             const setter = (newValue: any) => {
-              oldValue = newValue;
+              const oldValue = property;
+              property = newValue;
               this.propertyChangedCallback?.(propertyName, oldValue, newValue);
             };
             Object.defineProperty(this, propertyName, {
