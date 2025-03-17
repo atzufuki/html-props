@@ -2,6 +2,10 @@
 
 import type { Content, HTMLProps } from './types.ts';
 
+import { createRef, type RefObject } from './ref.ts';
+
+export { createRef, type RefObject };
+
 type Constructor<T> = new (...args: any[]) => T;
 
 function insertContent(element: HTMLElement, content: Content) {
@@ -93,6 +97,7 @@ interface ExtendedHTMLElement extends HTMLElement {
 
 interface HTMLPropsMixinClass<P = {}> extends ExtendedHTMLElement {
   props: HTMLProps<P>;
+  ref?: RefObject<this>;
   content?: Content;
   getDefaultProps(): this['props'];
 }
@@ -140,6 +145,7 @@ export const HTMLPropsMixin = <
 ): HTMLPropsMixinReturnType<P> => {
   class HTMLPropsMixinClass extends superClass {
     props: HTMLProps<P>;
+    ref?: RefObject<this>;
     content?: Content;
 
     constructor(...rest: any[]) {
@@ -151,7 +157,6 @@ export const HTMLPropsMixin = <
       if (super.connectedCallback) {
         super.connectedCallback();
       }
-
       const constructor = this.constructor as HTMLPropsMixinReturnType<P>;
 
       // If the element is a built-in element, the is-attribute can be added automatically.
@@ -203,10 +208,16 @@ export const HTMLPropsMixin = <
       };
 
       const {
+        ref,
         style,
         dataset,
         ...rest
       } = merge(this.getDefaultProps(), this.props);
+
+      this.ref = ref;
+      if (this.ref) {
+        this.ref.current = this;
+      }
 
       if (style) {
         Object.assign(this.style, style);
