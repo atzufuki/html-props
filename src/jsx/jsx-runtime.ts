@@ -18,7 +18,7 @@ export const JSX = {
     ...children: HTMLElement[][]
   ): HTMLElement | string => {
     if (typeof type === 'function') {
-      return new type({ ...props, children: children.flat() });
+      return new type({ ...props, content: children.flat() });
     }
 
     return '';

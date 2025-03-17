@@ -39,7 +39,7 @@ class MyElement extends HTMLProps<{
   render() {
     return (
       <Div>
-        {this.props.children}
+        {this.props.content}
       </Div>
     );
   }
