@@ -19,13 +19,21 @@ class MyElement extends HTMLProps<MyElement>(HTMLElement) {
 
   text?: string;
   textColor?: string;
+  containerRef = createRef<HTMLDivElement>(null);
+
+  get refs() {
+    return {
+      container: this.containerRef.current,
+    };
+  }
 
   propertyChangedCallback(name: string, oldValue: any, newValue: any) {
+    const { container } = this.refs;
+
     switch (name) {
       case 'text':
-        const div = this.querySelector<HTMLDivElement>(Div.getSelectors());
-        if (div) {
-          div.textContent = newValue;
+        if (container) {
+          container.textContent = newValue;
         }
         break;
 
@@ -53,6 +61,7 @@ class MyElement extends HTMLProps<MyElement>(HTMLElement) {
 
   render() {
     return new Div({
+      ref: this.containerRef,
       style: {
         display: 'flex',
         gap: '10px',
@@ -82,7 +91,13 @@ class MyButton extends HTMLProps<MyButton & HTMLButtonElement>(HTMLButtonElement
   text?: string;
   color?: string;
   textColor?: string;
-  containerRef = createRef<any>(null);
+  containerRef = createRef<HTMLDivElement>(null);
+
+  get refs() {
+    return {
+      container: this.containerRef.current,
+    };
+  }
 
   getDefaultProps(): this['props'] {
     return {
@@ -119,10 +134,12 @@ class MyButton extends HTMLProps<MyButton & HTMLButtonElement>(HTMLButtonElement
   }
 
   propertyChangedCallback(name: string, oldValue: any, newValue: any) {
+    const { container } = this.refs;
+
     switch (name) {
       case 'text':
-        if (this.containerRef.current) {
-          this.containerRef.current.textContent = newValue;
+        if (container) {
+          container.textContent = newValue;
         }
         break;
 
