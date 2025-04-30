@@ -38,7 +38,11 @@ The default export gives you a mixin including every feature of `HTMLPropsMixin`
 ```ts
 import HTMLProps from '@html-props/core';
 
-class MyElement extends HTMLProps<MyElement>(HTMLElement) {
+interface MyElementProps extends HTMLElement {
+  text?: string;
+}
+
+class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
   text?: string;
 
   render() {
@@ -63,12 +67,12 @@ use `HTMLTemplateMixin`, since we are not implementing a child tree using it's r
 already implements it's own rendering logic, it's likely to conflict if used.
 
 ```ts
-const Button = HTMLUtilityMixin(HTMLPropsMixin<HTMLButtonElement>(HTMLButtonElement)).define('html-button', {
+const Button = HTMLUtilityMixin(HTMLPropsMixin(HTMLButtonElement)).define('html-button', {
   extends: 'button',
 });
 
 // Or without the utilities
-const Button = HTMLPropsMixin<HTMLButtonElement>(HTMLButtonElement);
+const Button = HTMLPropsMixin(HTMLButtonElement);
 customElements.define('html-button', Button, { extends: 'button' });
 ```
 
@@ -77,7 +81,12 @@ customElements.define('html-button', Button, { extends: 'button' });
 You can define default properties for your custom element by overriding the `getDefaultProps` method.
 
 ```ts
-class MyElement extends HTMLProps<MyElement>(HTMLElement) {
+interface MyElementProps extends HTMLElement {
+  text?: string;
+  textColor?: string;
+}
+
+class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
   text?: string;
   textColor?: string;
 
@@ -99,35 +108,6 @@ MyElement.define('my-element');
 
 new MyElement({ text: 'Hello world!', textColor: 'red' }); // <my-element style="color: red;">Hello world!</my-element>
 new MyElement({}); // <my-element style="color: blue;">Default text</my-element>
-```
-
-### Defining a custom Props Interface
-
-You can also separate the props interface if you want to specify which properties to expose.
-
-```ts
-interface MyElementProps {
-  textColor?: string;
-}
-
-class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
-  text = 'Hello world!';
-  textColor?: string;
-
-  getDefaultProps(): this['props'] {
-    return {
-      style: {
-        color: this.props.textColor ?? 'blue',
-      },
-    };
-  }
-
-  render() {
-    return this.text ?? '-';
-  }
-}
-
-MyElement.define('my-element');
 ```
 
 ### Can I use JSX syntax for templating?
