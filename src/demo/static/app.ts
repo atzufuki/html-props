@@ -1,9 +1,7 @@
-import HTMLProps, { createRef, HTMLPropsMixin, HTMLUtilityMixin } from '@html-props/core';
+import HTMLProps, { createRef } from '@html-props/core';
 import type { Content } from '../../core/types.ts';
 
-const Div = HTMLUtilityMixin(HTMLPropsMixin(HTMLDivElement));
-
-Div.define('html-div', {
+const Div = HTMLProps(HTMLDivElement).define('html-div', {
   extends: 'div',
 });
 
