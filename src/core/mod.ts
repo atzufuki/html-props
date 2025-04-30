@@ -302,7 +302,7 @@ export const HTMLTemplateMixin = <P>(
 
 interface HTMLUtilityMixinClassContructor<P> {
   new (props?: HTMLProps<P>): P;
-  define(name: string, options?: ElementDefinitionOptions): P;
+  define(name: string, options?: ElementDefinitionOptions): HTMLUtilityMixinClassContructor<P>;
   getName(): string | null;
   getSelectors(selectors?: string): string;
 }
@@ -392,7 +392,7 @@ interface HTMLAllMixinClassContructor<P> {
    */
   observedProperties?: string[];
 
-  define(name: string, options?: ElementDefinitionOptions): P;
+  define(name: string, options?: ElementDefinitionOptions): HTMLAllMixinClassContructor<P>;
   getName(): string | null;
   getSelectors(selectors?: string): string;
 }
