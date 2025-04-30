@@ -17,10 +17,12 @@ const Div = HTMLUtilityMixin(
   },
 );
 
-class MyElement extends HTMLProps<{
+interface MyElementProps extends HTMLElement {
   text?: string;
   textColor?: string;
-}>(HTMLElement) {
+}
+
+class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
   text?: string;
   textColor?: string;
 

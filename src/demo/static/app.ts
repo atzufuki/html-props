@@ -1,18 +1,17 @@
-import HTMLProps, { createRef, HTMLPropsMixin, HTMLUtilityMixin, type RefObject } from '@html-props/core';
+import HTMLProps, { createRef } from '@html-props/core';
+import type { Content } from '../../core/types.ts';
 
-interface DivProps {
-  ref?: RefObject<any>;
-  child: any;
-  children: any[];
-}
-
-const Div = HTMLUtilityMixin(HTMLPropsMixin<DivProps>(HTMLDivElement));
-
-Div.define('html-div', {
+const Div = HTMLProps(HTMLDivElement).define('html-div', {
   extends: 'div',
 });
 
-class MyElement extends HTMLProps<MyElement>(HTMLElement) {
+interface MyElementProps extends HTMLElement {
+  text?: string;
+  textColor?: string;
+  content?: Content;
+}
+
+class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
   static get observedProperties() {
     return ['text', 'textColor'];
   }
@@ -83,7 +82,13 @@ class MyElement extends HTMLProps<MyElement>(HTMLElement) {
 
 MyElement.define('my-element');
 
-class MyButton extends HTMLProps<MyButton & HTMLButtonElement>(HTMLButtonElement) {
+interface MyButtonProps extends HTMLButtonElement {
+  text?: string;
+  color?: string;
+  textColor?: string;
+}
+
+class MyButton extends HTMLProps<MyButtonProps>(HTMLButtonElement) {
   static get observedProperties() {
     return ['text', 'color', 'textColor'];
   }
@@ -114,7 +119,7 @@ class MyButton extends HTMLProps<MyButton & HTMLButtonElement>(HTMLButtonElement
         cursor: 'pointer',
       },
       onmouseenter: (event) => {
-        const button = this as unknown as MyButton & HTMLButtonElement;
+        const button = this;
         if (button.disabled) return;
 
         this.color = '#f78787';
@@ -122,7 +127,7 @@ class MyButton extends HTMLProps<MyButton & HTMLButtonElement>(HTMLButtonElement
         this.text = 'Hovered!';
       },
       onmouseleave: (event) => {
-        const button = this as unknown as MyButton & HTMLButtonElement;
+        const button = this;
         if (button.disabled) return;
 
         const defaults = this.getDefaultProps();
@@ -176,7 +181,7 @@ class MyButton extends HTMLProps<MyButton & HTMLButtonElement>(HTMLButtonElement
 
 MyButton.define('my-custom-button', { extends: 'button' });
 
-class App extends HTMLProps<App>(HTMLElement) {
+class App extends HTMLProps(HTMLElement) {
   getDefaultProps(): this['props'] {
     return {
       style: {
@@ -199,7 +204,7 @@ class App extends HTMLProps<App>(HTMLElement) {
       content: new MyButton({
         text: 'Click me!',
         onclick: (event) => {
-          const button = event.currentTarget as MyButton & HTMLButtonElement;
+          const button = event.currentTarget as MyButton;
           button.content = new Div({ textContent: 'Clicked!' });
           button.text = 'Clicked!';
           button.color = '#50ad6d';

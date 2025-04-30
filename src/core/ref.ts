@@ -1,7 +1,6 @@
-/**
- * A RefObject is an object with a single property `current` that can hold a value or be null.
- */
-export type RefObject<T> = { current: T | null };
+import type { RefObject } from './types.ts';
+
+export type { RefObject };
 
 /**
  * Creates a RefObject with an optional default value.

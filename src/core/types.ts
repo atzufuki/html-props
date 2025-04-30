@@ -214,10 +214,16 @@ export type Content =
   | false
   | Array<Content>;
 
-type ParseableProps = {
+/**
+ * A RefObject is an object with a single property `current` that can hold a value or be null.
+ */
+export type RefObject<T> = { current: T | null };
+
+type ParseableProps<P> = {
   content?: Content;
   style?: Partial<CSSStyleDeclaration>;
   dataset?: Partial<DOMStringMap>;
+  ref?: RefObject<P>;
 };
 
 type Override<T1, T2> = Omit<T1, keyof T2> & T2;
@@ -226,20 +232,18 @@ type NoStringIndex<T> = {
   [K in keyof T as string extends K ? never : K]: T[K];
 };
 
-type NoReadOnlyNorMethods<E = unknown> = Omit<
-  NoStringIndex<Partial<E>>,
+type NoReadOnlyNorMethods<P = unknown> = Omit<
+  NoStringIndex<Partial<P>>,
   OmittableKeys
 >;
 
-export type IncomingProps<E = unknown, P = unknown> =
-  & Override<
-    NoReadOnlyNorMethods<E>,
-    ParseableProps
-  >
-  & P;
+export type IncomingProps<P = unknown> = Override<
+  NoReadOnlyNorMethods<P>,
+  ParseableProps<P>
+>;
 
 type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
 
-export type HTMLProps<T = unknown> = DeepPartial<IncomingProps<HTMLElement, T>>;
+export type HTMLProps<T = unknown> = DeepPartial<IncomingProps<T>>;
