@@ -242,4 +242,4 @@ type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
 
-export type HTMLProps<T = unknown> = DeepPartial<IncomingProps<HTMLElement, T>>;
+export type HTMLProps<T = unknown> = DeepPartial<IncomingProps<T>>;

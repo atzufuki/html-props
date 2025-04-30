@@ -137,13 +137,10 @@ type HTMLPropsMixinReturnType<P> = HTMLPropsMixinClassContructor<P, HTMLPropsMix
  */
 export const HTMLPropsMixin = <
   P,
-  T extends Constructor<ExtendedHTMLElement> = Constructor<
-    ExtendedHTMLElement
-  >,
 >(
-  superClass: T,
-): HTMLPropsMixinReturnType<P> => {
-  class HTMLPropsMixinClass extends superClass {
+  superClass: Constructor<P>,
+): Constructor<P> => {
+  class HTMLPropsMixinClass extends (superClass as Constructor<ExtendedHTMLElement>) {
     props: HTMLProps<P>;
     ref?: RefObject<this>;
     content?: Content;
@@ -157,6 +154,7 @@ export const HTMLPropsMixin = <
       if (super.connectedCallback) {
         super.connectedCallback();
       }
+
       const constructor = this.constructor as HTMLPropsMixinReturnType<P>;
 
       // If the element is a built-in element, the is-attribute can be added automatically.
@@ -248,7 +246,7 @@ export const HTMLPropsMixin = <
     }
   }
 
-  return HTMLPropsMixinClass;
+  return HTMLPropsMixinClass as Constructor<P>;
 };
 
 interface HTMLTemplateMixinClass extends ExtendedHTMLElement {

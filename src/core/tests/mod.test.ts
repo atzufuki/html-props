@@ -53,7 +53,7 @@ Deno.test('direct built in element test', () => {
 });
 
 Deno.test('custom built in element test', () => {
-  class MyButton extends HTMLProps(HTMLButtonElement) {}
+  class MyButton extends HTMLProps<MyButton>(HTMLButtonElement) {}
 
   MyButton.define('my-custom-button', { extends: 'button' });
 
