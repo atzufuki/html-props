@@ -1,4 +1,11 @@
-import HTMLProps, { createRef, HTMLPropsMixin, HTMLUtilityMixin, type RefObject } from '@html-props/core';
+import HTMLProps, {
+  createRef,
+  HTMLPropsMixin,
+  HTMLTemplateMixin,
+  HTMLUtilityMixin,
+  type RefObject,
+} from '@html-props/core';
+import type { Content } from '../../core/types.ts';
 
 interface DivProps extends HTMLDivElement {
   ref?: RefObject<any>;
@@ -10,7 +17,7 @@ Div.define('html-div', {
   extends: 'div',
 });
 
-class MyElement extends HTMLProps<MyElement>(HTMLElement) {
+class MyElement extends HTMLProps(HTMLElement) {
   static get observedProperties() {
     return ['text', 'textColor'];
   }
@@ -81,7 +88,7 @@ class MyElement extends HTMLProps<MyElement>(HTMLElement) {
 
 MyElement.define('my-element');
 
-class MyButton extends HTMLProps<MyButton>(HTMLButtonElement) {
+class MyButton extends HTMLProps(HTMLButtonElement) {
   static get observedProperties() {
     return ['text', 'color', 'textColor'];
   }
@@ -224,4 +231,20 @@ class Btn extends HTMLPropsMixin(HTMLButtonElement) {
     this.textContent = 'Click me!';
     this.disabled = false;
   }
+}
+
+new Btn({ disabled: true, textContent: 'Click me!' });
+
+class Btn2 extends HTMLTemplateMixin(HTMLButtonElement) {
+  render(): Content {
+    return [];
+  }
+}
+
+class Btn3 extends HTMLUtilityMixin(HTMLButtonElement) {
+}
+
+Btn3.define('my-btn3');
+
+class Btn4 extends HTMLProps(HTMLButtonElement) {
 }
