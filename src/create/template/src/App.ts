@@ -44,7 +44,7 @@ export default class App extends HTMLProps(HTMLElement) {
             className: "logo typescript",
           }),
         }),
-        new html.Heading1({ textContent: "HTML Props + Typescript" }),
+        new html.Heading1({ textContent: "HTML Props + TypeScript" }),
         new html.Div({
           className: "card",
           content: [
