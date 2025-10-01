@@ -11,7 +11,7 @@ if (import.meta.main) {
     Deno.exit(1);
   }
 
-  const templateDir = join(import.meta.dirname ?? '.', '../template');
+  const templateDir = join(import.meta.dirname ?? '.', 'template');
   const targetDir = join(Deno.cwd(), projectName);
 
   try {
