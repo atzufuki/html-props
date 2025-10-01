@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-import-prefix
 import { copy } from 'jsr:@std/fs@^1.0.19';
-import { join } from 'jsr:@std/path@^1.1.2';
+import { dirname, join } from 'jsr:@std/path@^1.1.2';
 
 if (import.meta.main) {
   const [projectName] = Deno.args;
@@ -41,7 +41,7 @@ if (import.meta.main) {
       const fileUrl = new URL(relPath, url);
       const destFilePath = join(targetDir, relPath);
       // Ensure parent directory exists
-      await Deno.mkdir(destFilePath.substring(0, destFilePath.lastIndexOf('/')), { recursive: true });
+      await Deno.mkdir(dirname(destFilePath), { recursive: true });
       const resp = await fetch(fileUrl.href);
       if (!resp.ok) throw new Error(`Failed to fetch ${fileUrl.href}: ${resp.status} ${resp.statusText}`);
       const data = new Uint8Array(await resp.arrayBuffer());
