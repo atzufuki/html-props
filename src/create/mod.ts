@@ -36,8 +36,8 @@ if (import.meta.main) {
   }
 
   if (url.protocol !== 'file:') {
-    // Remote: fetch each file and write to target
-    for (const relPath of templateFiles) {
+    // Remote: fetch and write all files concurrently
+    await Promise.all(templateFiles.map(async (relPath) => {
       const fileUrl = new URL(relPath, url);
       const destFilePath = join(targetDir, relPath);
       // Ensure parent directory exists
@@ -46,7 +46,7 @@ if (import.meta.main) {
       if (!resp.ok) throw new Error(`Failed to fetch ${fileUrl.href}: ${resp.status} ${resp.statusText}`);
       const data = new Uint8Array(await resp.arrayBuffer());
       await Deno.writeFile(destFilePath, data);
-    }
+    }));
     console.info(`\n✔ Project created in ${targetDir}`);
     console.info('\nNext steps:');
     console.info(`  cd ${projectName}`);
