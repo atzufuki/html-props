@@ -1,6 +1,6 @@
 {
   "name": "@html-props/create",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Scaffolding CLI for html-props projects.",
   "repository": "https://github.com/atzufuki/create-html-props",
   "exports": {
