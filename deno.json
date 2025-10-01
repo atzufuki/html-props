@@ -1,6 +1,7 @@
 {
   "workspace": [
     "./src/core",
+    "./src/create",
     "./src/jsx",
     "./src/demo/static"
   ],
