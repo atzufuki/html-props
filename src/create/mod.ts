@@ -43,7 +43,7 @@ if (import.meta.main) {
       // Ensure parent directory exists
       await Deno.mkdir(destFilePath.substring(0, destFilePath.lastIndexOf('/')), { recursive: true });
       const resp = await fetch(fileUrl.href);
-      if (!resp.ok) throw new Error(`Failed to fetch ${fileUrl.href}`);
+      if (!resp.ok) throw new Error(`Failed to fetch ${fileUrl.href}: ${resp.status} ${resp.statusText}`);
       const data = new Uint8Array(await resp.arrayBuffer());
       await Deno.writeFile(destFilePath, data);
     }
