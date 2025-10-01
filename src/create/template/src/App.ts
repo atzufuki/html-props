@@ -67,7 +67,7 @@ export default class App extends HTMLProps(HTMLElement) {
         new html.Paragraph({
           className: "read-the-docs",
           textContent:
-            "Click on the HTML Props and Typescript logos to learn more",
+            "Click on the HTML Props and TypeScript logos to learn more",
         }),
       ],
     });
