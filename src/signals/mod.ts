@@ -12,7 +12,9 @@ export type Signal<T> = (() => T) & {
  * A read-only signal. Call as a function to get the value, but cannot set.
  * @template T
  */
-export type ReadonlySignal<T> = () => T;
+export type ReadonlySignal<T> = (() => T) & {
+  get: () => T;
+};
 
 /**
  * A mutable reference container, similar to React's ref.
