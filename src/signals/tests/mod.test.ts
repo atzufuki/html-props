@@ -1,4 +1,4 @@
-import { assert } from '@std/assert';
+import { assert, assertEquals } from '@std/assert';
 import { batch, computed, effect, readonly, signal, untracked } from '../mod.ts';
 
 Deno.test('signal: get/set', () => {
@@ -26,6 +26,42 @@ Deno.test('effect: runs on signal change', () => {
   count.set(1);
   count.set(2);
   assert(triggered === 3, 'Effect did not run correct number of times');
+});
+
+Deno.test('effect: cleanup removes effect from subscribers', () => {
+  const s = signal(0);
+  let runs = 0;
+  const handle = effect(() => {
+    s();
+    runs++;
+  });
+  assert(runs === 1, 'Effect should run initially');
+  handle.stop();
+  s.set(1);
+  assert(runs === 1, 'Effect should not run after cleanup');
+});
+
+Deno.test('effect: onCleanup is called before re-run and stop', () => {
+  const s = signal(0);
+  let cleanups = 0;
+  let runs = 0;
+  const handle = effect((onCleanup) => {
+    onCleanup(() => {
+      cleanups++;
+    });
+    s();
+    runs++;
+  });
+  // First run, no cleanup yet
+  assertEquals(runs, 1, 'Effect should run initially');
+  assertEquals(cleanups, 0, 'Cleanup should not run initially');
+  // Trigger re-run
+  s.set(1);
+  assertEquals(runs, 2, 'Effect should run again after signal change');
+  assertEquals(cleanups, 1, 'Cleanup should run before re-run');
+  // Stop effect
+  handle.stop();
+  assertEquals(cleanups, 2, 'Cleanup should run on stop');
 });
 
 Deno.test('computed: updates when dependencies change', () => {

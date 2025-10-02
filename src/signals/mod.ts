@@ -21,7 +21,6 @@ export type ReadonlySignal<T> = (() => T) & {
  * @template T
  */
 export type Reference<T> = { current: T };
-type EffectCleanup = () => void;
 type StopHandle = { stop: () => void };
 
 let currentEffect: (() => void) | null = null;
@@ -62,26 +61,56 @@ export function signal<T>(initialValue: T): Signal<T> {
  * @param {() => void} fn - The effect function to run on dependency change.
  * @returns {StopHandle} Handle to stop the effect.
  */
-export function effect(fn: () => void): StopHandle {
+export function effect(fn: (onCleanup: (cb: () => void) => void) => void): StopHandle {
   let stopped = false;
+  let deps = new Set<Set<() => void>>(); // Track all subscriber sets this effect is in
+  let cleanupFn: (() => void) | undefined;
+
+  function cleanupDeps() {
+    for (const subs of deps) {
+      subs.delete(runner);
+    }
+    deps.clear();
+  }
+
+  function onCleanup(cb: () => void) {
+    cleanupFn = cb;
+  }
+
   const runner = () => {
     if (stopped) return;
-    cleanup();
+    cleanupFn?.();
+    cleanupFn = undefined;
+    cleanupDeps();
     effectStack.push(runner);
     currentEffect = runner;
     try {
-      fn();
+      fn(onCleanup);
     } finally {
       effectStack.pop();
       currentEffect = effectStack[effectStack.length - 1] || null;
     }
   };
-  let cleanup: EffectCleanup = () => {};
+
+  // Patch signal getter to track dependencies
+  const origCurrentEffect = currentEffect;
+  currentEffect = function (this: { subscribers?: Set<() => void> }) {
+    if (origCurrentEffect) {
+      if (this && this.subscribers) {
+        deps.add(this.subscribers);
+      }
+      origCurrentEffect();
+    }
+  };
+
   runner();
+  currentEffect = origCurrentEffect;
+
   return {
     stop() {
       stopped = true;
-      cleanup();
+      cleanupFn?.();
+      cleanupDeps();
     },
   };
 }
