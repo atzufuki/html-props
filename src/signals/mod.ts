@@ -23,8 +23,7 @@ export type ReadonlySignal<T> = (() => T) & {
 export type Reference<T> = { current: T };
 type StopHandle = { stop: () => void };
 
-let currentEffect: (() => void) | null = null;
-const effectStack: Array<() => void> = [];
+let subscriber: (() => void) | null = null;
 
 /**
  * Creates a reactive signal.
@@ -36,7 +35,7 @@ export function signal<T>(initialValue: T): Signal<T> {
   let value = initialValue;
   const subscribers = new Set<() => void>();
   const fn = function () {
-    if (currentEffect) subscribers.add(currentEffect);
+    if (subscriber) subscribers.add(subscriber);
     return value;
   } as Signal<T>;
   fn.get = () => fn();
@@ -82,29 +81,15 @@ export function effect(fn: (onCleanup: (cb: () => void) => void) => void): StopH
     cleanupFn?.();
     cleanupFn = undefined;
     cleanupDeps();
-    effectStack.push(runner);
-    currentEffect = runner;
+    subscriber = runner;
     try {
       fn(onCleanup);
     } finally {
-      effectStack.pop();
-      currentEffect = effectStack[effectStack.length - 1] || null;
-    }
-  };
-
-  // Patch signal getter to track dependencies
-  const origCurrentEffect = currentEffect;
-  currentEffect = function (this: { subscribers?: Set<() => void> }) {
-    if (origCurrentEffect) {
-      if (this && this.subscribers) {
-        deps.add(this.subscribers);
-      }
-      origCurrentEffect();
+      subscriber = null;
     }
   };
 
   runner();
-  currentEffect = origCurrentEffect;
 
   return {
     stop() {
@@ -155,8 +140,8 @@ export function batch(fn: () => void): void {
  * @returns {T} The result of the callback or the signal value.
  */
 export function untracked<T>(fnOrSignal: (() => T) | Signal<T>): T {
-  const prev = currentEffect;
-  currentEffect = null;
+  const prev = subscriber;
+  subscriber = null;
   try {
     if (typeof fnOrSignal === 'function' && 'set' in fnOrSignal) {
       // It's a signal
@@ -167,7 +152,7 @@ export function untracked<T>(fnOrSignal: (() => T) | Signal<T>): T {
     }
     throw new TypeError('untracked expects a function or signal');
   } finally {
-    currentEffect = prev;
+    subscriber = prev;
   }
 }
 
