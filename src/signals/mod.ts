@@ -1,3 +1,4 @@
+const SIGNAL_BRAND = Symbol('signal');
 /**
  * A reactive value container. Call as a function to get the value, or use .set() to update it.
  * @template T
@@ -38,6 +39,7 @@ export function signal<T>(initialValue: T): Signal<T> {
     if (subscriber) subscribers.add(subscriber);
     return value;
   } as Signal<T>;
+  (fn as any)[SIGNAL_BRAND] = true;
   fn.get = () => fn();
   fn.set = (v: T) => {
     if (v !== value) {
@@ -144,7 +146,7 @@ export function untracked<T>(fnOrSignal: (() => T) | Signal<T>): T {
   const prev = subscriber;
   subscriber = null;
   try {
-    if (typeof fnOrSignal === 'function' && 'set' in fnOrSignal) {
+    if (typeof fnOrSignal === 'function' && (fnOrSignal as any)[SIGNAL_BRAND]) {
       // It's a signal
       return fnOrSignal();
     } else if (typeof fnOrSignal === 'function') {
