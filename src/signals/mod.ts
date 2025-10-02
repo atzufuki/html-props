@@ -107,7 +107,8 @@ export function effect(fn: (onCleanup: (cb: () => void) => void) => void): StopH
  * @returns {Signal<T>} The computed signal.
  */
 export function computed<T>(fn: () => T): Signal<T> {
-  const s = signal<T>(fn());
+  // Create signal with a dummy value, will be set by effect immediately
+  const s = signal<T>(undefined as unknown as T);
   effect(() => s.set(fn()));
   return s;
 }
