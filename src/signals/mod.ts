@@ -39,11 +39,14 @@ type RunningEffect = {
   dependencies: Set<Set<() => void>>;
   cleanup?: (() => void) | void;
   disposed?: boolean;
+  executing?: boolean;
 };
 
 const context: RunningEffect[] = [];
 const pendingEffects = new Set<() => void>();
 let isBatching = false;
+const runEffects = new Set<() => void>();
+let notifyDepth = 0;
 
 function subscribe(running: RunningEffect, subscriptions: Set<() => void>) {
   subscriptions.add(running.execute);
@@ -67,11 +70,25 @@ export function signal<T>(initialValue: T): Signal<T> {
   };
 
   const notify = () => {
-    for (const sub of [...subscriptions]) {
-      if (isBatching) {
-        pendingEffects.add(sub);
-      } else {
-        sub();
+    notifyDepth++;
+    try {
+      for (const sub of [...subscriptions]) {
+        if (!runEffects.has(sub)) {
+          runEffects.add(sub);
+          pendingEffects.add(sub);
+        }
+      }
+      if (!isBatching) {
+        while (pendingEffects.size > 0) {
+          const toRun = Array.from(pendingEffects);
+          pendingEffects.clear();
+          toRun.forEach((fn) => fn());
+        }
+      }
+    } finally {
+      notifyDepth--;
+      if (notifyDepth === 0) {
+        runEffects.clear();
       }
     }
   };
@@ -122,7 +139,8 @@ function cleanup(running: RunningEffect): void {
 export function effect(fn: () => void): () => void {
   let running: RunningEffect;
   const execute = () => {
-    if (running.disposed) return;
+    if (running.disposed || running.executing) return;
+    running.executing = true;
     cleanup(running);
     context.push(running);
     try {
@@ -132,6 +150,7 @@ export function effect(fn: () => void): () => void {
       }
     } finally {
       context.pop();
+      running.executing = false;
     }
   };
 
@@ -140,6 +159,7 @@ export function effect(fn: () => void): () => void {
     dependencies: new Set<Set<() => void>>(),
     cleanup: undefined,
     disposed: false,
+    executing: false,
   };
 
   execute();
