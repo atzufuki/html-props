@@ -155,9 +155,10 @@ export function effect(fn: () => void, options?: { signal?: AbortSignal }): () =
     // Don't execute if already aborted
   } else {
     execute();
-    if (options?.signal) {
-      options.signal.addEventListener('abort', dispose, { once: true });
-    }
+  }
+
+  if (options?.signal) {
+    options.signal.addEventListener('abort', dispose, { once: true });
   }
 
   // Optionally add Symbol.dispose for integration
