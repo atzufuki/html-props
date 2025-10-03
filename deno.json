@@ -2,8 +2,9 @@
   "workspace": [
     "./src/core",
     "./src/create",
+    "./src/demo/static",
     "./src/jsx",
-    "./src/demo/static"
+    "./src/signals"
   ],
   "tasks": {
     "demo:bundle": {
