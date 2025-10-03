@@ -1,13 +1,14 @@
 {
   "name": "@html-props/signals",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "exports": {
     ".": "./mod.ts"
   },
   "compilerOptions": {
     "lib": [
-      "deno.ns"
+      "deno.ns",
+      "dom"
     ],
     "strict": true,
     "strictFunctionTypes": false,

@@ -44,6 +44,7 @@ type RunningEffect = {
 const context: RunningEffect[] = [];
 const pendingEffects = new Set<() => void>();
 let isBatching = false;
+let isNotifying = false;
 
 function subscribe(running: RunningEffect, subscriptions: Set<() => void>) {
   subscriptions.add(running.execute);
@@ -67,12 +68,24 @@ export function signal<T>(initialValue: T): Signal<T> {
   };
 
   const notify = () => {
-    for (const sub of [...subscriptions]) {
-      if (isBatching) {
+    if (isNotifying) {
+      for (const sub of [...subscriptions]) {
         pendingEffects.add(sub);
-      } else {
-        sub();
       }
+      return;
+    }
+    isNotifying = true;
+    try {
+      for (const sub of [...subscriptions]) {
+        pendingEffects.add(sub);
+      }
+      if (!isBatching) {
+        const toRun = Array.from(pendingEffects);
+        pendingEffects.clear();
+        toRun.forEach((fn) => fn());
+      }
+    } finally {
+      isNotifying = false;
     }
   };
 
