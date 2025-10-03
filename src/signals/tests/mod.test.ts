@@ -31,26 +31,26 @@ Deno.test('effect: runs on signal change', () => {
 Deno.test('effect: cleanup removes effect from subscribers', () => {
   const s = signal(0);
   let runs = 0;
-  const handle = effect(() => {
+  const dispose = effect(() => {
     s();
     runs++;
   });
   assert(runs === 1, 'Effect should run initially');
-  handle.stop();
+  dispose();
   s.set(1);
   assert(runs === 1, 'Effect should not run after cleanup');
 });
 
-Deno.test('effect: onCleanup is called before re-run and stop', () => {
+Deno.test('effect: cleanup function is called before re-run and on dispose', () => {
   const s = signal(0);
   let cleanups = 0;
   let runs = 0;
-  const handle = effect((onCleanup) => {
-    onCleanup(() => {
-      cleanups++;
-    });
+  const dispose = effect(() => {
     s();
     runs++;
+    return () => {
+      cleanups++;
+    };
   });
   // First run, no cleanup yet
   assertEquals(runs, 1, 'Effect should run initially');
@@ -59,9 +59,9 @@ Deno.test('effect: onCleanup is called before re-run and stop', () => {
   s.set(1);
   assertEquals(runs, 2, 'Effect should run again after signal change');
   assertEquals(cleanups, 1, 'Cleanup should run before re-run');
-  // Stop effect
-  handle.stop();
-  assertEquals(cleanups, 2, 'Cleanup should run on stop');
+  // Dispose effect
+  dispose();
+  assertEquals(cleanups, 2, 'Cleanup should run on dispose');
 });
 
 Deno.test('computed: updates when dependencies change', () => {

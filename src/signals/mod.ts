@@ -1,11 +1,25 @@
 const SIGNAL_BRAND = Symbol('signal');
+
 /**
  * A reactive value container. Call as a function to get the value, or use .set() to update it.
  * @template T
  */
 export type Signal<T> = (() => T) & {
+  /**
+   * Sets the signal to a new value.
+   * @param {T} v - The new value.
+   * @returns {void}
+   */
   set: (v: T) => void;
+  /**
+   * @return The current value of the signal.
+   */
   get: () => T;
+  /**
+   * Updates the signal based on its previous value.
+   * @param {(prev: T) => T} fn - A function that takes the previous value and returns the new value.
+   * @returns {void}
+   */
   update: (fn: (prev: T) => T) => void;
 };
 
@@ -14,92 +28,133 @@ export type Signal<T> = (() => T) & {
  * @template T
  */
 export type ReadonlySignal<T> = (() => T) & {
+  /**
+   * @return The current value of the signal.
+   */
   get: () => T;
 };
 
-/**
- * A mutable reference container, similar to React's ref.
- * @template T
- */
-export type Reference<T> = { current: T };
-type StopHandle = { stop: () => void };
+type RunningEffect = {
+  execute: () => void;
+  dependencies: Set<Set<() => void>>;
+  cleanup?: (() => void) | void;
+  disposed?: boolean;
+};
 
-let subscriber: (() => void) | null = null;
+const context: RunningEffect[] = [];
+const pendingEffects = new Set<() => void>();
+let isBatching = false;
+
+function subscribe(running: RunningEffect, subscriptions: Set<() => void>) {
+  subscriptions.add(running.execute);
+  running.dependencies.add(subscriptions);
+}
 
 /**
  * Creates a reactive signal.
  * @template T
  * @param {T} initialValue - The initial value of the signal.
- * @returns {Signal<T>} The signal function.
+ * @returns {Signal<T>} The created signal.
  */
 export function signal<T>(initialValue: T): Signal<T> {
   let value = initialValue;
-  const subscribers = new Set<() => void>();
-  const fn = function () {
-    if (subscriber) subscribers.add(subscriber);
+  const subscriptions = new Set<() => void>();
+
+  const get = (): T => {
+    const running = context[context.length - 1];
+    if (running) subscribe(running, subscriptions);
     return value;
-  } as Signal<T>;
-  (fn as any)[SIGNAL_BRAND] = true;
-  fn.get = () => fn();
-  fn.set = (v: T) => {
-    if (v !== value) {
-      value = v;
+  };
+
+  const notify = () => {
+    for (const sub of [...subscriptions]) {
       if (isBatching) {
-        subscribers.forEach((fn) => pendingEffects.add(fn));
+        pendingEffects.add(sub);
       } else {
-        subscribers.forEach((fn) => fn());
+        sub();
       }
     }
   };
-  fn.update = (cb: (prev: T) => T) => {
-    fn.set(cb(value));
+
+  const set = (nextValue: T): void => {
+    value = nextValue;
+    notify();
   };
+
+  const update = (fn: (prev: T) => T): void => {
+    set(fn(value));
+  };
+
+  const fn = get as Signal<T>;
+  fn.set = set;
+  fn.get = get;
+  fn.update = update;
+
+  try {
+    (fn as any)[SIGNAL_BRAND] = true;
+  } catch {
+    // Ignore if Symbol cannot be added
+  }
+
   return fn;
 }
 
-/**
- * Runs a function whenever any accessed signals change. Returns a handle to stop the effect.
- * @param {() => void} fn - The effect function to run on dependency change.
- * @returns {StopHandle} Handle to stop the effect.
- */
-export function effect(fn: (onCleanup: (cb: () => void) => void) => void): StopHandle {
-  let stopped = false;
-  let deps = new Set<Set<() => void>>(); // Track all subscriber sets this effect is in
-  let cleanupFn: (() => void) | undefined;
-
-  function cleanupDeps() {
-    for (const subs of deps) {
-      subs.delete(runner);
-    }
-    deps.clear();
+function cleanup(running: RunningEffect): void {
+  for (const dep of running.dependencies) {
+    dep.delete(running.execute);
   }
-
-  function onCleanup(cb: () => void) {
-    cleanupFn = cb;
-  }
-
-  const runner = () => {
-    if (stopped) return;
-    cleanupFn?.();
-    cleanupFn = undefined;
-    cleanupDeps();
-    subscriber = runner;
+  running.dependencies.clear();
+  if (typeof running.cleanup === 'function') {
     try {
-      fn(onCleanup);
+      running.cleanup();
+    } catch (e) {
+      // Optionally log error
+    }
+    running.cleanup = undefined;
+  }
+}
+
+/**
+ *  Creates a reactive effect that runs when its dependencies change.
+ * @param {() => void} fn - The effect function.
+ * @returns {() => void} A cleanup function to stop the effect.
+ */
+export function effect(fn: () => void): () => void {
+  let running: RunningEffect;
+  const execute = () => {
+    if (running.disposed) return;
+    cleanup(running);
+    context.push(running);
+    try {
+      const result = fn();
+      if (typeof result === 'function') {
+        running.cleanup = result;
+      }
     } finally {
-      subscriber = null;
+      context.pop();
     }
   };
 
-  runner();
-
-  return {
-    stop() {
-      stopped = true;
-      cleanupFn?.();
-      cleanupDeps();
-    },
+  running = {
+    execute,
+    dependencies: new Set<Set<() => void>>(),
+    cleanup: undefined,
+    disposed: false,
   };
+
+  execute();
+
+  const dispose = () => {
+    if (!running.disposed) {
+      running.disposed = true;
+      cleanup(running);
+    }
+  };
+  // Optionally add Symbol.dispose for integration
+  try {
+    (dispose as any)[Symbol.dispose] = dispose;
+  } catch {}
+  return dispose;
 }
 
 /**
@@ -115,8 +170,6 @@ export function computed<T>(fn: () => T): Signal<T> {
   return s;
 }
 
-let isBatching = false;
-const pendingEffects = new Set<() => void>();
 /**
  * Batches multiple signal updates, so effects run only once after all updates.
  * @param {() => void} fn - The function containing batched updates.
@@ -143,8 +196,7 @@ export function batch(fn: () => void): void {
  * @returns {T} The result of the callback or the signal value.
  */
 export function untracked<T>(fnOrSignal: (() => T) | Signal<T>): T {
-  const prev = subscriber;
-  subscriber = null;
+  const prevContext = context.pop(); // Remove current effect from context
   try {
     if (typeof fnOrSignal === 'function' && (fnOrSignal as any)[SIGNAL_BRAND]) {
       // It's a signal
@@ -155,7 +207,7 @@ export function untracked<T>(fnOrSignal: (() => T) | Signal<T>): T {
     }
     throw new TypeError('untracked expects a function or signal');
   } finally {
-    subscriber = prev;
+    if (prevContext !== undefined) context.push(prevContext); // Restore effect context
   }
 }
 
