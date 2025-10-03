@@ -31,10 +31,12 @@ Deno.test('effect: runs on signal change', () => {
 Deno.test('effect: runs once with multiple deps', () => {
   const count = signal(0);
   const doubleCount = computed(() => count() * 2);
+  const tripleCount = computed(() => count() * 3);
   let triggered = 0;
   effect(() => {
     count();
     doubleCount();
+    tripleCount();
     triggered++;
   });
   count.set(1);
