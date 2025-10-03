@@ -28,6 +28,21 @@ Deno.test('effect: runs on signal change', () => {
   assert(triggered === 3, 'Effect did not run correct number of times');
 });
 
+Deno.test('effect: runs once with multiple deps', () => {
+  const count = signal(0);
+  const doubleCount = computed(() => count() * 2);
+  const tripleCount = computed(() => count() * 3);
+  let triggered = 0;
+  effect(() => {
+    count();
+    doubleCount();
+    tripleCount();
+    triggered++;
+  });
+  count.set(1);
+  assert(triggered === 2, 'Effect did not run correct number of times');
+});
+
 Deno.test('effect: cleanup removes effect from subscribers', () => {
   const s = signal(0);
   let runs = 0;
