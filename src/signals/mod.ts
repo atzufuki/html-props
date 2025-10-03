@@ -117,9 +117,11 @@ function cleanup(running: RunningEffect): void {
 /**
  *  Creates a reactive effect that runs when its dependencies change.
  * @param {() => void} fn - The effect function.
+ * @param {object} [options] - Options for the effect.
+ * @param {AbortSignal} [options.signal] - An AbortSignal to cancel the effect.
  * @returns {() => void} A cleanup function to stop the effect.
  */
-export function effect(fn: () => void): () => void {
+export function effect(fn: () => void, options?: { signal?: AbortSignal }): () => void {
   let running: RunningEffect;
   const execute = () => {
     if (running.disposed) return;
@@ -142,14 +144,22 @@ export function effect(fn: () => void): () => void {
     disposed: false,
   };
 
-  execute();
-
   const dispose = () => {
     if (!running.disposed) {
       running.disposed = true;
       cleanup(running);
     }
   };
+
+  if (options?.signal?.aborted) {
+    // Don't execute if already aborted
+  } else {
+    execute();
+    if (options?.signal) {
+      options.signal.addEventListener('abort', dispose, { once: true });
+    }
+  }
+
   // Optionally add Symbol.dispose for integration
   try {
     (dispose as any)[Symbol.dispose] = dispose;

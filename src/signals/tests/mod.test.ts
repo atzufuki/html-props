@@ -64,6 +64,34 @@ Deno.test('effect: cleanup function is called before re-run and on dispose', () 
   assertEquals(cleanups, 2, 'Cleanup should run on dispose');
 });
 
+Deno.test('effect: abort signal cancels effect', () => {
+  const s = signal(0);
+  let runs = 0;
+  const controller = new AbortController();
+  effect(() => {
+    s();
+    runs++;
+  }, { signal: controller.signal });
+  assertEquals(runs, 1, 'Effect should run initially');
+  s.set(1);
+  assertEquals(runs, 2, 'Effect should run after signal change');
+  controller.abort();
+  s.set(2);
+  assertEquals(runs, 2, 'Effect should not run after abort');
+});
+
+Deno.test('effect: already aborted signal does not run effect', () => {
+  const controller = new AbortController();
+  controller.abort();
+  const s = signal(0);
+  let runs = 0;
+  effect(() => {
+    s();
+    runs++;
+  }, { signal: controller.signal });
+  assert(runs === 0, 'Effect should not run if signal already aborted');
+});
+
 Deno.test('computed: updates when dependencies change', () => {
   const a = signal(2);
   const b = signal(3);
