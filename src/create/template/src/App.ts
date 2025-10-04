@@ -1,77 +1,80 @@
-import HTMLProps, { createRef } from "@html-props/core";
-import * as html from "./html.ts";
-import "./App.css";
+import HTMLProps, { createRef } from '@html-props/core';
+import { computed, effect, signal } from '@html-props/signals';
+import * as html from './html.ts';
+import './App.css';
 
 export default class App extends HTMLProps(HTMLElement) {
-  static get observedProperties() {
-    return ["count"];
-  }
-
-  count: number = 0;
+  aborter = new AbortController();
   buttonRef = createRef<HTMLButtonElement>();
+  count = signal(0);
+  doubleCount = computed(() => this.count() * 2);
 
-  propertyChangedCallback(
-    name: string,
-    oldValue: unknown,
-    newValue: unknown,
-  ): void {
-    if (name === "count" && oldValue !== newValue) {
+  connectedCallback(): void {
+    super.connectedCallback?.();
+
+    const signal = this.aborter.signal;
+
+    effect(() => {
       const button = this.buttonRef.current;
       if (button) {
-        button.textContent = `count is ${newValue}`;
+        button.textContent = `count is ${this.count()}`;
       }
-    }
+    }, { signal });
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback?.();
+    this.aborter.abort();
   }
 
   render() {
     return new html.Div({
       content: [
         new html.Anchor({
-          href: "https://jsr.io/@html-props",
-          target: "_blank",
+          href: 'https://www.typescriptlang.org/',
+          target: '_blank',
           content: new html.Image({
-            src: "/html-props.svg",
-            alt: "HTML Props logo",
-            className: "logo",
+            src: '/typescript.svg',
+            alt: 'TypeScript logo',
+            className: 'logo',
           }),
         }),
         new html.Anchor({
-          href: "https://www.typescriptlang.org/",
-          target: "_blank",
+          href: 'https://github.com/atzufuki/html-props',
+          target: '_blank',
           content: new html.Image({
-            src: "/typescript.svg",
-            alt: "TypeScript logo",
-            className: "logo typescript",
+            src: '/html-props.svg',
+            alt: 'HTML Props logo',
+            className: 'logo html-props',
           }),
         }),
-        new html.Heading1({ textContent: "HTML Props + TypeScript" }),
+        new html.Heading1({ textContent: 'TypeScript + HTML Props' }),
         new html.Div({
-          className: "card",
+          className: 'card',
           content: [
             new html.Button({
               ref: this.buttonRef,
               onclick: () => {
-                this.count++;
+                this.count.update((c) => c + 1);
               },
-              textContent: `count is ${this.count}`,
+              textContent: `count is ${this.count.get()}`,
             }),
             new html.Paragraph({
               content: [
-                "Edit ",
-                new html.Code({ textContent: "src/App.ts" }),
-                " and save to test bundling",
+                'Edit ',
+                new html.Code({ textContent: 'src/App.ts' }),
+                ' and save to test bundling',
               ],
             }),
           ],
         }),
         new html.Paragraph({
-          className: "read-the-docs",
-          textContent:
-            "Click on the HTML Props and TypeScript logos to learn more",
+          className: 'read-the-docs',
+          textContent: 'Click on the TypeScript and HTML Props logos to learn more',
         }),
       ],
     });
   }
 }
 
-App.define("my-app");
+App.define('my-app');
