@@ -1,4 +1,3 @@
-template/dist/
-template/bundle.css
-template/bundle.js
-template/deno.lock
+template/public/bundle.css
+template/public/bundle.js
+template/public/deno.lock

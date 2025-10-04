@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-import-prefix
-import { dirname, join } from 'jsr:@std/path@^1.1.2';
+import { dirname, fromFileUrl, join } from 'jsr:@std/path@^1.1.2';
 
 if (import.meta.main) {
   const [projectName] = Deno.args;
@@ -10,9 +10,8 @@ if (import.meta.main) {
     Deno.exit(1);
   }
 
-  const meta = await fetch('https://jsr.io/@html-props/create/meta.json').then((r) => r.json());
-  const jsrBase = `https://jsr.io/@html-props/create/${meta.latest}/template/`;
   const targetDir = join(Deno.cwd(), projectName);
+  const templateDir = join(dirname(fromFileUrl(import.meta.url)), 'template');
 
   // List of all files in the template (relative to template root)
   const templateFiles = [
@@ -28,13 +27,11 @@ if (import.meta.main) {
   ];
 
   await Promise.all(templateFiles.map(async (relPath) => {
-    const fileUrl = jsrBase + relPath;
+    const srcFilePath = join(templateDir, relPath);
     const destFilePath = join(targetDir, relPath);
     // Ensure parent directory exists
     await Deno.mkdir(dirname(destFilePath), { recursive: true });
-    const resp = await fetch(fileUrl);
-    if (!resp.ok) throw new Error(`Failed to fetch ${fileUrl}: ${resp.status} ${resp.statusText}`);
-    const data = new Uint8Array(await resp.arrayBuffer());
+    const data = await Deno.readFile(srcFilePath);
     await Deno.writeFile(destFilePath, data);
   }));
 

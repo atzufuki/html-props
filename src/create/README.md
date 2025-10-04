@@ -4,22 +4,22 @@
 
 ## Usage
 
-### With Deno (recommended)
+Use `--reload` to make sure to use the latest template.
 
 ```
-deno run -A jsr:@html-props/create <project-name>
+deno run --allow-read --allow-write --reload jsr:@html-props/create <project-name>
 ```
 
 Or, if installed globally:
 
 ```
-create-html-props <project-name>
+create-html-props --allow-read --allow-write <project-name>
 ```
 
 ## Example
 
 ```
-deno run -A jsr:@html-props/create my-app
+deno run --allow-read --allow-write jsr:@html-props/create my-app
 cd my-app
 # Start hacking!
 ```

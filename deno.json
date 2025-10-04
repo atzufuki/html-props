@@ -2,6 +2,7 @@
   "workspace": [
     "./src/core",
     "./src/create",
+    "./src/create/template",
     "./src/demo/static",
     "./src/jsx",
     "./src/signals"
