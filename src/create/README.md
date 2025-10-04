@@ -7,19 +7,19 @@
 Use `--reload` to make sure to use the latest template.
 
 ```
-deno run --allow-read --allow-write --reload jsr:@html-props/create <project-name>
+deno run --reload jsr:@html-props/create <project-name>
 ```
 
 Or, if installed globally:
 
 ```
-create-html-props --allow-read --allow-write <project-name>
+create-html-props <project-name>
 ```
 
 ## Example
 
 ```
-deno run --allow-read --allow-write jsr:@html-props/create my-app
+deno run jsr:@html-props/create my-app
 cd my-app
 # Start hacking!
 ```
