@@ -1,5 +1,6 @@
-import { assert } from '@std/assert';
+import { assert, assertEquals } from '@std/assert';
 import HTMLProps, { HTMLPropsMixin, HTMLUtilityMixin } from '../mod.ts';
+import { effect, signal } from '../../signals/mod.ts';
 import { JSDOM } from 'jsdom';
 
 const dom = new JSDOM(`<!DOCTYPE html><body></body>`);
@@ -17,9 +18,11 @@ self.HTMLElement = dom.window.HTMLElement;
 self.HTMLButtonElement = dom.window.HTMLButtonElement;
 
 Deno.test('html props mixin test', () => {
-  class MyElement extends HTMLProps<{
+  interface MyElementProps extends HTMLElement {
     text?: string;
-  }>(HTMLElement) {
+  }
+
+  class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
     text?: string;
   }
 
@@ -36,9 +39,7 @@ Deno.test('html props mixin test', () => {
 });
 
 Deno.test('direct built in element test', () => {
-  const MyButton = HTMLUtilityMixin(
-    HTMLPropsMixin<HTMLButtonElement>(HTMLButtonElement),
-  );
+  const MyButton = HTMLUtilityMixin(HTMLPropsMixin(HTMLButtonElement));
 
   MyButton.define('my-direct-button', { extends: 'button' });
 
@@ -53,7 +54,7 @@ Deno.test('direct built in element test', () => {
 });
 
 Deno.test('custom built in element test', () => {
-  class MyButton extends HTMLProps<MyButton>(HTMLButtonElement) {}
+  class MyButton extends HTMLProps(HTMLButtonElement) {}
 
   MyButton.define('my-custom-button', { extends: 'button' });
 
@@ -69,4 +70,115 @@ Deno.test('custom built in element test', () => {
   assert(typeof element.build === 'function');
 
   assert(element.textContent === 'Click me!');
+});
+
+Deno.test('signal support in props mapping', () => {
+  interface MyElementProps extends HTMLElement {
+    text?: string;
+  }
+
+  class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
+    text = signal('');
+
+    connectedCallback(): void {
+      super.connectedCallback?.();
+      // Update textContent whenever text signal changes
+      this.textContent = this.text();
+    }
+  }
+
+  MyElement.define('my-signal-element');
+
+  // Create element with initial text value
+  const element = new MyElement({ text: 'Original text' });
+  document.body.appendChild(element);
+
+  // Signal should have been updated with the prop value
+  assertEquals(element.text(), 'Original text');
+  assertEquals(element.textContent, 'Original text');
+
+  // Should be able to update the signal
+  element.text.set('New text');
+  assertEquals(element.text(), 'New text');
+});
+
+Deno.test('signal support with click handler', () => {
+  interface MyElementProps extends HTMLElement {
+    text?: string;
+  }
+
+  class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
+    text = signal('');
+
+    connectedCallback(): void {
+      super.connectedCallback?.();
+      // Update textContent whenever text signal changes
+      this.textContent = this.text();
+    }
+  }
+
+  MyElement.define('my-signal-click-element');
+
+  // Create element with initial text and click handler
+  const element = new MyElement({
+    text: 'Original text',
+    onclick: (event) => {
+      const el = event.currentTarget as MyElement;
+      el.text.set('New text');
+    },
+  });
+
+  document.body.appendChild(element);
+
+  // Initial state
+  assertEquals(element.text(), 'Original text');
+  assertEquals(element.textContent, 'Original text');
+
+  // Simulate click
+  element.click();
+
+  // Signal should have been updated by the click handler
+  assertEquals(element.text(), 'New text');
+});
+
+Deno.test('signal support with effect', () => {
+  interface MyElementProps extends HTMLElement {
+    text?: string;
+  }
+
+  class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
+    text = signal('');
+
+    connectedCallback(): void {
+      super.connectedCallback?.();
+      // Update textContent whenever text signal changes using effect
+      effect(() => {
+        this.textContent = this.text();
+      });
+    }
+  }
+
+  MyElement.define('my-signal-effect-element');
+
+  // Create element with initial text and click handler
+  const element = new MyElement({
+    text: 'Original text',
+    onclick: (event) => {
+      const el = event.currentTarget as MyElement;
+      el.text.set('New text');
+    },
+  });
+
+  document.body.appendChild(element);
+
+  // Initial state - effect should have run
+  assertEquals(element.text(), 'Original text');
+  assertEquals(element.textContent, 'Original text');
+
+  // Simulate click - effect should automatically update textContent
+  element.click();
+
+  // Signal and textContent should both be updated
+  assertEquals(element.text(), 'New text');
+  assertEquals(element.textContent, 'New text');
 });
