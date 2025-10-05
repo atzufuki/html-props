@@ -16,5 +16,8 @@ jobs:
         with:
           deno-version: v2.5.2
 
-      - name: Run tests
+      - name: Test code
         run: deno task test
+
+      - name: Test publish
+        run: deno publish --dry-run

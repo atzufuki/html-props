@@ -9,7 +9,7 @@ import type { Constructor, HTMLElementLifecycles, HTMLUtilityConstructor } from 
  */
 export const HTMLUtilityMixin = <P = any, Base extends Constructor<any, any> = Constructor<HTMLElement>>(
   superClass: Base,
-) => {
+): HTMLUtilityConstructor<InstanceType<Base>, 0 extends (1 & P) ? InstanceType<Base> : P> => {
   type PropsType = 0 extends (1 & P) ? InstanceType<Base> : P;
 
   class HTMLUtilityMixinClass extends (superClass as Constructor<HTMLElementLifecycles, any>) {

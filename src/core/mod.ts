@@ -1,14 +1,17 @@
 import type { Constructor, HTMLUtilityConstructor } from './types.ts';
 import { createRef, type RefObject } from './ref.ts';
 import { HTMLUtilityMixin } from './mixins/utility.ts';
-import { HTMLTemplateMixin } from './mixins/template.ts';
-import { HTMLPropsMixin } from './mixins/props.ts';
+import { HTMLTemplateMixin, type HTMLTemplateMixinInterface } from './mixins/template.ts';
+import { HTMLPropsMixin, type HTMLPropsMixinInterface } from './mixins/props.ts';
 
 export { createRef, HTMLPropsMixin, HTMLTemplateMixin, HTMLUtilityMixin, type RefObject };
 
 const HTMLAllMixin = <P = any, Base extends Constructor<any, any> = Constructor<HTMLElement>>(
   superClass: Base,
-) => {
+): HTMLUtilityConstructor<
+  InstanceType<Base> & HTMLPropsMixinInterface<0 extends (1 & P) ? InstanceType<Base> : P> & HTMLTemplateMixinInterface,
+  0 extends (1 & P) ? InstanceType<Base> : P
+> => {
   type PropsType = 0 extends (1 & P) ? InstanceType<Base> : P;
 
   // Chain the mixins properly

@@ -2,6 +2,19 @@ import { insertContent } from '../content.ts';
 import type { Constructor, Content, HTMLElementLifecycles } from '../types.ts';
 
 /**
+ * Interface describing the members added by HTMLTemplateMixin
+ */
+export interface HTMLTemplateMixinInterface {
+  connectedCallback(): void;
+  disconnectedCallback?(): void;
+  adoptedCallback?(): void;
+  attributeChangedCallback?(name: string, oldValue: any, newValue: any): void;
+  propertyChangedCallback?(name: string, oldValue: any, newValue: any): void;
+  render?(): Content;
+  build(): void;
+}
+
+/**
  * A mixin that adds template rendering capabilities to a custom element.
  *
  * @template P - The type of the props.
@@ -10,7 +23,10 @@ import type { Constructor, Content, HTMLElementLifecycles } from '../types.ts';
  */
 export const HTMLTemplateMixin = <P = any, Base extends Constructor<any, any> = Constructor<HTMLElement>>(
   superClass: Base,
-) => {
+): Constructor<
+  InstanceType<Base> & HTMLTemplateMixinInterface,
+  0 extends (1 & P) ? InstanceType<Base> : P
+> => {
   type PropsType = 0 extends (1 & P) ? InstanceType<Base> : P;
 
   class HTMLTemplateMixinClass extends (superClass as Constructor<HTMLElementLifecycles, any>) {

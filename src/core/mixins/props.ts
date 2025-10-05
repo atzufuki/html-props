@@ -6,6 +6,16 @@ import { insertContent } from '../content.ts';
 export { createRef, type RefObject };
 
 /**
+ * Interface describing the members added by HTMLPropsMixin
+ */
+export interface HTMLPropsMixinInterface<P = any> {
+  props: HTMLProps<P>;
+  ref?: RefObject<any>;
+  content?: Content;
+  getDefaultProps(): HTMLProps<P>;
+}
+
+/**
  * Symbol used to identify signals across different implementations.
  * Signal implementations should set this symbol to true on their signal instances.
  */
@@ -35,7 +45,10 @@ function isSignal(value: any): boolean {
  */
 export const HTMLPropsMixin = <P = any, Base extends Constructor<any, any> = Constructor<HTMLElement, P>>(
   superClass: Base,
-) => {
+): Constructor<
+  InstanceType<Base> & HTMLPropsMixinInterface<0 extends (1 & P) ? InstanceType<Base> : P>,
+  0 extends (1 & P) ? InstanceType<Base> : P
+> => {
   type PropsType = 0 extends (1 & P) ? InstanceType<Base> : P;
 
   class HTMLPropsMixinClass extends (superClass as Constructor<HTMLElementLifecycles, any>) {
