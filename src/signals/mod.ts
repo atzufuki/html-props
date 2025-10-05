@@ -1,4 +1,8 @@
-const SIGNAL_BRAND = Symbol('signal');
+/**
+ * Symbol used to identify signals across different implementations.
+ * Using Symbol.for ensures the same symbol is shared across all modules.
+ */
+const SIGNAL_BRAND = Symbol.for('html-props:signal');
 
 /**
  * A reactive value container. Call as a function to get the value, or use .set() to update it.

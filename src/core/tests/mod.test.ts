@@ -65,7 +65,7 @@ Deno.test('custom built in element test', () => {
   document.body.appendChild(element);
 
   assert(element instanceof HTMLElement);
-  assert(element instanceof HTMLButtonElement); // ?
+  assert(element instanceof HTMLButtonElement);
   assert(element instanceof MyButton);
   assert(typeof element.build === 'function');
 

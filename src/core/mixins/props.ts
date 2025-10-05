@@ -6,16 +6,24 @@ import { insertContent } from '../content.ts';
 export { createRef, type RefObject };
 
 /**
+ * Symbol used to identify signals across different implementations.
+ * Signal implementations should set this symbol to true on their signal instances.
+ */
+const SIGNAL_BRAND = Symbol.for('html-props:signal');
+
+/**
  * Checks if a value is a Signal.
+ * Uses Symbol.for to detect signals without creating a package dependency.
+ * Signal implementations should mark their instances with Symbol.for('html-props:signal') = true.
  * @param value - The value to check.
  * @returns True if the value is a Signal, false otherwise.
  */
 function isSignal(value: any): boolean {
-  return (
-    typeof value === 'function' &&
-    typeof value.set === 'function' &&
-    typeof value.get === 'function'
-  );
+  // First check for the signal brand symbol (most reliable)
+  if (value != null && (value as any)[SIGNAL_BRAND] === true) {
+    return true;
+  }
+  return false;
 }
 
 /**
