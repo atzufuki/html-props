@@ -1,6 +1,6 @@
 import HTMLProps, { createRef } from '@html-props/core';
 
-const Div = HTMLProps(HTMLDivElement).define('html-div', {
+const Div = HTMLProps(HTMLDivElement)<{}>().define('html-div', {
   extends: 'div',
 });
 
@@ -11,8 +11,8 @@ interface CatCardProps extends HTMLElement {
   onSwipeRight?: () => void;
 }
 
-class CatCard extends HTMLProps<CatCardProps>(HTMLElement) {
-  static get observedProperties() {
+class CatCard extends HTMLProps(HTMLElement)<CatCardProps>() {
+  static get observedAttributes() {
     return ['imageUrl', 'name'];
   }
 
@@ -31,7 +31,7 @@ class CatCard extends HTMLProps<CatCardProps>(HTMLElement) {
     };
   }
 
-  getDefaultProps(): this['props'] {
+  getDefaultProps() {
     return {
       style: {
         display: 'flex',
@@ -47,12 +47,12 @@ class CatCard extends HTMLProps<CatCardProps>(HTMLElement) {
         position: 'relative',
         touchAction: 'none',
       },
-      onmousedown: (event) => {
+      onmousedown: (event: MouseEvent) => {
         this.isDragging = true;
         this.startX = event.clientX;
         this.style.transition = 'none';
       },
-      onmousemove: (event) => {
+      onmousemove: (event: MouseEvent) => {
         if (!this.isDragging) return;
         this.currentX = event.clientX;
         const translateX = this.currentX - this.startX;
@@ -80,12 +80,12 @@ class CatCard extends HTMLProps<CatCardProps>(HTMLElement) {
         this.style.transition = 'transform 0.3s ease';
         this.style.transform = 'translateX(0)';
       },
-      ontouchstart: (event) => {
+      ontouchstart: (event: TouchEvent) => {
         this.isDragging = true;
         this.startX = event.touches[0].clientX;
         this.style.transition = 'none';
       },
-      ontouchmove: (event) => {
+      ontouchmove: (event: TouchEvent) => {
         if (!this.isDragging) return;
         this.currentX = event.touches[0].clientX;
         const translateX = this.currentX - this.startX;
@@ -156,7 +156,7 @@ class CatCard extends HTMLProps<CatCardProps>(HTMLElement) {
 
 CatCard.define('cat-card');
 
-class App extends HTMLProps(HTMLElement) {
+class App extends HTMLProps(HTMLElement)() {
   catIndex = 0;
   cats = [
     { imageUrl: 'https://placecats.com/300/400', name: 'Fluffy' },
@@ -164,7 +164,7 @@ class App extends HTMLProps(HTMLElement) {
     { imageUrl: 'https://placecats.com/302/400', name: 'Mittens' },
   ];
 
-  getDefaultProps(): this['props'] {
+  getDefaultProps() {
     return {
       style: {
         display: 'flex',
@@ -180,7 +180,7 @@ class App extends HTMLProps(HTMLElement) {
 
   handleSwipe(direction: 'left' | 'right') {
     const appContainer = document.querySelector('#app-container');
-    const card = appContainer?.querySelector<CatCard>('cat-card');
+    const card = appContainer?.querySelector('cat-card') as CatCard;
 
     if (card) {
       const translateX = direction === 'left' ? '-100vw' : '100vw';

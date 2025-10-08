@@ -1,31 +1,50 @@
-import type { Constructor, HTMLUtilityConstructor } from './types.ts';
 import { createRef, type RefObject } from './ref.ts';
 import { HTMLUtilityMixin } from './mixins/utility.ts';
-import { HTMLTemplateMixin, type HTMLTemplateMixinInterface } from './mixins/template.ts';
-import { HTMLPropsMixin, type HTMLPropsMixinInterface } from './mixins/props.ts';
+import { HTMLTemplateMixin } from './mixins/template.ts';
+import { HTMLPropsMixin } from './mixins/props.ts';
+import type {
+  Constructor,
+  HTMLPropsConstructorExtra,
+  HTMLPropsExtra,
+  HTMLTemplateConstructorExtra,
+  HTMLTemplateExtra,
+  HTMLUtilityConstructorExtra,
+  HTMLUtilityExtra,
+} from './types.ts';
 
 export { createRef, HTMLPropsMixin, HTMLTemplateMixin, HTMLUtilityMixin, type RefObject };
 
-const HTMLAllMixin = <P = any, Base extends Constructor<any, any> = Constructor<HTMLElement>>(
-  superClass: Base,
-): HTMLUtilityConstructor<
-  InstanceType<Base> & HTMLPropsMixinInterface<0 extends (1 & P) ? InstanceType<Base> : P> & HTMLTemplateMixinInterface,
-  0 extends (1 & P) ? InstanceType<Base> : P
-> => {
-  type PropsType = 0 extends (1 & P) ? InstanceType<Base> : P;
+/**
+ * Type for the HTMLAllMixin function that combines HTMLPropsMixin, HTMLTemplateMixin, and HTMLUtilityMixin.
+ */
+type HTMLAllMixinType = <SuperClass extends Constructor<any, any>>(
+  superClass: SuperClass,
+) => <Props>() =>
+  & Constructor<
+    & InstanceType<SuperClass>
+    & HTMLPropsExtra<Props>
+    & HTMLTemplateExtra<Props>
+    & HTMLUtilityExtra,
+    Props
+  >
+  & Omit<SuperClass, keyof Constructor<any, any>>
+  & HTMLPropsConstructorExtra
+  & HTMLTemplateConstructorExtra
+  & HTMLUtilityConstructorExtra;
 
-  // Chain the mixins properly
-  const WithProps = HTMLPropsMixin<P, Base>(superClass);
-  const WithTemplate = HTMLTemplateMixin<PropsType, typeof WithProps>(WithProps as any);
-  const WithUtility = HTMLUtilityMixin<PropsType, typeof WithTemplate>(WithTemplate as any);
+/**
+ * A mixin that combines HTMLPropsMixin, HTMLTemplateMixin, and HTMLUtilityMixin.
+ * Provides full functionality for custom elements with props, rendering, and utility methods.
+ */
+const HTMLAllMixin = (<SuperClass extends Constructor<HTMLElement>>(superClass: SuperClass) => {
+  return <Props>() => {
+    return HTMLUtilityMixin(
+      HTMLTemplateMixin(
+        HTMLPropsMixin(superClass)<Props>(),
+      ),
+    );
+  };
+}) as HTMLAllMixinType;
 
-  return WithUtility as unknown as HTMLUtilityConstructor<
-    & InstanceType<Base>
-    & InstanceType<typeof WithProps>
-    & InstanceType<typeof WithTemplate>
-    & InstanceType<typeof WithUtility>,
-    PropsType
-  >;
-};
-
+export { HTMLAllMixin };
 export default HTMLAllMixin;

@@ -1,4 +1,18 @@
-import type { Constructor, HTMLElementLifecycles, HTMLUtilityConstructor } from '../types.ts';
+import type { Constructor, HTMLTemplateExtra, HTMLUtilityConstructorExtra, HTMLUtilityExtra } from '../types.ts';
+
+// /**
+//  * The observed attributes for the custom element.
+//  */
+// observedAttributes?: string[];
+
+// /**
+//  * The observed properties for the custom element.
+//  */
+// observedProperties?: string[];
+
+// define(name: string, options?: ElementDefinitionOptions): Constructor<T, P>;
+// getName(): string | null;
+// getSelectors(selectors?: string): string;
 
 /**
  * A mixin that adds utility methods to a custom element.
@@ -7,16 +21,26 @@ import type { Constructor, HTMLElementLifecycles, HTMLUtilityConstructor } from 
  * @template Base - The base class to extend.
  * @returns {HTMLUtilityConstructor<HTMLUtilityMixinClass>} The extended class with utility methods.
  */
-export const HTMLUtilityMixin = <P = any, Base extends Constructor<any, any> = Constructor<HTMLElement>>(
-  superClass: Base,
-): HTMLUtilityConstructor<InstanceType<Base>, 0 extends (1 & P) ? InstanceType<Base> : P> => {
-  type PropsType = 0 extends (1 & P) ? InstanceType<Base> : P;
+type HTMLUtilityMixinType = <SuperClass extends Constructor<any, any> & Record<string, any>>(
+  superClass: SuperClass,
+) => SuperClass extends Constructor<infer T, infer P> ?
+    & Constructor<
+      T & HTMLUtilityExtra,
+      P
+    >
+    & Omit<SuperClass, keyof Constructor<any, any>>
+    & HTMLUtilityConstructorExtra
+  : never;
 
-  class HTMLUtilityMixinClass extends (superClass as Constructor<HTMLElementLifecycles, any>) {
-    constructor(...args: any[]) {
-      super(...args);
-    }
-
+/**
+ * A mixin that adds utility methods to a custom element.
+ * Provides define(), getName(), and getSelectors() static methods.
+ */
+export const HTMLUtilityMixin: HTMLUtilityMixinType = <SuperClass>(superClass: SuperClass) => {
+  /**
+   * Class that extends the superclass with utility methods for custom element registration and selection.
+   */
+  return class HTMLUtilityMixinClass extends (superClass as Constructor<HTMLTemplateExtra>) {
     /**
      * Defines a custom element with the specified name and options.
      *
@@ -57,10 +81,5 @@ export const HTMLUtilityMixin = <P = any, Base extends Constructor<any, any> = C
 
       return `${name}${selectors}`;
     }
-  }
-
-  return HTMLUtilityMixinClass as unknown as HTMLUtilityConstructor<
-    InstanceType<Base> & HTMLUtilityMixinClass,
-    PropsType
-  >;
+  } as any;
 };
