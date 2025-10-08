@@ -206,6 +206,38 @@ type OmittableKeys =
   | FormMethods
   | FormReadOnly;
 
+type ParseableProps<T> = {
+  content?: Content;
+  style?: Partial<CSSStyleDeclaration>;
+  dataset?: Partial<DOMStringMap>;
+  ref?: RefObject<T>;
+};
+
+type Override<T1, T2> = Omit<T1, keyof T2> & T2;
+
+type NoStringIndex<T> = {
+  [K in keyof T as string extends K ? never : K]: T[K];
+};
+
+type NoReadOnlyNorMethods<P = unknown> = Omit<
+  NoStringIndex<Partial<P>>,
+  OmittableKeys
+>;
+
+type IncomingProps<P = unknown, T = unknown> = Override<
+  NoReadOnlyNorMethods<P>,
+  ParseableProps<T>
+>;
+
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
+/**
+ * Represents HTML properties that can be passed to elements, with deep partial support.
+ */
+export type HTMLProps<P = unknown, T = unknown> = DeepPartial<IncomingProps<P, T>>;
+
 /**
  * Represents the possible content types that can be inserted into an element.
  */
@@ -222,50 +254,18 @@ export type Content =
  */
 export type RefObject<T> = { current: T | null };
 
-type ParseableProps<P> = {
-  content?: Content;
-  style?: Partial<CSSStyleDeclaration>;
-  dataset?: Partial<DOMStringMap>;
-  ref?: RefObject<P>;
-};
-
-type Override<T1, T2> = Omit<T1, keyof T2> & T2;
-
-type NoStringIndex<T> = {
-  [K in keyof T as string extends K ? never : K]: T[K];
-};
-
-type NoReadOnlyNorMethods<P = unknown> = Omit<
-  NoStringIndex<Partial<P>>,
-  OmittableKeys
->;
-
-export type IncomingProps<P = unknown> = Override<
-  NoReadOnlyNorMethods<P>,
-  ParseableProps<P>
->;
-
-export type DeepPartial<T> = {
-  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
-};
-
-/**
- * Represents HTML properties that can be passed to elements, with deep partial support.
- */
-export type HTMLProps<T = unknown> = DeepPartial<IncomingProps<T>>;
-
 /**
  * A constructor function type for creating instances with HTML props.
  */
-export type Constructor<T = any, P = T> = new (...args: HTMLProps<P>[]) => T;
+export type Constructor<T = unknown, P = T> = new (...args: HTMLProps<P, T>[]) => T;
 
 export interface HTMLPropsConstructorExtra {}
 
-export interface HTMLPropsExtra<Props = any> extends HTMLElement {
+export interface HTMLPropsExtra<Props = unknown> extends HTMLElement {
   /**
    * The props associated with the element.
    */
-  props: HTMLProps<Props>;
+  props: HTMLProps<Props, this>;
 }
 
 export interface HTMLTemplateConstructorExtra {
@@ -282,11 +282,11 @@ export interface HTMLTemplateConstructorExtra {
   observedProperties?: string[];
 }
 
-export interface HTMLTemplateExtra<Props = any> extends HTMLElement {
+export interface HTMLTemplateExtra<Props = unknown> extends HTMLElement {
   /**
    * The props associated with the element.
    */
-  props: HTMLProps<Props>;
+  props: HTMLProps<Props, this>;
 
   /**
    * An optional reference object that can be used to access the element instance.
