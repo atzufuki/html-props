@@ -63,7 +63,7 @@ export const HTMLPropsMixin: HTMLPropsMixinType = <SuperClass>(superClass: Super
       ref?: RefObject<this>;
       content?: Content;
 
-      constructor(...rest: HTMLProps<any>[]) {
+      constructor(...rest: HTMLProps[]) {
         super();
         this.props = rest[0];
       }

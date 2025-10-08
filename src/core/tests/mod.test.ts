@@ -1,5 +1,5 @@
 import { assert, assertEquals } from '@std/assert';
-import HTMLProps, { HTMLPropsMixin, HTMLTemplateMixin, HTMLUtilityMixin } from '../mod.ts';
+import HTMLProps, { createRef, HTMLPropsMixin, HTMLTemplateMixin, HTMLUtilityMixin } from '../mod.ts';
 import { effect, signal } from '../../signals/mod.ts';
 import { JSDOM } from 'jsdom';
 
@@ -16,6 +16,7 @@ self.DOMParser = dom.window.DOMParser;
 self.Node = dom.window.Node;
 self.HTMLElement = dom.window.HTMLElement;
 self.HTMLButtonElement = dom.window.HTMLButtonElement;
+self.DocumentFragment = dom.window.DocumentFragment;
 
 Deno.test('html props mixin test', () => {
   interface MyElementProps extends HTMLElement {
@@ -228,4 +229,37 @@ Deno.test('nested inheritance', () => {
   assert(element instanceof HTMLElement);
   assert(element instanceof ParentElement);
   assert(element instanceof ChildElement);
+});
+
+Deno.test('ref', () => {
+  class MyButton extends HTMLProps(HTMLButtonElement)<HTMLButtonElement>() {}
+
+  MyButton.define('my-button-ref', { extends: 'button' });
+
+  class MyElement extends HTMLProps(HTMLElement)() {
+    buttonRef = createRef<MyButton>(null);
+
+    render(): this['content'] {
+      return new MyButton({
+        ref: this.buttonRef,
+        textContent: 'Click me!',
+        onclick: () => {
+          const btn = this.buttonRef.current;
+          if (btn) {
+            btn.textContent = 'Clicked!';
+          }
+        },
+      });
+    }
+  }
+
+  MyElement.define('my-element-ref');
+
+  const element = new MyElement();
+  document.body.appendChild(element);
+  const button = element.buttonRef.current;
+  assert(button instanceof HTMLButtonElement);
+  assertEquals(button?.textContent, 'Click me!');
+  button?.click();
+  assertEquals(button?.textContent, 'Clicked!');
 });
