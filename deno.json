@@ -18,7 +18,7 @@
     "dev": {
       "dependencies": ["demo:bundle", "demo:server"]
     },
-    "test": " deno test --allow-env --no-check"
+    "test": " deno test --allow-env"
   },
   "imports": {
     "@luca/esbuild-deno-loader": "jsr:@luca/esbuild-deno-loader@^0.11.1",

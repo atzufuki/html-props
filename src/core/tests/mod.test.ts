@@ -1,5 +1,5 @@
 import { assert, assertEquals } from '@std/assert';
-import HTMLProps, { HTMLPropsMixin, HTMLUtilityMixin } from '../mod.ts';
+import HTMLProps, { HTMLPropsMixin, HTMLTemplateMixin, HTMLUtilityMixin } from '../mod.ts';
 import { effect, signal } from '../../signals/mod.ts';
 import { JSDOM } from 'jsdom';
 
@@ -22,24 +22,48 @@ Deno.test('html props mixin test', () => {
     text?: string;
   }
 
-  class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
+  class MyElement extends HTMLProps(HTMLElement)<MyElementProps>() {
     text?: string;
+
+    getDefaultProps(): this['props'] {
+      return {
+        text: 'Default text',
+      };
+    }
+  }
+
+  class MyElementFromMixins extends HTMLUtilityMixin(HTMLTemplateMixin(HTMLPropsMixin(HTMLElement)<MyElementProps>())) {
+    text?: string;
+
+    getDefaultProps(): this['props'] {
+      return {
+        text: 'Default text from mixins',
+      };
+    }
   }
 
   MyElement.define('my-element');
+  MyElementFromMixins.define('my-element-from-mixins');
 
   const element = new MyElement({ text: 'Hello, World!' });
+  const elementFromMixins = new MyElementFromMixins({ text: 'Hello, Mixins!' });
 
   document.body.appendChild(element);
+  document.body.appendChild(elementFromMixins);
 
   assert(element instanceof HTMLElement);
   assert(element instanceof MyElement);
   assert(typeof element.build === 'function');
   assert(element.text === 'Hello, World!');
+
+  assert(elementFromMixins instanceof HTMLElement);
+  assert(elementFromMixins instanceof MyElementFromMixins);
+  assert(typeof elementFromMixins.build === 'function');
+  assert(elementFromMixins.text === 'Hello, Mixins!');
 });
 
 Deno.test('direct built in element test', () => {
-  const MyButton = HTMLUtilityMixin(HTMLPropsMixin(HTMLButtonElement));
+  const MyButton = HTMLUtilityMixin(HTMLPropsMixin(HTMLButtonElement)<HTMLButtonElement>());
 
   MyButton.define('my-direct-button', { extends: 'button' });
 
@@ -54,7 +78,7 @@ Deno.test('direct built in element test', () => {
 });
 
 Deno.test('custom built in element test', () => {
-  class MyButton extends HTMLProps(HTMLButtonElement) {}
+  class MyButton extends HTMLProps(HTMLButtonElement)<HTMLButtonElement>() {}
 
   MyButton.define('my-custom-button', { extends: 'button' });
 
@@ -77,27 +101,23 @@ Deno.test('signal support in props mapping', () => {
     text?: string;
   }
 
-  class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
+  class MyElement extends HTMLProps(HTMLElement)<MyElementProps>() {
     text = signal('');
 
     connectedCallback(): void {
       super.connectedCallback?.();
-      // Update textContent whenever text signal changes
       this.textContent = this.text();
     }
   }
 
   MyElement.define('my-signal-element');
 
-  // Create element with initial text value
   const element = new MyElement({ text: 'Original text' });
   document.body.appendChild(element);
 
-  // Signal should have been updated with the prop value
   assertEquals(element.text(), 'Original text');
   assertEquals(element.textContent, 'Original text');
 
-  // Should be able to update the signal
   element.text.set('New text');
   assertEquals(element.text(), 'New text');
 });
@@ -107,22 +127,20 @@ Deno.test('signal support with click handler', () => {
     text?: string;
   }
 
-  class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
+  class MyElement extends HTMLProps(HTMLElement)<MyElementProps>() {
     text = signal('');
 
     connectedCallback(): void {
       super.connectedCallback?.();
-      // Update textContent whenever text signal changes
       this.textContent = this.text();
     }
   }
 
   MyElement.define('my-signal-click-element');
 
-  // Create element with initial text and click handler
   const element = new MyElement({
     text: 'Original text',
-    onclick: (event) => {
+    onclick: (event: Event) => {
       const el = event.currentTarget as MyElement;
       el.text.set('New text');
     },
@@ -130,14 +148,11 @@ Deno.test('signal support with click handler', () => {
 
   document.body.appendChild(element);
 
-  // Initial state
   assertEquals(element.text(), 'Original text');
   assertEquals(element.textContent, 'Original text');
 
-  // Simulate click
   element.click();
 
-  // Signal should have been updated by the click handler
   assertEquals(element.text(), 'New text');
 });
 
@@ -146,12 +161,11 @@ Deno.test('signal support with effect', () => {
     text?: string;
   }
 
-  class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
+  class MyElement extends HTMLProps(HTMLElement)<MyElementProps>() {
     text = signal('');
 
     connectedCallback(): void {
       super.connectedCallback?.();
-      // Update textContent whenever text signal changes using effect
       effect(() => {
         this.textContent = this.text();
       });
@@ -160,7 +174,6 @@ Deno.test('signal support with effect', () => {
 
   MyElement.define('my-signal-effect-element');
 
-  // Create element with initial text and click handler
   const element = new MyElement({
     text: 'Original text',
     onclick: (event) => {
@@ -171,14 +184,48 @@ Deno.test('signal support with effect', () => {
 
   document.body.appendChild(element);
 
-  // Initial state - effect should have run
   assertEquals(element.text(), 'Original text');
   assertEquals(element.textContent, 'Original text');
 
-  // Simulate click - effect should automatically update textContent
   element.click();
 
-  // Signal and textContent should both be updated
   assertEquals(element.text(), 'New text');
   assertEquals(element.textContent, 'New text');
+});
+
+Deno.test('nested inheritance', () => {
+  interface ParentProps extends HTMLElement {
+    foo?: string;
+  }
+
+  class ParentElement extends HTMLProps(HTMLElement)<ParentProps>() {
+    foo = signal('');
+  }
+
+  ParentElement.define('parent-element');
+
+  interface ChildProps extends ParentProps {
+    bar?: string;
+  }
+
+  class ChildElement extends HTMLProps(ParentElement)<ChildProps>() {
+    bar = signal('');
+
+    connectedCallback(): void {
+      super.connectedCallback?.();
+      this.textContent = this.bar();
+    }
+  }
+
+  ChildElement.define('child-element');
+
+  const element = new ChildElement({ foo: 'Name', bar: 'Alice' });
+  document.body.appendChild(element);
+
+  assertEquals(element.bar(), 'Alice');
+  assertEquals(element.foo(), 'Name');
+  assertEquals(element.textContent, 'Alice');
+  assert(element instanceof HTMLElement);
+  assert(element instanceof ParentElement);
+  assert(element instanceof ChildElement);
 });

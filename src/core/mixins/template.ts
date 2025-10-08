@@ -1,18 +1,5 @@
 import { insertContent } from '../content.ts';
-import type { Constructor, Content, HTMLElementLifecycles } from '../types.ts';
-
-/**
- * Interface describing the members added by HTMLTemplateMixin
- */
-export interface HTMLTemplateMixinInterface {
-  connectedCallback(): void;
-  disconnectedCallback?(): void;
-  adoptedCallback?(): void;
-  attributeChangedCallback?(name: string, oldValue: any, newValue: any): void;
-  propertyChangedCallback?(name: string, oldValue: any, newValue: any): void;
-  render?(): Content;
-  build(): void;
-}
+import type { Constructor, Content, HTMLTemplateConstructorExtra, HTMLTemplateExtra } from '../types.ts';
 
 /**
  * A mixin that adds template rendering capabilities to a custom element.
@@ -21,15 +8,26 @@ export interface HTMLTemplateMixinInterface {
  * @template Base - The base class to extend.
  * @returns {Constructor<HTMLTemplateMixinClass>} The extended class with template rendering capabilities.
  */
-export const HTMLTemplateMixin = <P = any, Base extends Constructor<any, any> = Constructor<HTMLElement>>(
-  superClass: Base,
-): Constructor<
-  InstanceType<Base> & HTMLTemplateMixinInterface,
-  0 extends (1 & P) ? InstanceType<Base> : P
-> => {
-  type PropsType = 0 extends (1 & P) ? InstanceType<Base> : P;
+type HTMLTemplateMixinType = <SuperClass extends Constructor<any, any> & Record<string, any>>(
+  superClass: SuperClass,
+) => SuperClass extends Constructor<infer T, infer P> ?
+    & Constructor<
+      T & HTMLTemplateExtra<P>,
+      P
+    >
+    & Omit<SuperClass, keyof Constructor<any, any>>
+    & HTMLTemplateConstructorExtra
+  : never;
 
-  class HTMLTemplateMixinClass extends (superClass as Constructor<HTMLElementLifecycles, any>) {
+/**
+ * A mixin that adds template rendering capabilities to a custom element.
+ * Provides render() and build() methods for dynamic content insertion.
+ */
+export const HTMLTemplateMixin: HTMLTemplateMixinType = <SuperClass>(superClass: SuperClass) => {
+  /**
+   * Class that extends the superclass with template rendering capabilities.
+   */
+  return class HTMLTemplateMixinClass extends (superClass as Constructor<HTMLTemplateExtra>) {
     connectedCallback(): void {
       if (super.connectedCallback) {
         super.connectedCallback();
@@ -62,7 +60,5 @@ export const HTMLTemplateMixin = <P = any, Base extends Constructor<any, any> = 
         insertContent(this, render);
       }
     }
-  }
-
-  return HTMLTemplateMixinClass as unknown as Constructor<InstanceType<Base> & HTMLTemplateMixinClass, PropsType>;
+  } as any;
 };

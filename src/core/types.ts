@@ -206,6 +206,9 @@ type OmittableKeys =
   | FormMethods
   | FormReadOnly;
 
+/**
+ * Represents the possible content types that can be inserted into an element.
+ */
 export type Content =
   | Node
   | string
@@ -213,43 +216,6 @@ export type Content =
   | undefined
   | false
   | Array<Content>;
-
-export interface HTMLElementLifecycles extends HTMLElement {
-  /**
-   * Called when the element is inserted into a document.
-   * This can be useful for initializing the element's state or setting up event listeners.
-   */
-  connectedCallback?(): void;
-  /**
-   * Called when the element is removed from a document.
-   * This can be useful for cleaning up any resources or event listeners that were set up in connectedCallback.
-   */
-  disconnectedCallback?(): void;
-  /**
-   * Called when the element is moved to a new document.
-   * This can be useful for reinitializing the element's state or setting up event listeners in the new document.
-   */
-  adoptedCallback?(): void;
-  /**
-   * Called when one of the element's attributes is added, removed, or changed.
-   * @param name - The name of the attribute that was changed.
-   * @param oldValue - The previous value of the attribute.
-   * @param newValue - The new value of the attribute.
-   */
-  attributeChangedCallback?(
-    name: string,
-    oldValue: string,
-    newValue: string,
-  ): void;
-
-  /**
-   * Called when a property is added, removed, or changed.
-   * @param name - The name of the property that was changed.
-   * @param oldValue - The previous value of the property.
-   * @param newValue - The new value of the property.
-   */
-  propertyChangedCallback?(name: string, oldValue: any, newValue: any): void;
-}
 
 /**
  * A RefObject is an object with a single property `current` that can hold a value or be null.
@@ -279,26 +245,140 @@ export type IncomingProps<P = unknown> = Override<
   ParseableProps<P>
 >;
 
-type DeepPartial<T> = {
+export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
 
+/**
+ * Represents HTML properties that can be passed to elements, with deep partial support.
+ */
 export type HTMLProps<T = unknown> = DeepPartial<IncomingProps<T>>;
 
+/**
+ * A constructor function type for creating instances with HTML props.
+ */
 export type Constructor<T = any, P = T> = new (...args: HTMLProps<P>[]) => T;
 
-export interface HTMLUtilityConstructor<T = any, P = T> extends Constructor<T, P> {
+export interface HTMLPropsConstructorExtra {}
+
+export interface HTMLPropsExtra<Props = any> extends HTMLElement {
   /**
-   * The observed attributes for the custom element.
+   * The props associated with the element.
+   */
+  props: HTMLProps<Props>;
+}
+
+export interface HTMLTemplateConstructorExtra {
+  /**
+   * An array of attribute names to be observed for changes.
+   * When any of these attributes change, the `attributeChangedCallback` method will be called.
    */
   observedAttributes?: string[];
 
   /**
-   * The observed properties for the custom element.
+   * An array of property names to be observed for changes.
+   * When any of these properties change, the `propertyChangedCallback` method will be called.
    */
   observedProperties?: string[];
+}
 
-  define(name: string, options?: ElementDefinitionOptions): Constructor<T, P>;
+export interface HTMLTemplateExtra<Props = any> extends HTMLElement {
+  /**
+   * The props associated with the element.
+   */
+  props: HTMLProps<Props>;
+
+  /**
+   * An optional reference object that can be used to access the element instance.
+   */
+  ref?: RefObject<this>;
+
+  /**
+   * The content associated with the element.
+   * This can be a Node, string, null, undefined, false, or an array of these types.
+   */
+  content?: Content;
+
+  /**
+   * Called when the element is inserted into a document.
+   * This can be useful for initializing the element's state or setting up event listeners.
+   */
+  connectedCallback?(): void;
+
+  /**
+   * Called when the element is removed from a document.
+   * This can be useful for cleaning up any resources or event listeners that were set up in connectedCallback.
+   */
+  disconnectedCallback?(): void;
+
+  /**
+   * Called when the element is moved to a new document.
+   * This can be useful for reinitializing the element's state or setting up event listeners in the new document.
+   */
+  adoptedCallback?(): void;
+
+  /**
+   * Called when one of the element's attributes is added, removed, or changed.
+   * @param name - The name of the attribute that was changed.
+   * @param oldValue - The previous value of the attribute.
+   * @param newValue - The new value of the attribute.
+   */
+  attributeChangedCallback?(
+    name: string,
+    oldValue: string,
+    newValue: string,
+  ): void;
+
+  /**
+   * Called when a property is added, removed, or changed.
+   * @param name - The name of the property that was changed.
+   * @param oldValue - The previous value of the property.
+   * @param newValue - The new value of the property.
+   */
+  propertyChangedCallback?(name: string, oldValue: any, newValue: any): void;
+
+  /**
+   * Returns the default properties for the component.
+   * This method can be overridden by subclasses to provide default values for properties.
+   * @returns The default properties object.
+   */
+  getDefaultProps(): this['props'];
+
+  /**
+   * Renders the content for the element.
+   * This method can be overridden by subclasses to define custom rendering logic.
+   * @returns The content to be rendered, which can be a Node, string, null, undefined, false, or an array of these.
+   */
+  render?(): this['content'];
+
+  /**
+   * Builds or updates the element's DOM structure.
+   * This method is responsible for applying the rendered content to the element.
+   */
+  build(): void;
+}
+
+export interface HTMLUtilityConstructorExtra {
+  /**
+   * Defines a custom element with the specified name and options.
+   * @param name - The name of the custom element to define.
+   * @param options - Optional configuration options for the custom element.
+   * @returns The class itself, allowing for method chaining.
+   */
+  define(name: string, options?: ElementDefinitionOptions): any;
+
+  /**
+   * Retrieves the name of the custom element.
+   * @returns The name of the custom element, or null if it is not defined.
+   */
   getName(): string | null;
+
+  /**
+   * Generates a selector string for the custom element.
+   * @param selectors - Optional additional selectors to include.
+   * @returns A string representing the selector for the custom element.
+   */
   getSelectors(selectors?: string): string;
 }
+
+export interface HTMLUtilityExtra extends HTMLElement {}

@@ -1,5 +1,10 @@
 import type { Content } from './types.ts';
 
+/**
+ * Inserts content into an HTMLElement, handling various content types including strings, nodes, and arrays.
+ * @param element - The HTMLElement to insert content into.
+ * @param content - The content to insert, which can be a string, Node, or array of such.
+ */
 export function insertContent(element: HTMLElement, content: Content) {
   const isHTML = (string: string) => {
     const doc = new DOMParser().parseFromString(string, 'text/html');
