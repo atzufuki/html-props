@@ -1,5 +1,11 @@
 import type { Constructor, HTMLTemplateExtra, HTMLUtilityConstructorExtra, HTMLUtilityExtra } from '../types.ts';
 
+/**
+ * Symbol used to detect if HTMLUtilityMixin has already been applied to a class.
+ * Prevents duplicate mixin application in inheritance chains.
+ */
+const UTILITY_MIXIN_APPLIED = Symbol.for('html-props:utility-mixin-applied');
+
 // /**
 //  * The observed attributes for the custom element.
 //  */
@@ -37,10 +43,20 @@ type HTMLUtilityMixinType = <SuperClass extends Constructor<any, any> & Record<s
  * Provides define(), getName(), and getSelectors() static methods.
  */
 export const HTMLUtilityMixin: HTMLUtilityMixinType = <SuperClass>(superClass: SuperClass) => {
+  // Check if this mixin is already applied in the prototype chain
+  if ((superClass as any)[UTILITY_MIXIN_APPLIED]) {
+    // Already applied - return a pass-through class that only adds type info
+    return class HTMLUtilityMixinPassThrough extends (superClass as any) {
+      static [UTILITY_MIXIN_APPLIED] = true;
+    } as any;
+  }
+
+  // Not applied yet - apply the full mixin
   /**
    * Class that extends the superclass with utility methods for custom element registration and selection.
    */
   return class HTMLUtilityMixinClass extends (superClass as Constructor<HTMLTemplateExtra>) {
+    static [UTILITY_MIXIN_APPLIED] = true;
     /**
      * Defines a custom element with the specified name and options.
      *

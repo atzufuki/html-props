@@ -2,6 +2,12 @@ import { insertContent } from '../content.ts';
 import type { Constructor, Content, HTMLTemplateConstructorExtra, HTMLTemplateExtra } from '../types.ts';
 
 /**
+ * Symbol used to detect if HTMLTemplateMixin has already been applied to a class.
+ * Prevents duplicate mixin application in inheritance chains.
+ */
+const TEMPLATE_MIXIN_APPLIED = Symbol.for('html-props:template-mixin-applied');
+
+/**
  * A mixin that adds template rendering capabilities to a custom element.
  *
  * @template P - The type of the props.
@@ -24,10 +30,20 @@ type HTMLTemplateMixinType = <SuperClass extends Constructor<any, any> & Record<
  * Provides render() and build() methods for dynamic content insertion.
  */
 export const HTMLTemplateMixin: HTMLTemplateMixinType = <SuperClass>(superClass: SuperClass) => {
+  // Check if this mixin is already applied in the prototype chain
+  if ((superClass as any)[TEMPLATE_MIXIN_APPLIED]) {
+    // Already applied - return a pass-through class that only adds type info
+    return class HTMLTemplateMixinPassThrough extends (superClass as any) {
+      static [TEMPLATE_MIXIN_APPLIED] = true;
+    } as any;
+  }
+
+  // Not applied yet - apply the full mixin
   /**
    * Class that extends the superclass with template rendering capabilities.
    */
   return class HTMLTemplateMixinClass extends (superClass as Constructor<HTMLTemplateExtra>) {
+    static [TEMPLATE_MIXIN_APPLIED] = true;
     connectedCallback(): void {
       if (super.connectedCallback) {
         super.connectedCallback();
