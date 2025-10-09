@@ -13,6 +13,12 @@ import { insertContent } from '../content.ts';
 export { createRef, type RefObject };
 
 /**
+ * Symbol used to detect if HTMLPropsMixin has already been applied to a class.
+ * Prevents duplicate mixin application in inheritance chains.
+ */
+const PROPS_MIXIN_APPLIED = Symbol.for('html-props:props-mixin-applied');
+
+/**
  * Symbol used to identify signals across different implementations.
  * Signal implementations should set this symbol to true on their signal instances.
  */
@@ -57,8 +63,19 @@ export const HTMLPropsMixin: HTMLPropsMixinType = <SuperClass>(superClass: Super
   /**
    * Class that extends the superclass with HTML props handling capabilities.
    */
-  return <Props>() =>
-    class HTMLPropsMixinClass extends (superClass as Constructor<HTMLTemplateExtra<Props>>) {
+  return <Props>() => {
+    // Check if this mixin is already applied in the prototype chain
+    if ((superClass as any)[PROPS_MIXIN_APPLIED]) {
+      // Already applied - return a pass-through class that only adds type info
+      return class HTMLPropsMixinPassThrough extends (superClass as any) {
+        static [PROPS_MIXIN_APPLIED] = true;
+      } as any;
+    }
+
+    // Not applied yet - apply the full mixin
+    return class HTMLPropsMixinClass extends (superClass as Constructor<HTMLTemplateExtra<Props>>) {
+      static [PROPS_MIXIN_APPLIED] = true;
+
       props: any;
       ref?: RefObject<this>;
       content?: Content;
@@ -173,4 +190,5 @@ export const HTMLPropsMixin: HTMLPropsMixinType = <SuperClass>(superClass: Super
         return {};
       }
     } as any;
+  };
 };

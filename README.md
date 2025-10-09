@@ -10,6 +10,17 @@ element's constructor.
 - **Templating**: Implement a `render` method to create a child tree for the component.
 - **Utilities**: Includes utility methods for defining custom elements, and generating selectors.
 - **TypeScript Support**: Written in TypeScript for type safety.
+- **Inheritance Support**: Build component hierarchies with proper mixin application.
+
+## Quick Start
+
+Scaffold a new project with the create tool:
+
+```sh
+deno run --reload jsr:@html-props/create my-app
+cd my-app
+# Start hacking!
+```
 
 ## Installation
 
@@ -38,11 +49,11 @@ The default export gives you a mixin including every feature of `HTMLPropsMixin`
 ```ts
 import HTMLProps from '@html-props/core';
 
-interface MyElementProps extends HTMLElement {
+interface MyElementProps {
   text?: string;
 }
 
-class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
+class MyElement extends HTMLProps(HTMLElement)<MyElementProps>() {
   text?: string;
 
   render() {
@@ -60,6 +71,42 @@ const element = new MyElement({ text: 'Hello world!' });
 document.body.appendChild(element); // <my-element>Hello world!</my-element>
 ```
 
+### Building Component Hierarchies
+
+You can extend components that already use HTMLProps to build inheritance hierarchies:
+
+```ts
+import HTMLProps from '@html-props/core';
+import { signal } from '@html-props/signals';
+
+// Base widget
+class Widget extends HTMLProps(HTMLElement)<{ visible: boolean }>() {
+  visible = signal(true);
+}
+
+Widget.define('base-widget');
+
+// Extended widget - mixins are automatically handled!
+interface BoxProps {
+  visible?: boolean;
+  orientation: 'horizontal' | 'vertical';
+}
+
+class Box extends HTMLProps(Widget)<BoxProps>() {
+  orientation = signal<'horizontal' | 'vertical'>('horizontal');
+
+  render() {
+    return `Box: ${this.orientation()}`;
+  }
+}
+
+Box.define('widget-box');
+
+// Use it
+const box = new Box({ visible: true, orientation: 'vertical' });
+document.body.appendChild(box);
+```
+
 ### Converting an existing Custom Element
 
 You can also convert existing custom elements, like built-in elements to support props. In this case it's unnecessary to
@@ -67,12 +114,12 @@ use `HTMLTemplateMixin`, since we are not implementing a child tree using it's r
 already implements it's own rendering logic, it's likely to conflict if used.
 
 ```ts
-const Button = HTMLUtilityMixin(HTMLPropsMixin(HTMLButtonElement)).define('html-button', {
+const Button = HTMLUtilityMixin(HTMLPropsMixin(HTMLButtonElement)<HTMLButtonElement>()).define('html-button', {
   extends: 'button',
 });
 
 // Or without the utilities
-const Button = HTMLPropsMixin(HTMLButtonElement);
+const Button = HTMLPropsMixin(HTMLButtonElement)<HTMLButtonElement>();
 customElements.define('html-button', Button, { extends: 'button' });
 ```
 
@@ -81,12 +128,12 @@ customElements.define('html-button', Button, { extends: 'button' });
 You can define default properties for your custom element by overriding the `getDefaultProps` method.
 
 ```ts
-interface MyElementProps extends HTMLElement {
+interface MyElementProps {
   text?: string;
   textColor?: string;
 }
 
-class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
+class MyElement extends HTMLProps(HTMLElement)<MyElementProps>() {
   text?: string;
   textColor?: string;
 
@@ -94,7 +141,7 @@ class MyElement extends HTMLProps<MyElementProps>(HTMLElement) {
     return {
       text: 'Default text',
       style: {
-        color: this.props.textColor ?? 'blue',
+        color: this.textColor ?? 'blue',
       },
     };
   }
@@ -142,11 +189,11 @@ esbuild.build({
 You can now start writing render methods with JSX syntax.
 
 ```tsx
-const Button = HTMLUtilityMixin(HTMLPropsMixin<HTMLButtonElement>(HTMLButtonElement)).define('html-button', {
+const Button = HTMLUtilityMixin(HTMLPropsMixin(HTMLButtonElement)<HTMLButtonElement>()).define('html-button', {
   extends: 'button',
 });
 
-class MyElement extends HTMLProps<MyElement>(HTMLElement) {
+class MyElement extends HTMLProps(HTMLElement)<{ text?: string }>() {
   text?: string;
 
   render() {

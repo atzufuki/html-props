@@ -263,3 +263,276 @@ Deno.test('ref', () => {
   button?.click();
   assertEquals(button?.textContent, 'Clicked!');
 });
+
+Deno.test('mixin duplication prevention - single level (baseline)', () => {
+  let connectedCallCount = 0;
+
+  class Widget extends HTMLProps(HTMLElement)<{ prop: string }>() {
+    prop = signal('');
+
+    connectedCallback() {
+      super.connectedCallback?.();
+      connectedCallCount++;
+    }
+  }
+
+  Widget.define('widget-single');
+
+  const widget = new Widget({ prop: 'test' });
+  document.body.appendChild(widget);
+
+  assertEquals(connectedCallCount, 1, 'connectedCallback should be called once');
+  assertEquals(widget.prop(), 'test');
+
+  document.body.removeChild(widget);
+});
+
+Deno.test('mixin duplication prevention - multi-level inheritance', () => {
+  let baseConnectCount = 0;
+  let extendedConnectCount = 0;
+
+  class BaseWidget extends HTMLProps(HTMLElement)<{ baseProp: string }>() {
+    baseProp = signal('');
+
+    connectedCallback() {
+      super.connectedCallback?.();
+      baseConnectCount++;
+    }
+  }
+
+  BaseWidget.define('base-widget');
+
+  interface ExtendedProps {
+    baseProp?: string;
+    extendedProp: string;
+  }
+
+  class ExtendedWidget extends HTMLProps(BaseWidget)<ExtendedProps>() {
+    extendedProp = signal('');
+
+    connectedCallback() {
+      super.connectedCallback?.();
+      extendedConnectCount++;
+    }
+  }
+
+  ExtendedWidget.define('extended-widget');
+
+  const widget = new ExtendedWidget({ baseProp: 'base', extendedProp: 'extended' });
+  document.body.appendChild(widget);
+
+  assertEquals(baseConnectCount, 1, 'BaseWidget connectedCallback should be called once');
+  assertEquals(extendedConnectCount, 1, 'ExtendedWidget connectedCallback should be called once');
+  assertEquals(widget.baseProp(), 'base');
+  assertEquals(widget.extendedProp(), 'extended');
+
+  document.body.removeChild(widget);
+});
+
+Deno.test('mixin duplication prevention - children should NOT reconnect', () => {
+  let childConnectCount = 0;
+  let childDisconnectCount = 0;
+
+  class ChildElement extends HTMLProps(HTMLElement)<{ label: string }>() {
+    label = signal('');
+
+    connectedCallback() {
+      super.connectedCallback?.();
+      childConnectCount++;
+    }
+
+    disconnectedCallback() {
+      super.disconnectedCallback?.();
+      childDisconnectCount++;
+    }
+  }
+
+  ChildElement.define('child-element-test');
+
+  class BaseContainer extends HTMLProps(HTMLElement)<{ prop1: string }>() {
+    prop1 = signal('');
+  }
+
+  BaseContainer.define('base-container');
+
+  interface ExtendedContainerProps {
+    prop1?: string;
+    prop2: string;
+  }
+
+  class ExtendedContainer extends HTMLProps(BaseContainer)<ExtendedContainerProps>() {
+    prop2 = signal('');
+  }
+
+  ExtendedContainer.define('extended-container');
+
+  const child = new ChildElement({ label: 'test' });
+  const container = new ExtendedContainer({
+    prop1: 'a',
+    prop2: 'b',
+    content: [child],
+  });
+
+  document.body.appendChild(container);
+
+  assertEquals(childConnectCount, 1, 'Child should connect once');
+  assertEquals(childDisconnectCount, 0, 'Child should NOT disconnect during parent connection');
+  assertEquals(child.label(), 'test');
+
+  document.body.removeChild(container);
+  assertEquals(childDisconnectCount, 1, 'Child should disconnect once on removal');
+});
+
+Deno.test('mixin duplication prevention - deep inheritance chain (4 levels)', () => {
+  class L1 extends HTMLProps(HTMLElement)<{ p1: string }>() {
+    p1 = signal('');
+  }
+  L1.define('level-1-element');
+
+  interface L2Props {
+    p1?: string;
+    p2: string;
+  }
+
+  class L2 extends HTMLProps(L1)<L2Props>() {
+    p2 = signal('');
+  }
+  L2.define('level-2-element');
+
+  interface L3Props {
+    p1?: string;
+    p2?: string;
+    p3: string;
+  }
+
+  class L3 extends HTMLProps(L2)<L3Props>() {
+    p3 = signal('');
+  }
+  L3.define('level-3-element');
+
+  interface L4Props {
+    p1?: string;
+    p2?: string;
+    p3?: string;
+    p4: string;
+  }
+
+  class L4 extends HTMLProps(L3)<L4Props>() {
+    p4 = signal('');
+  }
+  L4.define('level-4-element');
+
+  const widget = new L4({ p1: 'a', p2: 'b', p3: 'c', p4: 'd' });
+  document.body.appendChild(widget);
+
+  assertEquals(widget.p1(), 'a');
+  assertEquals(widget.p2(), 'b');
+  assertEquals(widget.p3(), 'c');
+  assertEquals(widget.p4(), 'd');
+
+  assert(widget instanceof L1);
+  assert(widget instanceof L2);
+  assert(widget instanceof L3);
+  assert(widget instanceof L4);
+
+  document.body.removeChild(widget);
+});
+
+Deno.test('mixin duplication prevention - content insertion happens once', () => {
+  let buildCallCount = 0;
+
+  class BaseWidget extends HTMLProps(HTMLElement)<{ baseProp: string }>() {
+    baseProp = signal('');
+
+    build() {
+      buildCallCount++;
+      super.build?.();
+    }
+  }
+
+  BaseWidget.define('base-widget-build');
+
+  interface ExtendedProps {
+    baseProp?: string;
+    extendedProp: string;
+  }
+
+  class ExtendedWidget extends HTMLProps(BaseWidget)<ExtendedProps>() {
+    extendedProp = signal('');
+
+    render() {
+      return document.createTextNode('Content');
+    }
+  }
+
+  ExtendedWidget.define('extended-widget-build');
+
+  const widget = new ExtendedWidget({ baseProp: 'base', extendedProp: 'extended' });
+  document.body.appendChild(widget);
+
+  // build() should be called once from HTMLTemplateMixin
+  assertEquals(buildCallCount, 1, 'build() should be called once');
+  assertEquals(widget.textContent, 'Content');
+
+  document.body.removeChild(widget);
+});
+
+Deno.test('mixin duplication prevention - effect cleanup preserved', () => {
+  let effectRunCount = 0;
+  let effectCleanupCount = 0;
+
+  class ChildWithEffect extends HTMLProps(HTMLElement)<{ value: string }>() {
+    value = signal('');
+
+    connectedCallback() {
+      super.connectedCallback?.();
+      effect(() => {
+        effectRunCount++;
+        this.textContent = this.value();
+        return () => {
+          effectCleanupCount++;
+        };
+      });
+    }
+  }
+
+  ChildWithEffect.define('child-with-effect');
+
+  class BaseContainer extends HTMLProps(HTMLElement)<{ prop1: string }>() {
+    prop1 = signal('');
+  }
+
+  BaseContainer.define('base-container-effect');
+
+  interface ExtendedContainerProps {
+    prop1?: string;
+    prop2: string;
+  }
+
+  class ExtendedContainer extends HTMLProps(BaseContainer)<ExtendedContainerProps>() {
+    prop2 = signal('');
+  }
+
+  ExtendedContainer.define('extended-container-effect');
+
+  const child = new ChildWithEffect({ value: 'initial' });
+  const container = new ExtendedContainer({
+    prop1: 'a',
+    prop2: 'b',
+    content: [child],
+  });
+
+  document.body.appendChild(container);
+
+  // Effect should run once when child connects
+  assertEquals(effectRunCount, 1, 'Effect should run once on connect');
+  assertEquals(effectCleanupCount, 0, 'Effect should not cleanup if child stays connected');
+  assertEquals(child.textContent, 'initial');
+
+  // Update the signal
+  child.value.set('updated');
+  assertEquals(effectRunCount, 2, 'Effect should run again after signal update');
+  assertEquals(child.textContent, 'updated');
+
+  document.body.removeChild(container);
+});
