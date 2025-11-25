@@ -479,8 +479,8 @@
     "members": {
       "src/create/template": {
         "dependencies": [
-          "jsr:@html-props/core@0.5",
-          "jsr:@html-props/signals@0.2",
+          "jsr:@html-props/core@~0.7.2",
+          "jsr:@html-props/signals@~0.2.1",
           "jsr:@std/http@^1.0.20"
         ]
       }
