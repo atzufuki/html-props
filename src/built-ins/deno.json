@@ -1,0 +1,11 @@
+{
+  "name": "@html-props/built-ins",
+  "version": "0.1.0",
+  "imports": {
+    "@html-props/core/**/*": "../../core"
+  },
+  "exports": "./mod.ts",
+  "compilerOptions": {
+    "lib": ["dom", "deno.ns"]
+  }
+}

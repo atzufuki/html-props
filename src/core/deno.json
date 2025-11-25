@@ -1,23 +1,9 @@
 {
   "name": "@html-props/core",
-  "version": "0.7.2",
-  "license": "MIT",
-  "exports": {
-    ".": "./mod.ts"
-  },
+  "version": "0.1.0",
+  "exports": "./mod.ts",
   "compilerOptions": {
-    "lib": [
-      "dom",
-      "deno.window",
-      "DOM.Iterable",
-      "DOM.AsyncIterable"
-    ],
-    "strict": true,
-    "strictFunctionTypes": false,
-    "noUnusedLocals": true,
-    "noUnusedParameters": false,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
+    "lib": ["dom", "deno.ns"],
     "noImplicitOverride": false
   }
 }

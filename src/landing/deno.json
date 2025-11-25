@@ -1,9 +1,9 @@
 {
-  "name": "@html-props/demo",
+  "name": "@html-props/landing",
   "version": "0.0.1",
   "imports": {
     "@html-props/core/**/*": "../../core",
-    "@html-props/jsx/**/*": "../../jsx"
+    "@html-props/signals/**/*": "../../signals"
   },
   "exports": {
     ".": "./app.ts"
@@ -21,8 +21,6 @@
     "noUnusedParameters": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "noImplicitOverride": false,
-    "jsx": "react-jsx",
-    "jsxImportSource": "@html-props/jsx"
+    "noImplicitOverride": false
   }
 }

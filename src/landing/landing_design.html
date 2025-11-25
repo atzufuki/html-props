@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTML Props - Reactive Custom Elements</title>
+    <style>
+      :root {
+        --bg-color: #0f172a;
+        --text-color: #e2e8f0;
+        --accent-color: #38bdf8;
+        --accent-hover: #0ea5e9;
+        --secondary-bg: #1e293b;
+        --border-color: #334155;
+        --code-bg: #020617;
+        --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, "Helvetica Neue", Arial, sans-serif;
+        --font-mono: "Menlo", "Monaco", "Courier New", monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        line-height: 1.6;
+      }
+
+      a {
+        color: var(--accent-color);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      a:hover {
+        color: var(--accent-hover);
+      }
+
+      /* Header */
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-color);
+        position: sticky;
+        top: 0;
+        background-color: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(8px);
+        z-index: 100;
+      }
+
+      .logo {
+        font-weight: 700;
+        font-size: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .logo span {
+        color: var(--accent-color);
+      }
+
+      nav ul {
+        display: flex;
+        gap: 2rem;
+        list-style: none;
+      }
+
+      nav a {
+        color: var(--text-color);
+        font-weight: 500;
+      }
+
+      nav a:hover {
+        color: var(--accent-color);
+      }
+
+      /* Hero */
+      .hero {
+        padding: 6rem 2rem;
+        text-align: center;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .hero h1 {
+        font-size: 3.5rem;
+        line-height: 1.2;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(to right, #fff, #94a3b8);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .hero p {
+        font-size: 1.25rem;
+        color: #94a3b8;
+        max-width: 600px;
+        margin: 0 auto 2.5rem;
+      }
+
+      .cta-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background-color: var(--accent-color);
+        color: #0f172a;
+      }
+
+      .btn-primary:hover {
+        background-color: var(--accent-hover);
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background-color: var(--secondary-bg);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+      }
+
+      .btn-secondary:hover {
+        border-color: var(--accent-color);
+        transform: translateY(-1px);
+      }
+
+      /* Features */
+      .features {
+        padding: 4rem 2rem;
+        background-color: var(--secondary-bg);
+        border-top: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .feature-card {
+        padding: 1.5rem;
+        background-color: var(--bg-color);
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-color);
+      }
+
+      .feature-icon {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        display: inline-block;
+        padding: 0.5rem;
+        background-color: rgba(56, 189, 248, 0.1);
+        border-radius: 0.5rem;
+        color: var(--accent-color);
+      }
+
+      .feature-card h3 {
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+      }
+
+      .feature-card p {
+        color: #94a3b8;
+        font-size: 0.95rem;
+      }
+
+      /* Playground / Code */
+      .playground {
+        padding: 6rem 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .section-header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+
+      .section-header h2 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .section-header p {
+        color: #94a3b8;
+      }
+
+      .code-preview-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        background-color: var(--secondary-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+          0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+
+      .code-editor {
+        background-color: var(--code-bg);
+        padding: 1.5rem;
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        overflow-x: auto;
+        border-right: 1px solid var(--border-color);
+      }
+
+      .preview-pane {
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: #1e293b; /* Slightly lighter than code bg */
+        background-image: radial-gradient(#334155 1px, transparent 1px);
+        background-size: 20px 20px;
+      }
+
+      .preview-card {
+        background: var(--bg-color);
+        padding: 2rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        min-width: 300px;
+      }
+
+      /* Syntax Highlighting Mock */
+      .token.keyword {
+        color: #c678dd;
+      }
+      .token.class-name {
+        color: #e5c07b;
+      }
+      .token.function {
+        color: #61afef;
+      }
+      .token.string {
+        color: #98c379;
+      }
+      .token.number {
+        color: #d19a66;
+      }
+      .token.comment {
+        color: #5c6370;
+        font-style: italic;
+      }
+      .token.operator {
+        color: #56b6c2;
+      }
+      .token.property {
+        color: #e06c75;
+      }
+
+      /* Interactive Demo Elements */
+      .demo-btn {
+        background-color: var(--accent-color);
+        color: #0f172a;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        font-weight: 600;
+        margin-top: 1rem;
+      }
+
+      .demo-btn:hover {
+        background-color: var(--accent-hover);
+      }
+
+      /* Installation */
+      .installation {
+        padding: 4rem 2rem;
+        text-align: center;
+        background-color: var(--secondary-bg);
+        border-top: 1px solid var(--border-color);
+      }
+
+      .install-cmd {
+        background-color: var(--code-bg);
+        padding: 1rem 2rem;
+        border-radius: 0.5rem;
+        font-family: var(--font-mono);
+        display: inline-flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid var(--border-color);
+        margin-top: 2rem;
+        color: #a5b4fc;
+      }
+
+      .copy-btn {
+        background: none;
+        border: none;
+        color: #64748b;
+        cursor: pointer;
+      }
+
+      .copy-btn:hover {
+        color: var(--text-color);
+      }
+
+      /* Footer */
+      footer {
+        padding: 2rem;
+        text-align: center;
+        color: #64748b;
+        border-top: 1px solid var(--border-color);
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 768px) {
+        .hero h1 {
+          font-size: 2.5rem;
+        }
+        .code-preview-container {
+          grid-template-columns: 1fr;
+        }
+        .code-editor {
+          border-right: none;
+          border-bottom: 1px solid var(--border-color);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo"><span>&lt;/&gt;</span> HTML Props</div>
+      <nav>
+        <ul>
+          <li><a href="#">Documentation</a></li>
+          <li><a href="#">Examples</a></li>
+          <li><a href="#">GitHub</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <h1>Reactive Custom Elements,<br />Simplified.</h1>
+      <p>
+        A lightweight mixin for building native Web Components with reactive
+        props, signals, and zero dependencies. No build step required.
+      </p>
+      <div class="cta-buttons">
+        <a href="#" class="btn btn-primary">Get Started</a>
+        <a href="#" class="btn btn-secondary">View on GitHub</a>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>Zero Dependencies</h3>
+          <p>
+            Extremely lightweight. No framework lock-in. Just a simple mixin for
+            your native HTMLElement classes.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔄</div>
+          <h3>Reactive Signals</h3>
+          <p>
+            Built-in signal-based reactivity. Props automatically map to signals
+            and trigger efficient updates.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📘</div>
+          <h3>TypeScript First</h3>
+          <p>
+            Designed with strong type inference in mind. Define props via static
+            config and get full type safety.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎨</div>
+          <h3>Native DOM</h3>
+          <p>
+            Works seamlessly with standard DOM APIs. Use it with vanilla JS, or
+            integrate into any framework.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="playground">
+      <div class="section-header">
+        <h2>Write Less, Do More</h2>
+        <p>
+          Define props, handle events, and render content with a clean,
+          declarative API.
+        </p>
+      </div>
+
+      <div class="code-preview-container">
+        <div class="code-editor">
+          <pre><code><span class="token keyword">import</span> { HTMLPropsMixin } <span class="token keyword">from</span> <span class="token string">'@html-props/core'</span>;
+<span class="token keyword">import</span> { Button, Div } <span class="token keyword">from</span> <span class="token string">'@html-props/built-ins'</span>;
+
+<span class="token keyword">class</span> <span class="token class-name">CounterApp</span> <span class="token keyword">extends</span> <span class="token class-name">HTMLPropsMixin</span>(HTMLElement) {
+  <span class="token keyword">static</span> props = {
+    <span class="token property">count</span>: { <span class="token property">type</span>: Number, <span class="token property">default</span>: 0 }
+  };
+
+  <span class="token function">render</span>() {
+    <span class="token keyword">const</span> { count } = <span class="token keyword">this</span>;
+    
+    <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Div</span>({
+      <span class="token property">style</span>: { padding: <span class="token string">'1rem'</span>, textAlign: <span class="token string">'center'</span> },
+      <span class="token property">content</span>: [
+        <span class="token keyword">new</span> <span class="token class-name">Div</span>({ 
+            <span class="token property">textContent</span>: <span class="token string">`Count is: ${count}`</span>,
+            <span class="token property">style</span>: { marginBottom: <span class="token string">'1rem'</span> }
+        }),
+        <span class="token keyword">new</span> <span class="token class-name">Button</span>({
+          <span class="token property">textContent</span>: <span class="token string">'Increment'</span>,
+          <span class="token property">onClick</span>: () => <span class="token keyword">this</span>.count++
+        })
+      ]
+    });
+  }
+}
+
+<span class="token class-name">CounterApp</span>.<span class="token function">define</span>(<span class="token string">'counter-app'</span>);</code></pre>
+        </div>
+        <div class="preview-pane">
+          <div class="preview-card">
+            <!-- Simulated Output -->
+            <div style="padding: 1rem; text-align: center">
+              <div style="margin-bottom: 1rem; font-size: 1.2rem">
+                Count is: 0
+              </div>
+              <button class="demo-btn">Increment</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="installation">
+      <h2>Ready to build?</h2>
+      <div class="install-cmd">
+        <span>deno add @html-props/core</span>
+        <button class="copy-btn" title="Copy to clipboard">📋</button>
+      </div>
+    </section>
+
+    <footer>
+      <p>&copy; 2025 HTML Props. MIT License.</p>
+    </footer>
+  </body>
+</html>
