@@ -3,7 +3,7 @@ import { computed, effect, signal } from '@html-props/signals';
 import * as html from './html.ts';
 import './App.css';
 
-export default class App extends HTMLProps(HTMLElement) {
+export default class App extends HTMLProps(HTMLElement)<HTMLElement>() {
   aborter = new AbortController();
   buttonRef = createRef<HTMLButtonElement>();
   count = signal(0);
