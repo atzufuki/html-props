@@ -42,7 +42,11 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement) {
               items: [
                 { label: 'Introduction', href: '#/docs', active: currentPath === '/docs' || currentPath === '/docs/' },
                 { label: 'Installation', href: '#/docs/installation', active: currentPath === '/docs/installation' },
+                { label: 'CLI Tool', href: '#/docs/cli', active: currentPath === '/docs/cli' },
                 { label: 'Basic Usage', href: '#/docs/usage', active: currentPath === '/docs/usage' },
+                { label: 'Signals', href: '#/docs/signals', active: currentPath === '/docs/signals' },
+                { label: 'Lifecycle Hooks', href: '#/docs/lifecycle', active: currentPath === '/docs/lifecycle' },
+                { label: 'JSX Support', href: '#/docs/jsx', active: currentPath === '/docs/jsx' },
                 { label: 'API Reference', href: '#/docs/api', active: currentPath === '/docs/api' },
               ],
             }),
@@ -75,6 +79,31 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement) {
             style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
           }),
           new CodeBlock({ code: "import { HTMLPropsMixin } from 'https://esm.sh/@html-props/core';" }),
+        ],
+      });
+    }
+
+    if (path === '/docs/cli') {
+      return new Article({
+        style: { flex: '1', padding: '3rem 4rem', maxWidth: '800px' },
+        content: [
+          new H1({
+            textContent: 'CLI Tool',
+            style: { fontSize: '2.5rem', marginBottom: '1.5rem', color: theme.colors.text },
+          }),
+          new P({
+            textContent: 'Scaffold new projects quickly with the html-props CLI.',
+            style: { marginBottom: '1.5rem', color: '#94a3b8' },
+          }),
+          new H2({
+            textContent: 'Creating a New Project',
+            style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
+          }),
+          new CodeBlock({ code: 'deno run jsr:@html-props/create my-app' }),
+          new P({
+            textContent: 'This will create a new directory called "my-app" with a basic project structure.',
+            style: { marginTop: '1rem', marginBottom: '1rem', color: '#94a3b8' },
+          }),
         ],
       });
     }
@@ -119,6 +148,207 @@ Counter.define('my-counter');`,
       });
     }
 
+    if (path === '/docs/signals') {
+      return new Article({
+        style: { flex: '1', padding: '3rem 4rem', maxWidth: '800px' },
+        content: [
+          new H1({
+            textContent: 'Signals',
+            style: { fontSize: '2.5rem', marginBottom: '1.5rem', color: theme.colors.text },
+          }),
+          new P({
+            textContent: 'Fine-grained reactivity for your components.',
+            style: { marginBottom: '1.5rem', color: '#94a3b8' },
+          }),
+          new P({
+            textContent:
+              'Signals are the backbone of reactivity in html-props. They allow you to create state that automatically updates your UI when changed.',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+          new CodeBlock({
+            code: `import { signal, effect } from '@html-props/signals';
+
+const count = signal(0);
+
+// Effects run whenever dependencies change
+effect(() => {
+  console.log(\`The count is \${count()}\`);
+});
+
+count(1); // Logs: "The count is 1"
+count(2); // Logs: "The count is 2"`,
+          }),
+          new H2({
+            textContent: 'Using Signals in Components',
+            style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
+          }),
+          new P({
+            textContent:
+              'Component props are internally backed by signals. You can also use standalone signals for local state.',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+          new CodeBlock({
+            code: `class Counter extends HTMLPropsMixin(HTMLElement) {
+  // Local state
+  count = signal(0);
+
+  render() {
+    return new Button({
+      textContent: \`Count: \${this.count()}\`,
+      onclick: () => this.count.update(n => n + 1)
+    });
+  }
+}`,
+          }),
+          new H2({
+            textContent: 'Computed Values',
+            style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
+          }),
+          new P({
+            textContent: 'Computed signals derive their value from other signals and update automatically.',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+          new CodeBlock({
+            code: `import { computed } from '@html-props/signals';
+
+const count = signal(1);
+const double = computed(() => count() * 2);
+
+console.log(double()); // 2
+count(2);
+console.log(double()); // 4`,
+          }),
+          new H2({
+            textContent: 'Batch Updates',
+            style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
+          }),
+          new P({
+            textContent: 'Group multiple signal updates into a single effect run.',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+          new CodeBlock({
+            code: `import { batch } from '@html-props/signals';
+
+batch(() => {
+  count(10);
+  count(20);
+}); // Effects run only once`,
+          }),
+        ],
+      });
+    }
+
+    if (path === '/docs/lifecycle') {
+      return new Article({
+        style: { flex: '1', padding: '3rem 4rem', maxWidth: '800px' },
+        content: [
+          new H1({
+            textContent: 'Lifecycle Hooks',
+            style: { fontSize: '2.5rem', marginBottom: '1.5rem', color: theme.colors.text },
+          }),
+          new P({
+            textContent: 'Hook into the lifecycle of your components.',
+            style: { marginBottom: '1.5rem', color: '#94a3b8' },
+          }),
+          new H2({
+            textContent: 'onMount()',
+            style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
+          }),
+          new P({
+            textContent:
+              'Called when the component is connected to the DOM. This is a good place to fetch data or set up subscriptions.',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+          new H2({
+            textContent: 'onUnmount()',
+            style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
+          }),
+          new P({
+            textContent:
+              'Called when the component is disconnected from the DOM. Use this to clean up timers or subscriptions.',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+          new CodeBlock({
+            code: `class Timer extends HTMLPropsMixin(HTMLElement) {
+  count = signal(0);
+  intervalId = null;
+
+  onMount() {
+    console.log('Timer mounted');
+    this.intervalId = setInterval(() => {
+      this.count.update(c => c + 1);
+    }, 1000);
+  }
+
+  onUnmount() {
+    console.log('Timer unmounted');
+    clearInterval(this.intervalId);
+  }
+
+  render() {
+    return new Div({ textContent: \`Seconds: \${this.count()}\` });
+  }
+}`,
+          }),
+        ],
+      });
+    }
+
+    if (path === '/docs/jsx') {
+      return new Article({
+        style: { flex: '1', padding: '3rem 4rem', maxWidth: '800px' },
+        content: [
+          new H1({
+            textContent: 'JSX Support',
+            style: { fontSize: '2.5rem', marginBottom: '1.5rem', color: theme.colors.text },
+          }),
+          new P({
+            textContent: 'Use JSX syntax for templating in your components.',
+            style: { marginBottom: '1.5rem', color: '#94a3b8' },
+          }),
+          new H2({
+            textContent: 'Installation',
+            style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
+          }),
+          new CodeBlock({ code: 'deno add jsr:@html-props/jsx' }),
+          new H2({
+            textContent: 'Configuration',
+            style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
+          }),
+          new P({
+            textContent: 'Configure your compiler options in deno.json:',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+          new CodeBlock({
+            code: `{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "@html-props/jsx"
+  }
+}`,
+          }),
+          new H2({
+            textContent: 'Usage',
+            style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
+          }),
+          new CodeBlock({
+            code: `import { HTMLPropsMixin } from '@html-props/core';
+
+class MyElement extends HTMLPropsMixin(HTMLElement) {
+  render() {
+    return (
+      <div class="container">
+        <h1>Hello JSX</h1>
+        <p>This is rendered using JSX!</p>
+      </div>
+    );
+  }
+}`,
+          }),
+        ],
+      });
+    }
+
     if (path === '/docs/api') {
       return new Article({
         style: { flex: '1', padding: '3rem 4rem', maxWidth: '800px' },
@@ -153,6 +383,30 @@ Counter.define('my-counter');`,
     attr: 'my-prop' // Custom attribute name
   }
 }`,
+          }),
+          new H2({
+            textContent: 'Built-in Elements',
+            style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
+          }),
+          new P({
+            textContent:
+              'A collection of type-safe wrappers for standard HTML elements. They accept all standard HTML attributes plus \`style\`, \`class\`, and \`content\`.',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+          new CodeBlock({
+            code: `import { Div, Button, Input } from '@html-props/built-ins';
+
+// Usage
+new Div({
+  style: { padding: '1rem' },
+  class: 'container',
+  content: [
+    new Button({ 
+      textContent: 'Click me',
+      onclick: () => console.log('Clicked')
+    })
+  ]
+})`,
           }),
         ],
       });
