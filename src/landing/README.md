@@ -29,7 +29,7 @@ This project is configured for automatic deployment via Deno Deploy's GitHub int
 
 ### Setup
 
-1. Log in to [Deno Deploy](https://dash.deno.com).
+1. Log in to [Deno Deploy](https://console.deno.com).
 2. Create a **New Project**.
 3. Select the **GitHub** repository for this project.
 4. Configure the **Build Step**:
