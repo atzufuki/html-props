@@ -14,7 +14,7 @@
     "compile:builder": "npm run compile --prefix ./src/builder",
     "bundle": "deno bundle --unstable-sloppy-imports src/landing/main.ts --output src/landing/dist/main.bundle.js",
     "build": "deno task bundle",
-    "start": "deno run --allow-net --allow-read src/landing/serve.ts",
+    "start": "deno run --allow-net --allow-read src/landing/server.ts",
     "test": " deno test --allow-env"
   },
   "imports": {

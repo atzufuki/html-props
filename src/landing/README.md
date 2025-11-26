@@ -9,7 +9,7 @@ This folder contains the documentation and landing page for HTML Props.
 - `dist/main.bundle.js` – generated bundle.
 - `hmr-client.ts` – tiny hot-reload client using Server-Sent Events.
 - `dev_server.ts` – Deno dev server with bundling + HMR.
-- `serve.ts` – Production server for Deno Deploy.
+- `server.ts` – Production server for Deno Deploy.
 
 ## Run locally (with hot reload)
 
@@ -34,13 +34,13 @@ This project is configured for automatic deployment via Deno Deploy's GitHub int
 3. Select the **GitHub** repository for this project.
 4. Configure the **Build Step**:
    - **Build Command**: `deno task build`
-   - **Entrypoint**: `deno task start` (or `src/landing/serve.ts`)
+   - **Entrypoint**: `deno task start` (or `src/landing/server.ts`)
 5. Click **Deploy Project**.
 
 ### How it works
 
 - **Build**: Deno Deploy runs `deno task build`, which executes `deno bundle` to generate
   `src/landing/dist/main.bundle.js`.
-- **Runtime**: Deno Deploy runs `src/landing/serve.ts`.
-- **Serving**: `serve.ts` serves the static files and the generated bundle. It automatically removes the HMR script from
-  `index.html` for production.
+- **Runtime**: Deno Deploy runs `src/landing/server.ts`.
+- **Serving**: `server.ts` serves the static files and the generated bundle. It automatically removes the HMR script
+  from `index.html` for production.
