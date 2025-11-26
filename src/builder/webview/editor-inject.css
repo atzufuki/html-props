@@ -1,0 +1,81 @@
+/* Visual Editor Styles - Injected into user's HTML */
+
+/* Selection and hover states */
+.wb-selected {
+  outline: 2px solid var(--vscode-focusBorder, #007acc) !important;
+  outline-offset: 2px;
+}
+
+.wb-hoverable:hover {
+  outline: 1px dashed var(--vscode-focusBorder, #007acc) !important;
+  outline-offset: 1px;
+}
+
+/* Selected element keeps its style even on hover */
+.wb-selected:hover {
+  outline: 2px solid var(--vscode-focusBorder, #007acc) !important;
+  outline-offset: 2px;
+}
+
+.wb-hover {
+  outline: 1px dashed var(--vscode-focusBorder, #007acc) !important;
+  outline-offset: 1px;
+}
+
+/* Drop zones */
+.wb-drop-target {
+  background-color: var(--vscode-editor-findMatchBackground, rgba(0, 122, 204, 0.1)) !important;
+  min-height: 24px;
+}
+
+.wb-drop-target.active {
+  background-color: var(--vscode-editor-findMatchHighlightBackground, rgba(0, 122, 204, 0.3)) !important;
+  border: 2px dashed var(--vscode-focusBorder, #007acc) !important;
+}
+
+/* Ghost element for drag preview */
+#wb-ghost-element {
+  opacity: 0.7;
+  border: 2px dashed var(--vscode-focusBorder, #007acc);
+  background-color: var(--vscode-editor-findMatchBackground, rgba(0, 122, 204, 0.1));
+  padding: 4px;
+}
+
+/* Status bar */
+#wb-status-bar {
+  font-family: var(--vscode-font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif);
+  font-size: var(--vscode-font-size, 12px);
+  z-index: 10000;
+}
+
+/* Action toolbar */
+#wb-action-toolbar {
+  font-family: var(--vscode-font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif);
+  font-size: var(--vscode-font-size, 12px);
+}
+
+#wb-action-toolbar button {
+  cursor: pointer;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+
+#wb-action-toolbar button:hover {
+  background-color: var(--vscode-toolbar-hoverBackground, rgba(255, 255, 255, 0.1));
+}
+
+#wb-action-toolbar button:active {
+  background-color: var(--vscode-toolbar-activeBackground, rgba(255, 255, 255, 0.2));
+}
+
+/* Editor UI elements should not affect layout */
+.wb-editor-ui {
+  pointer-events: auto;
+}
+
+/* Hide sensitive data during editing */
+[wb-hide-content] {
+  visibility: hidden;
+}

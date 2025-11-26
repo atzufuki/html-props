@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Custom Element Creation UX - HTML Props Builder</title>
+    <link
+      rel="stylesheet"
+      href="https://microsoft.github.io/vscode-codicons/dist/codicon.css"
+    />
+    <style>
+      @font-face {
+        font-family: "codicon";
+        font-display: block;
+        src: url("https://microsoft.github.io/vscode-codicons/dist/codicon.ttf")
+          format("truetype");
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Segoe WPC",
+          sans-serif;
+        background: #1e1e1e;
+        color: #cccccc;
+        font-size: 13px;
+      }
+
+      .vscode-layout {
+        display: flex;
+        height: 100%;
+      }
+
+      /* Activity Bar */
+      .activity-bar {
+        width: 48px;
+        background: #333333;
+        border-right: 1px solid #252525;
+        display: flex;
+        flex-direction: column;
+        padding: 8px 0;
+      }
+
+      .activity-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #858585;
+        cursor: pointer;
+        position: relative;
+      }
+
+      .activity-icon:hover {
+        color: #ffffff;
+      }
+
+      .activity-icon.active {
+        color: #ffffff;
+      }
+
+      .activity-icon.active::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #007acc;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: 320px;
+        background: #252526;
+        border-right: 1px solid #1e1e1e;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .panel {
+        display: flex;
+        flex-direction: column;
+        border-bottom: 1px solid #1e1e1e;
+        flex: 1 1 0;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .panel-header {
+        padding: 0 8px 0 8px;
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #cccccc;
+        font-weight: 600;
+        background: #252526;
+        border-bottom: 1px solid #1e1e1e;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        user-select: none;
+        height: 22px;
+      }
+
+      .panel-content {
+        flex: 1 1 0;
+        min-height: 0;
+        overflow-y: auto;
+        background: #1e1e1e;
+      }
+
+      .tree-item {
+        padding: 2px 8px;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        color: #cccccc;
+      }
+
+      .tree-item:hover {
+        background: #2a2d2e;
+      }
+
+      .tree-item.selected {
+        background: #04395e;
+      }
+
+      .tree-item-icon {
+        margin-right: 6px;
+      }
+
+      .tree-item-label {
+        flex: 1;
+        font-size: 13px;
+      }
+
+      /* Editor Area */
+      .editor-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #1e1e1e;
+      }
+
+      .editor-tabs {
+        background: #252526;
+        border-bottom: 1px solid #1e1e1e;
+        padding: 0;
+        display: flex;
+        height: 35px;
+      }
+
+      .editor-tab {
+        padding: 0 12px;
+        display: flex;
+        align-items: center;
+        color: #969696;
+        cursor: pointer;
+        border-right: 1px solid #1e1e1e;
+      }
+
+      .editor-tab.active {
+        background: #1e1e1e;
+        color: #ffffff;
+        border-bottom: 1px solid #007acc;
+      }
+
+      .editor-content {
+        flex: 1;
+        padding: 20px;
+        overflow: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .visual-preview {
+        background: white;
+        border-radius: 4px;
+        padding: 40px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        max-width: 700px;
+      }
+
+      .selected-elements {
+        border: 2px dashed #007acc;
+        padding: 16px;
+        border-radius: 4px;
+        background: #f0f8ff;
+      }
+
+      /* Wizard Modal */
+      .wizard-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      .wizard-container {
+        background: #252526;
+        border: 1px solid #454545;
+        border-radius: 6px;
+        width: 600px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+      }
+
+      .wizard-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #1e1e1e;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .wizard-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #cccccc;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .wizard-close {
+        color: #858585;
+        cursor: pointer;
+        padding: 4px;
+      }
+
+      .wizard-close:hover {
+        color: #ffffff;
+      }
+
+      .wizard-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+      }
+
+      .wizard-step {
+        margin-bottom: 24px;
+      }
+
+      .step-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #858585;
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .step-input {
+        width: 100%;
+        background: #3c3c3c;
+        border: 1px solid #3c3c3c;
+        border-radius: 3px;
+        padding: 6px 10px;
+        color: #cccccc;
+        font-size: 13px;
+        outline: none;
+      }
+
+      .step-input:focus {
+        border-color: #007acc;
+      }
+
+      .step-description {
+        font-size: 12px;
+        color: #858585;
+        margin-top: 4px;
+        line-height: 1.4;
+      }
+
+      .step-radio-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .radio-option {
+        background: #3c3c3c;
+        border: 1px solid #3c3c3c;
+        border-radius: 3px;
+        padding: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .radio-option:hover {
+        background: #454545;
+      }
+
+      .radio-option.selected {
+        background: #094771;
+        border-color: #007acc;
+      }
+
+      .radio-option-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #cccccc;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .radio-option-desc {
+        font-size: 11px;
+        color: #858585;
+        line-height: 1.4;
+      }
+
+      /* Property Builder */
+      .property-list {
+        background: #1e1e1e;
+        border: 1px solid #3c3c3c;
+        border-radius: 3px;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      .property-item {
+        padding: 8px 12px;
+        border-bottom: 1px solid #2d2d2d;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .property-item:last-child {
+        border-bottom: none;
+      }
+
+      .property-name {
+        font-family: "Consolas", monospace;
+        color: #4ec9b0;
+        font-size: 12px;
+        flex: 1;
+      }
+
+      .property-type {
+        font-size: 11px;
+        color: #858585;
+        background: #3c3c3c;
+        padding: 2px 8px;
+        border-radius: 2px;
+      }
+
+      .property-remove {
+        color: #858585;
+        cursor: pointer;
+        padding: 4px;
+      }
+
+      .property-remove:hover {
+        color: #f48771;
+      }
+
+      .add-property-btn {
+        background: #3c3c3c;
+        border: 1px dashed #858585;
+        border-radius: 3px;
+        padding: 8px 12px;
+        color: #858585;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 12px;
+        margin-top: 8px;
+      }
+
+      .add-property-btn:hover {
+        background: #454545;
+        color: #cccccc;
+      }
+
+      /* Code Preview */
+      .code-preview {
+        background: #1e1e1e;
+        border: 1px solid #3c3c3c;
+        border-radius: 3px;
+        padding: 12px;
+        font-family: "Consolas", monospace;
+        font-size: 12px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .code-line {
+        color: #d4d4d4;
+        line-height: 1.6;
+      }
+
+      .code-keyword {
+        color: #569cd6;
+      }
+
+      .code-class {
+        color: #4ec9b0;
+      }
+
+      .code-string {
+        color: #ce9178;
+      }
+
+      .code-comment {
+        color: #6a9955;
+      }
+
+      .code-property {
+        color: #9cdcfe;
+      }
+
+      /* Wizard Footer */
+      .wizard-footer {
+        padding: 16px 20px;
+        border-top: 1px solid #1e1e1e;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .wizard-nav {
+        display: flex;
+        gap: 8px;
+      }
+
+      .wizard-btn {
+        background: #3c3c3c;
+        border: 1px solid #3c3c3c;
+        border-radius: 3px;
+        padding: 6px 16px;
+        color: #cccccc;
+        cursor: pointer;
+        font-size: 13px;
+      }
+
+      .wizard-btn:hover {
+        background: #505050;
+      }
+
+      .wizard-btn.primary {
+        background: #0e639c;
+        border-color: #0e639c;
+        color: #ffffff;
+      }
+
+      .wizard-btn.primary:hover {
+        background: #1177bb;
+      }
+
+      .wizard-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .step-indicator {
+        font-size: 11px;
+        color: #858585;
+      }
+
+      /* Info Box */
+      .info-box {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #252526;
+        border: 1px solid #454545;
+        border-radius: 4px;
+        padding: 16px;
+        max-width: 400px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        z-index: 999;
+      }
+
+      .info-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #cccccc;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .info-text {
+        font-size: 11px;
+        color: #858585;
+        line-height: 1.5;
+      }
+
+      .info-highlight {
+        color: #4ec9b0;
+        font-weight: 600;
+      }
+
+      .info-section {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #3c3c3c;
+      }
+
+      .info-list {
+        list-style: none;
+        margin-top: 6px;
+      }
+
+      .info-list li {
+        padding-left: 16px;
+        position: relative;
+        margin-bottom: 4px;
+      }
+
+      .info-list li::before {
+        content: "▸";
+        position: absolute;
+        left: 4px;
+        color: #007acc;
+      }
+
+      /* Context Menu Style */
+      .context-menu-hint {
+        position: absolute;
+        top: 120px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #252526;
+        border: 1px solid #007acc;
+        border-radius: 4px;
+        padding: 8px 12px;
+        font-size: 11px;
+        color: #cccccc;
+        box-shadow: 0 2px 8px rgba(0, 122, 204, 0.3);
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.6;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="vscode-layout">
+      <!-- Activity Bar -->
+      <div class="activity-bar">
+        <div class="activity-icon">
+          <i class="codicon codicon-files"></i>
+        </div>
+        <div class="activity-icon">
+          <i class="codicon codicon-search"></i>
+        </div>
+        <div class="activity-icon active">
+          <i class="codicon codicon-browser"></i>
+        </div>
+        <div class="activity-icon">
+          <i class="codicon codicon-gear"></i>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="panel">
+          <div class="panel-header">
+            <span>LAYERS</span>
+          </div>
+          <div class="panel-content">
+            <div class="tree-item">
+              <span class="tree-item-icon"
+                ><i class="codicon codicon-symbol-class"></i
+              ></span>
+              <span class="tree-item-label">div.container</span>
+            </div>
+            <div class="tree-item selected">
+              <span class="tree-item-icon"
+                ><i class="codicon codicon-symbol-string"></i
+              ></span>
+              <span class="tree-item-label">h1</span>
+            </div>
+            <div class="tree-item selected">
+              <span class="tree-item-icon"
+                ><i class="codicon codicon-symbol-string"></i
+              ></span>
+              <span class="tree-item-label">p</span>
+            </div>
+            <div class="tree-item selected">
+              <span class="tree-item-icon"
+                ><i class="codicon codicon-symbol-method"></i
+              ></span>
+              <span class="tree-item-label">button</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Editor Area -->
+      <div class="editor-area">
+        <div class="context-menu-hint">
+          <i class="codicon codicon-lightbulb"></i> Right-click selected
+          elements → "Create Component"
+        </div>
+        <div class="editor-tabs">
+          <div class="editor-tab active">
+            <i class="codicon codicon-file-code" style="margin-right: 6px"></i>
+            index.html
+          </div>
+        </div>
+        <div class="editor-content">
+          <div class="visual-preview">
+            <div class="selected-elements">
+              <h1 style="color: #333; margin-bottom: 12px">
+                Welcome to Our App
+              </h1>
+              <p style="color: #666; margin-bottom: 16px">
+                Build amazing web experiences
+              </p>
+              <button
+                style="
+                  background: #007acc;
+                  color: white;
+                  padding: 10px 20px;
+                  border: none;
+                  border-radius: 4px;
+                  cursor: pointer;
+                "
+              >
+                Get Started
+              </button>
+            </div>
+            <p
+              style="
+                margin-top: 20px;
+                color: #999;
+                font-size: 12px;
+                text-align: center;
+              "
+            >
+              ↑ 3 elements selected (will be converted to component)
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wizard Modal -->
+    <div class="wizard-modal">
+      <div class="wizard-container">
+        <div class="wizard-header">
+          <div class="wizard-title">
+            <i class="codicon codicon-symbol-misc" style="color: #4ec9b0"></i>
+            Create Custom Element
+          </div>
+          <div class="wizard-close">
+            <i class="codicon codicon-close"></i>
+          </div>
+        </div>
+
+        <div class="wizard-body">
+          <!-- Step 1: Component Name -->
+          <div class="wizard-step">
+            <div class="step-label">
+              <i class="codicon codicon-tag"></i>
+              1. Component Name
+            </div>
+            <input
+              type="text"
+              class="step-input"
+              value="hero-banner"
+              placeholder="my-component"
+            />
+            <div class="step-description">
+              Web component tag name (must contain a hyphen, e.g.,
+              <code>hero-banner</code>)
+            </div>
+          </div>
+
+          <!-- Step 2: Class Name -->
+          <div class="wizard-step">
+            <div class="step-label">
+              <i class="codicon codicon-symbol-class"></i>
+              2. Class Name
+            </div>
+            <input
+              type="text"
+              class="step-input"
+              value="HeroBanner"
+              placeholder="MyComponent"
+            />
+            <div class="step-description">
+              TypeScript class name (PascalCase recommended)
+            </div>
+          </div>
+
+          <!-- Step 3: Component Type -->
+          <div class="wizard-step">
+            <div class="step-label">
+              <i class="codicon codicon-code"></i>
+              3. Component Type
+            </div>
+            <div class="step-radio-group">
+              <div class="radio-option selected">
+                <div class="radio-option-title">
+                  <i class="codicon codicon-sparkle"></i>
+                  html-props Component (Recommended)
+                </div>
+                <div class="radio-option-desc">
+                  Props passed via constructor with TypeScript interfaces.
+                  Supports objects, arrays, functions, signals, and
+                  getDefaultProps(). Uses MyElement.define() for registration.
+                </div>
+              </div>
+              <div class="radio-option">
+                <div class="radio-option-title">
+                  <i class="codicon codicon-symbol-misc"></i>
+                  Vanilla Web Component
+                </div>
+                <div class="radio-option-desc">
+                  Standard attribute-based web component. Simpler API,
+                  string-only attributes. Good for basic, standalone components.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3.5: Base Element -->
+          <div class="wizard-step">
+            <div class="step-label">
+              <i class="codicon codicon-symbol-interface"></i>
+              3.5. Base Element
+            </div>
+            <select class="step-input base-element-select">
+              <option value="HTMLElement" selected>
+                HTMLElement (generic element)
+              </option>
+              <option value="HTMLButtonElement:button">
+                HTMLButtonElement (extends button)
+              </option>
+              <option value="HTMLInputElement:input">
+                HTMLInputElement (extends input)
+              </option>
+              <option value="HTMLDivElement:div">
+                HTMLDivElement (extends div)
+              </option>
+              <option value="HTMLSpanElement:span">
+                HTMLSpanElement (extends span)
+              </option>
+              <option value="HTMLAnchorElement:a">
+                HTMLAnchorElement (extends a)
+              </option>
+              <option value="HTMLImageElement:img">
+                HTMLImageElement (extends img)
+              </option>
+              <option value="HTMLFormElement:form">
+                HTMLFormElement (extends form)
+              </option>
+              <option value="HTMLParagraphElement:p">
+                HTMLParagraphElement (extends p)
+              </option>
+              <option value="HTMLHeadingElement:h1">
+                HTMLHeadingElement (extends h1-h6)
+              </option>
+            </select>
+            <div class="step-description">
+              Base HTML element to extend. Built-in elements inherit all
+              standard properties and behaviors.
+            </div>
+          </div>
+
+          <!-- Step 4: Properties -->
+          <div class="wizard-step">
+            <div class="step-label">
+              <i class="codicon codicon-symbol-property"></i>
+              4. Component Properties
+            </div>
+            <div class="property-list">
+              <div class="property-item">
+                <div class="property-name">title</div>
+                <div class="property-type">string</div>
+                <div class="property-remove">
+                  <i class="codicon codicon-trash"></i>
+                </div>
+              </div>
+              <div class="property-item">
+                <div class="property-name">subtitle</div>
+                <div class="property-type">string</div>
+                <div class="property-remove">
+                  <i class="codicon codicon-trash"></i>
+                </div>
+              </div>
+              <div class="property-item">
+                <div class="property-name">buttonText</div>
+                <div class="property-type">string</div>
+                <div class="property-remove">
+                  <i class="codicon codicon-trash"></i>
+                </div>
+              </div>
+              <div class="property-item">
+                <div class="property-name">onClick</div>
+                <div class="property-type">function</div>
+                <div class="property-remove">
+                  <i class="codicon codicon-trash"></i>
+                </div>
+              </div>
+            </div>
+            <div class="add-property-btn">
+              <i class="codicon codicon-add"></i>
+              Add Property
+            </div>
+            <div class="step-description">
+              Define component properties (auto-detected from selected HTML
+              content)
+            </div>
+          </div>
+
+          <!-- Step 5: Preview -->
+          <div class="wizard-step">
+            <div class="step-label">
+              <i class="codicon codicon-preview"></i>
+              5. Generated Code Preview
+            </div>
+            <div class="code-preview">
+              <div class="code-line">
+                <span class="code-keyword">import</span>
+                <span class="code-class">HTMLProps</span>
+                <span class="code-keyword">from</span>
+                <span class="code-string">'@html-props/core'</span>;
+              </div>
+              <div class="code-line">
+                <span class="code-keyword">import</span> {
+                <span class="code-class">signal</span> }
+                <span class="code-keyword">from</span>
+                <span class="code-string">'@html-props/signals'</span>;
+              </div>
+              <div class="code-line">
+                <span class="code-keyword">import</span> *
+                <span class="code-keyword">as</span> html
+                <span class="code-keyword">from</span>
+                <span class="code-string">'@html-props/built-ins'</span>;
+              </div>
+              <div class="code-line">&nbsp;</div>
+              <div class="code-line"><span class="code-comment">/**</span></div>
+              <div class="code-line">
+                <span class="code-comment">
+                  * Props interface for HeroBanner</span
+                >
+              </div>
+              <div class="code-line"><span class="code-comment"> */</span></div>
+              <div class="code-line">
+                <span class="code-keyword">interface</span>
+                <span class="code-class">HeroBannerProps</span>
+                <span class="code-keyword">extends</span>
+                <span class="code-class">HTMLElement</span> {
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;<span class="code-property">title</span>?:
+                <span class="code-class">string</span>;
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;<span class="code-property">subtitle</span>?:
+                <span class="code-class">string</span>;
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;<span class="code-property">buttonText</span>?:
+                <span class="code-class">string</span>;
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;<span class="code-property">onClick</span>?:
+                <span class="code-class">function</span>;
+              </div>
+              <div class="code-line">}</div>
+              <div class="code-line">&nbsp;</div>
+              <div class="code-line"><span class="code-comment">/**</span></div>
+              <div class="code-line">
+                <span class="code-comment"> * HeroBanner component</span>
+              </div>
+              <div class="code-line">
+                <span class="code-comment">
+                  * Generated by HTML Props Builder</span
+                >
+              </div>
+              <div class="code-line"><span class="code-comment"> */</span></div>
+              <div class="code-line">
+                <span class="code-keyword">class</span>
+                <span class="code-class">HeroBanner</span>
+                <span class="code-keyword">extends</span>
+                <span class="code-class">HTMLProps</span>(<span
+                  class="code-class"
+                  >HTMLElement</span
+                >)&lt;<span class="code-class">HeroBannerProps</span>&gt;() {
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;<span class="code-keyword">static</span>
+                <span class="code-keyword">get</span>
+                <span class="code-property">observedAttributes</span>() {
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">return</span>
+                [<span class="code-string">'title'</span>,
+                <span class="code-string">'subtitle'</span>,
+                <span class="code-string">'button-text'</span>];
+              </div>
+              <div class="code-line">&nbsp;&nbsp;}</div>
+              <div class="code-line">&nbsp;</div>
+              <div class="code-line">
+                &nbsp;&nbsp;<span class="code-property">title</span> =
+                <span class="code-keyword">signal</span>&lt;<span
+                  class="code-class"
+                  >string</span
+                >&gt;(<span class="code-string">''</span>);
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;<span class="code-property">subtitle</span> =
+                <span class="code-keyword">signal</span>&lt;<span
+                  class="code-class"
+                  >string</span
+                >&gt;(<span class="code-string">''</span>);
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;<span class="code-property">buttonText</span> =
+                <span class="code-keyword">signal</span>&lt;<span
+                  class="code-class"
+                  >string</span
+                >&gt;(<span class="code-string">'Get Started'</span>);
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;<span class="code-property">onClick</span>?:
+                <span class="code-class">function</span>;
+              </div>
+              <div class="code-line">&nbsp;</div>
+              <div class="code-line">
+                &nbsp;&nbsp;<span class="code-keyword"
+                  >attributeChangedCallback</span
+                >(name: <span class="code-class">string</span>, oldValue:
+                <span class="code-class">string</span> |
+                <span class="code-keyword">null</span>, newValue:
+                <span class="code-class">string</span> |
+                <span class="code-keyword">null</span>) {
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-property"
+                  >mapAttributeToSignal</span
+                >(<span class="code-keyword">this</span>, name, newValue);
+              </div>
+              <div class="code-line">&nbsp;&nbsp;}</div>
+              <div class="code-line">&nbsp;</div>
+              <div class="code-line">
+                &nbsp;&nbsp;<span class="code-keyword">render</span>():
+                <span class="code-keyword">this</span>[<span class="code-string"
+                  >'content'</span
+                >] {
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-comment"
+                  >// Build your component structure using HTML Props
+                  Builder</span
+                >
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-comment"
+                  >// Drag elements from Elements panel to construct the DOM
+                  hierarchy</span
+                >
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">return</span>
+                [];
+              </div>
+              <div class="code-line">&nbsp;&nbsp;}</div>
+              <div class="code-line">}</div>
+              <div class="code-line">&nbsp;</div>
+              <div class="code-line"><span class="code-comment">/**</span></div>
+              <div class="code-line">
+                <span class="code-comment">
+                  * Helper to map kebab-case attributes to camelCase signal
+                  properties</span
+                >
+              </div>
+              <div class="code-line"><span class="code-comment"> */</span></div>
+              <div class="code-line">
+                <span class="code-keyword">function</span>
+                <span class="code-property">mapAttributeToSignal</span>(
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;component: <span class="code-class">any</span>,
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;attrName: <span class="code-class">string</span>,
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;value: <span class="code-class">string</span> |
+                <span class="code-keyword">null</span>
+              </div>
+              <div class="code-line">) {</div>
+              <div class="code-line">
+                &nbsp;&nbsp;<span class="code-keyword">if</span> (value ===
+                <span class="code-keyword">null</span>)
+                <span class="code-keyword">return</span>;
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;<span class="code-keyword">const</span> propName =
+                attrName.<span class="code-property">replace</span>(<span
+                  class="code-string"
+                  >/-([a-z])/g</span
+                >, (_, letter) => letter.<span class="code-property"
+                  >toUpperCase</span
+                >());
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;<span class="code-keyword">if</span> (propName
+                <span class="code-keyword">in</span> component &&
+                <span class="code-keyword">typeof</span>
+                component[propName]?.set ===
+                <span class="code-string">'function'</span>) {
+              </div>
+              <div class="code-line">
+                &nbsp;&nbsp;&nbsp;&nbsp;component[propName].<span
+                  class="code-property"
+                  >set</span
+                >(value);
+              </div>
+              <div class="code-line">&nbsp;&nbsp;}</div>
+              <div class="code-line">}</div>
+              <div class="code-line">&nbsp;</div>
+              <div class="code-line">
+                <span class="code-class">HeroBanner</span>.<span
+                  class="code-keyword"
+                  >define</span
+                >(<span class="code-string">'hero-banner'</span>);
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 6: File Location -->
+          <div class="wizard-step">
+            <div class="step-label">
+              <i class="codicon codicon-file"></i>
+              6. Save Location
+            </div>
+            <input
+              type="text"
+              class="step-input"
+              value="./components/hero-banner.ts"
+              placeholder="./components/my-component.ts"
+            />
+            <div class="step-description">
+              Component file path (relative to workspace root)
+            </div>
+          </div>
+        </div>
+
+        <div class="wizard-footer">
+          <div class="step-indicator">Step 6 of 6</div>
+          <div class="wizard-nav">
+            <button class="wizard-btn">Cancel</button>
+            <button class="wizard-btn primary">Create Component</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="info-box">
+      <div class="info-title">
+        <i class="codicon codicon-info"></i>
+        Custom Element Creation Workflow
+      </div>
+      <div class="info-text">
+        <strong class="info-highlight">Entry Points:</strong>
+        <ul class="info-list">
+          <li>Right-click selected elements in Layers panel</li>
+          <li>Command Palette: "HTML Props Builder: Create Component"</li>
+          <li>Keyboard shortcut: Ctrl+Shift+C</li>
+        </ul>
+      </div>
+
+      <div class="info-section">
+        <strong class="info-highlight">Wizard Steps:</strong>
+        <ul class="info-list">
+          <li><strong>Component Name:</strong> Web component tag name</li>
+          <li><strong>Class Name:</strong> TypeScript class name</li>
+          <li><strong>Type:</strong> html-props vs vanilla component</li>
+          <li>
+            <strong>Base Element:</strong> Extend HTMLElement or built-in
+            elements
+          </li>
+          <li>
+            <strong>Properties:</strong> Define reactive properties with signals
+          </li>
+          <li><strong>Preview:</strong> See generated code scaffold</li>
+          <li><strong>Location:</strong> Choose file path</li>
+        </ul>
+        <p style="margin-top: 8px; font-size: 11px; color: #858585">
+          Note: render() method is empty - build DOM structure visually after
+          creation
+        </p>
+      </div>
+
+      <div class="info-section">
+        <strong class="info-highlight">html-props Features:</strong>
+        <ul class="info-list">
+          <li>TypeScript interfaces for type-safe props</li>
+          <li>Props passed via constructor: new MyElement({ prop: value })</li>
+          <li>Optional getDefaultProps() for default values</li>
+          <li>Static define() method for registration</li>
+          <li>render() returns: string, Node, Node[], null, or false</li>
+          <li>Signal support for reactive properties</li>
+          <li>
+            Mixin-based architecture (HTMLProps, HTMLTemplate, HTMLUtility)
+          </li>
+        </ul>
+      </div>
+
+      <div class="info-section">
+        <strong class="info-highlight">Post-Creation:</strong>
+        <ul class="info-list">
+          <li>Component file created and opened in HTML Props Builder</li>
+          <li>Visual editor opens for the new component file</li>
+          <li>Elements panel auto-refreshes</li>
+          <li>Build component structure using drag & drop</li>
+          <li>Drag elements from Elements panel into render() method</li>
+          <li>New component appears in custom category when saved</li>
+          <li>Ready to use in other HTML files via drag & drop</li>
+        </ul>
+      </div>
+    </div>
+
+    <script>
+      // Wizard state
+      const wizardState = {
+        currentStep: 1,
+        tagName: "hero-banner",
+        className: "HeroBanner",
+        componentType: "html-props",
+        baseElement: "HTMLElement",
+        baseTag: null,
+        properties: [
+          { name: "title", type: "string", defaultValue: "" },
+          { name: "subtitle", type: "string", defaultValue: "" },
+          { name: "buttonText", type: "string", defaultValue: "Get Started" },
+          { name: "onClick", type: "function", defaultValue: "null" },
+        ],
+        filePath: "./components/hero-banner.ts",
+      };
+
+      // Step 1: Tag name input
+      const tagNameInput = document.querySelector(
+        ".wizard-step:nth-child(1) .step-input"
+      );
+      tagNameInput.addEventListener("input", (e) => {
+        wizardState.tagName = e.target.value;
+        // Auto-update class name
+        const className = toPascalCase(e.target.value);
+        wizardState.className = className;
+        document.querySelector(".wizard-step:nth-child(2) .step-input").value =
+          className;
+        // Update file path
+        updateFilePath();
+        updateCodePreview();
+      });
+
+      // Step 2: Class name input
+      const classNameInput = document.querySelector(
+        ".wizard-step:nth-child(2) .step-input"
+      );
+      classNameInput.addEventListener("input", (e) => {
+        wizardState.className = e.target.value;
+        updateCodePreview();
+      });
+
+      // Step 3: Component type selection
+      const radioOptions = document.querySelectorAll(".radio-option");
+      radioOptions.forEach((option, index) => {
+        option.addEventListener("click", () => {
+          radioOptions.forEach((opt) => opt.classList.remove("selected"));
+          option.classList.add("selected");
+          wizardState.componentType = index === 0 ? "html-props" : "vanilla";
+          updateCodePreview();
+        });
+      });
+
+      // Step 3.5: Base element selection
+      const baseElementSelect = document.querySelector(".base-element-select");
+      baseElementSelect.addEventListener("change", (e) => {
+        const value = e.target.value;
+        if (value.includes(":")) {
+          const [element, tag] = value.split(":");
+          wizardState.baseElement = element;
+          wizardState.baseTag = tag;
+        } else {
+          wizardState.baseElement = value;
+          wizardState.baseTag = null;
+        }
+        updateCodePreview();
+      });
+
+      // Step 4: Property management
+      const propertyList = document.querySelector(".property-list");
+      const addPropertyBtn = document.querySelector(".add-property-btn");
+
+      function renderProperties() {
+        propertyList.innerHTML = wizardState.properties
+          .map(
+            (prop, index) => `
+        <div class="property-item" data-index="${index}">
+          <div class="property-name">${prop.name}</div>
+          <div class="property-type">${prop.type}</div>
+          <div class="property-remove" onclick="removeProperty(${index})">
+            <i class="codicon codicon-trash"></i>
+          </div>
+        </div>
+      `
+          )
+          .join("");
+        updateCodePreview();
+      }
+
+      window.removeProperty = function (index) {
+        wizardState.properties.splice(index, 1);
+        renderProperties();
+      };
+
+      addPropertyBtn.addEventListener("click", () => {
+        const propertyName = prompt("Property name:");
+        if (!propertyName) return;
+
+        const propertyType =
+          prompt(
+            "Property type (string/number/boolean/object/array/function):"
+          ) || "string";
+
+        wizardState.properties.push({
+          name: propertyName,
+          type: propertyType,
+          defaultValue: getDefaultValueForType(propertyType),
+        });
+
+        renderProperties();
+      });
+
+      // Step 6: File path
+      const filePathInput = document.querySelector(
+        ".wizard-step:nth-child(6) .step-input"
+      );
+      filePathInput.addEventListener("input", (e) => {
+        wizardState.filePath = e.target.value;
+      });
+
+      // Wizard navigation
+      const cancelBtn = document.querySelector(
+        ".wizard-footer .wizard-btn:nth-child(1)"
+      );
+      const backBtn = document.querySelector(
+        ".wizard-footer .wizard-btn:nth-child(2)"
+      );
+      const createBtn = document.querySelector(
+        ".wizard-footer .wizard-btn:nth-child(3)"
+      );
+      const wizardClose = document.querySelector(".wizard-close");
+
+      cancelBtn.addEventListener("click", closeWizard);
+      wizardClose.addEventListener("click", closeWizard);
+
+      createBtn.addEventListener("click", () => {
+        alert(
+          `Component created!\n\nFile: ${wizardState.filePath}\nTag: <${wizardState.tagName}>\nClass: ${wizardState.className}\nType: ${wizardState.componentType}\nProperties: ${wizardState.properties.length}`
+        );
+      });
+
+      function closeWizard() {
+        if (confirm("Close wizard without creating component?")) {
+          document.querySelector(".wizard-modal").style.display = "none";
+        }
+      }
+
+      // Utility functions
+      function toPascalCase(str) {
+        return str
+          .split("-")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join("");
+      }
+
+      function getDefaultValueForType(type) {
+        const defaults = {
+          string: "''",
+          number: "0",
+          boolean: "false",
+          object: "{}",
+          array: "[]",
+          function: "null",
+        };
+        return defaults[type] || "''";
+      }
+
+      function updateFilePath() {
+        wizardState.filePath = `./components/${wizardState.tagName}.ts`;
+        filePathInput.value = wizardState.filePath;
+      }
+
+      function updateCodePreview() {
+        const codePreview = document.querySelector(".code-preview");
+
+        if (wizardState.componentType === "html-props") {
+          codePreview.innerHTML = generateHtmlPropsCode();
+        } else {
+          codePreview.innerHTML = generateVanillaCode();
+        }
+      }
+
+      function generateHtmlPropsCode() {
+        // Generate interface properties
+        const interfaceProps = wizardState.properties
+          .map(
+            (prop) =>
+              `<div class="code-line">&nbsp;&nbsp;<span class="code-property">${prop.name}</span>?: <span class="code-class">${prop.type}</span>;</div>`
+          )
+          .join("\n");
+
+        // Determine base interface for props interface
+        const baseInterface = ` <span class="code-keyword">extends</span> <span class="code-class">${wizardState.baseElement}</span>`;
+
+        // Generate class properties as signals (except functions)
+        const properties = wizardState.properties
+          .map((prop) => {
+            if (prop.type === "function") {
+              return `<div class="code-line">&nbsp;&nbsp;<span class="code-property">${prop.name}</span>?: <span class="code-class">${prop.type}</span>;</div>`;
+            }
+            const defaultVal =
+              prop.defaultValue &&
+              prop.defaultValue !== "''" &&
+              prop.defaultValue !== "null"
+                ? prop.defaultValue
+                : prop.type === "string"
+                ? `<span class="code-string">''</span>`
+                : prop.type === "number"
+                ? "0"
+                : prop.type === "boolean"
+                ? '<span class="code-keyword">false</span>'
+                : '<span class="code-keyword">null</span>';
+            return `<div class="code-line">&nbsp;&nbsp;<span class="code-property">${prop.name}</span> = <span class="code-keyword">signal</span>&lt;<span class="code-class">${prop.type}</span>&gt;(${defaultVal});</div>`;
+          })
+          .join("\n");
+
+        // Defaults are now handled in signal initializers, no need for getDefaultProps
+
+        // Generate observedAttributes for non-function properties
+        const observedAttrs = wizardState.properties
+          .filter((p) => p.type !== "function")
+          .map(
+            (p) => `<span class="code-string">'${toKebabCase(p.name)}'</span>`
+          )
+          .join(", ");
+
+        // No need for manual mapping, using automated kebab-to-camelCase conversion
+
+        return `
+        <div class="code-line"><span class="code-keyword">import</span> <span class="code-class">HTMLProps</span> <span class="code-keyword">from</span> <span class="code-string">'@html-props/core'</span>;</div>
+        <div class="code-line"><span class="code-keyword">import</span> { <span class="code-class">signal</span> } <span class="code-keyword">from</span> <span class="code-string">'@html-props/signals'</span>;</div>
+        <div class="code-line"><span class="code-keyword">import</span> * <span class="code-keyword">as</span> html <span class="code-keyword">from</span> <span class="code-string">'@html-props/built-ins'</span>;</div>
+        <div class="code-line">&nbsp;</div>
+        <div class="code-line"><span class="code-comment">/**</span></div>
+        <div class="code-line"><span class="code-comment"> * Props interface for ${
+          wizardState.className
+        }</span></div>
+        <div class="code-line"><span class="code-comment"> */</span></div>
+        <div class="code-line"><span class="code-keyword">interface</span> <span class="code-class">${
+          wizardState.className
+        }Props</span>${baseInterface} {</div>
+        ${interfaceProps}
+        <div class="code-line">}</div>
+        <div class="code-line">&nbsp;</div>
+        <div class="code-line"><span class="code-comment">/**</span></div>
+        <div class="code-line"><span class="code-comment"> * ${
+          wizardState.className
+        } component</span></div>
+        <div class="code-line"><span class="code-comment"> * Generated by HTML Props Builder</span></div>
+        <div class="code-line"><span class="code-comment"> */</span></div>
+        <div class="code-line"><span class="code-keyword">class</span> <span class="code-class">${
+          wizardState.className
+        }</span> <span class="code-keyword">extends</span> <span class="code-class">HTMLProps</span>(<span class="code-class">${
+          wizardState.baseElement
+        }</span>)&lt;<span class="code-class">${
+          wizardState.className
+        }Props</span>&gt;() {</div>
+        <div class="code-line">&nbsp;&nbsp;<span class="code-keyword">static</span> <span class="code-keyword">get</span> <span class="code-property">observedAttributes</span>() {</div>
+        <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">return</span> [${observedAttrs}];</div>
+        <div class="code-line">&nbsp;&nbsp;}</div>
+        <div class="code-line">&nbsp;</div>
+        ${properties}
+        <div class="code-line">&nbsp;</div>
+        <div class="code-line">&nbsp;&nbsp;<span class="code-keyword">attributeChangedCallback</span>(name: <span class="code-class">string</span>, oldValue: <span class="code-class">string</span> | <span class="code-keyword">null</span>, newValue: <span class="code-class">string</span> | <span class="code-keyword">null</span>) {</div>
+        <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-property">mapAttributeToSignal</span>(<span class="code-keyword">this</span>, name, newValue);</div>
+        <div class="code-line">&nbsp;&nbsp;}</div>
+        <div class="code-line">&nbsp;</div>
+        <div class="code-line">&nbsp;&nbsp;<span class="code-keyword">render</span>(): <span class="code-keyword">this</span>[<span class="code-string">'content'</span>] {</div>
+        <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-comment">// Build your component structure using HTML Props Builder</span></div>
+        <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-comment">// Drag elements from Elements panel to construct the DOM hierarchy</span></div>
+        <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">return</span> [];</div>
+        <div class="code-line">&nbsp;&nbsp;}</div>
+        <div class="code-line">}</div>
+        <div class="code-line">&nbsp;</div>
+        <div class="code-line"><span class="code-comment">/**</span></div>
+        <div class="code-line"><span class="code-comment"> * Helper to map kebab-case attributes to camelCase signal properties</span></div>
+        <div class="code-line"><span class="code-comment"> */</span></div>
+        <div class="code-line"><span class="code-keyword">function</span> <span class="code-property">mapAttributeToSignal</span>(</div>
+        <div class="code-line">&nbsp;&nbsp;component: <span class="code-class">any</span>,</div>
+        <div class="code-line">&nbsp;&nbsp;attrName: <span class="code-class">string</span>,</div>
+        <div class="code-line">&nbsp;&nbsp;value: <span class="code-class">string</span> | <span class="code-keyword">null</span></div>
+        <div class="code-line">) {</div>
+        <div class="code-line">&nbsp;&nbsp;<span class="code-keyword">if</span> (value === <span class="code-keyword">null</span>) <span class="code-keyword">return</span>;</div>
+        <div class="code-line">&nbsp;&nbsp;<span class="code-keyword">const</span> propName = attrName.<span class="code-property">replace</span>(<span class="code-string">/-([a-z])/g</span>, (_, letter) => letter.<span class="code-property">toUpperCase</span>());</div>
+        <div class="code-line">&nbsp;&nbsp;<span class="code-keyword">if</span> (propName <span class="code-keyword">in</span> component && <span class="code-keyword">typeof</span> component[propName]?.set === <span class="code-string">'function'</span>) {</div>
+        <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;component[propName].<span class="code-property">set</span>(value);</div>
+        <div class="code-line">&nbsp;&nbsp;}</div>
+        <div class="code-line">}</div>
+        <div class="code-line">&nbsp;</div>
+        <div class="code-line"><span class="code-class">${
+          wizardState.className
+        }</span>.<span class="code-keyword">define</span>(<span class="code-string">'${
+          wizardState.tagName
+        }'</span>${
+          wizardState.baseTag
+            ? `, { <span class="code-property">extends</span>: <span class="code-string">'${wizardState.baseTag}'</span> }`
+            : ""
+        });</div>
+      `;
+      }
+
+      function generateVanillaCode() {
+        const observedAttrs = wizardState.properties
+          .filter((p) => p.type !== "function")
+          .map((p) => `'${toKebabCase(p.name)}'`)
+          .join(", ");
+
+        const renderContent = wizardState.properties
+          .filter((p) => p.type === "string" && p.name !== "onClick")
+          .map(
+            (prop) =>
+              `<div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-string">&lt;div&gt;\${this.getAttribute('${toKebabCase(
+                prop.name
+              )}') || ${prop.defaultValue}}&lt;/div&gt;</span></div>`
+          )
+          .join("\n");
+
+        return `
+        <div class="code-line"><span class="code-comment">/**</span></div>
+        <div class="code-line"><span class="code-comment"> * ${
+          wizardState.className
+        } component</span></div>
+        <div class="code-line"><span class="code-comment"> * Generated by HTML Props Builder</span></div>
+        <div class="code-line"><span class="code-comment"> */</span></div>
+        <div class="code-line"><span class="code-keyword">class</span> <span class="code-class">${
+          wizardState.className
+        }</span> <span class="code-keyword">extends</span> <span class="code-class">HTMLElement</span> {</div>
+        <div class="code-line">&nbsp;&nbsp;<span class="code-keyword">static</span> <span class="code-keyword">get</span> <span class="code-property">observedAttributes</span>() {</div>
+        <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">return</span> [${observedAttrs}];</div>
+        <div class="code-line">&nbsp;&nbsp;}</div>
+        <div class="code-line">&nbsp;</div>
+        <div class="code-line">&nbsp;&nbsp;<span class="code-keyword">connectedCallback</span>() {</div>
+        <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">this</span>.<span class="code-property">render</span>();</div>
+        <div class="code-line">&nbsp;&nbsp;}</div>
+        <div class="code-line">&nbsp;</div>
+        <div class="code-line">&nbsp;&nbsp;<span class="code-keyword">attributeChangedCallback</span>(name, oldValue, newValue) {</div>
+        <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">this</span>.<span class="code-property">render</span>();</div>
+        <div class="code-line">&nbsp;&nbsp;}</div>
+        <div class="code-line">&nbsp;</div>
+        <div class="code-line">&nbsp;&nbsp;<span class="code-keyword">render</span>() {</div>
+        <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">this</span>.<span class="code-property">innerHTML</span> = <span class="code-string">\`</span></div>
+        ${
+          renderContent ||
+          '<div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-string">&lt;div&gt;Component content&lt;/div&gt;</span></div>'
+        }
+        <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-string">\`</span>;</div>
+        <div class="code-line">&nbsp;&nbsp;}</div>
+        <div class="code-line">}</div>
+        <div class="code-line">&nbsp;</div>
+        <div class="code-line"><span class="code-class">customElements</span>.<span class="code-keyword">define</span>(<span class="code-string">'${
+          wizardState.tagName
+        }'</span>, <span class="code-class">${
+          wizardState.className
+        }</span>);</div>
+      `;
+      }
+
+      function toKebabCase(str) {
+        return str.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+      }
+
+      // Initialize
+      renderProperties();
+      updateCodePreview();
+    </script>
+  </body>
+</html>

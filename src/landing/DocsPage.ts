@@ -1,5 +1,5 @@
 import { HTMLPropsMixin } from '@html-props/core';
-import { Article, Div, H1, H2, P } from '@html-props/built-ins';
+import { Article, Div, H1, H2, H3, Img, Li, P, Ul } from '@html-props/built-ins';
 import { NavBar } from './components/NavBar.ts';
 import { Sidebar } from './components/Sidebar.ts';
 import { CodeBlock } from './components/CodeBlock.ts';
@@ -43,6 +43,7 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement) {
                 { label: 'Introduction', href: '#/docs', active: currentPath === '/docs' || currentPath === '/docs/' },
                 { label: 'Installation', href: '#/docs/installation', active: currentPath === '/docs/installation' },
                 { label: 'CLI Tool', href: '#/docs/cli', active: currentPath === '/docs/cli' },
+                { label: 'Builder', href: '#/docs/builder', active: currentPath === '/docs/builder' },
                 { label: 'Basic Usage', href: '#/docs/usage', active: currentPath === '/docs/usage' },
                 { label: 'Signals', href: '#/docs/signals', active: currentPath === '/docs/signals' },
                 { label: 'Lifecycle Hooks', href: '#/docs/lifecycle', active: currentPath === '/docs/lifecycle' },
@@ -407,6 +408,214 @@ new Div({
     })
   ]
 })`,
+          }),
+        ],
+      });
+    }
+
+    if (path === '/docs/builder') {
+      return new Article({
+        style: { flex: '1', padding: '3rem 4rem', maxWidth: '800px' },
+        content: [
+          new H1({
+            textContent: 'Builder',
+            style: { fontSize: '2.5rem', marginBottom: '1.5rem', color: theme.colors.text },
+          }),
+          new P({
+            textContent: 'Visual HTML page building tool for VS Code.',
+            style: { marginBottom: '1.5rem', color: '#94a3b8' },
+          }),
+          new Img({
+            src: 'builder_1.png',
+            alt: 'HTML Props Builder Interface',
+            style: {
+              width: '100%',
+              borderRadius: '8px',
+              marginBottom: '2rem',
+              border: `1px solid ${theme.colors.border}`,
+            },
+          }),
+          new P({
+            textContent:
+              'The Builder allows you to construct web pages visually while maintaining full control over the underlying code. It bridges the gap between design and development by directly manipulating your source files.',
+            style: { marginBottom: '1.5rem', color: '#94a3b8' },
+          }),
+
+          // Section 1: Getting Started
+          new H2({
+            textContent: 'Getting Started',
+            style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
+          }),
+          new P({
+            textContent: 'To open the visual editor:',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+          new Ul({
+            style: { paddingLeft: '1.5rem', marginBottom: '2rem', color: '#94a3b8' },
+            content: [
+              new Li({ textContent: 'Right-click on any .html or .ts file in the explorer' }),
+              new Li({ textContent: 'Select "Open With..."' }),
+              new Li({ textContent: 'Choose "HTML Props Builder Visual Editor"' }),
+            ],
+          }),
+
+          // Section 2: Resource Management (UI + Config)
+          new H2({
+            textContent: 'Resource Management',
+            style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
+          }),
+          new P({
+            textContent:
+              'The Resources panel lets you manage your component libraries. Actions here directly affect your project configuration.',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+
+          new H3({
+            textContent: 'Adding Resource Directories',
+            style: { fontSize: '1.4rem', marginTop: '1.5rem', marginBottom: '0.5rem', color: theme.colors.text },
+          }),
+          new P({
+            textContent: 'Click the "+" button in the Resources panel to select a folder containing your components.',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+          new P({
+            textContent:
+              'Technical Effect: This updates your VS Code workspace settings (settings.json) to include the new path:',
+            style: { marginBottom: '0.5rem', color: theme.colors.text, fontWeight: 'bold', fontSize: '0.9rem' },
+          }),
+          new CodeBlock({
+            code: `{
+  "webBuilder.resourceDirectories": [
+    {
+      "name": "My Components",
+      "path": "./src/components"
+    }
+  ]
+}`,
+          }),
+
+          new H3({
+            textContent: 'Creating Components',
+            style: { fontSize: '1.4rem', marginTop: '1.5rem', marginBottom: '0.5rem', color: theme.colors.text },
+          }),
+          new P({
+            textContent:
+              'Use the category menu (three dots) in the Resources panel to "Create Resource". The wizard guides you through defining the tag name, properties, and base element.',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+          new P({
+            textContent: 'Technical Effect: Generates a new TypeScript file with the component class definition:',
+            style: { marginBottom: '0.5rem', color: theme.colors.text, fontWeight: 'bold', fontSize: '0.9rem' },
+          }),
+          new CodeBlock({
+            code: `// Generated file: src/components/MyButton.ts
+class MyButton extends HTMLProps(HTMLElement)<MyButtonProps>() {
+  static props = {
+    label: { type: String, default: '' }
+  };
+  // ...
+}
+MyButton.define('my-button');`,
+          }),
+
+          new H3({
+            textContent: 'Supported Resource Types',
+            style: { fontSize: '1.4rem', marginTop: '1.5rem', marginBottom: '0.5rem', color: theme.colors.text },
+          }),
+          new Ul({
+            style: { paddingLeft: '1.5rem', marginBottom: '1rem', color: '#94a3b8' },
+            content: [
+              new Li({
+                content: [
+                  new P({
+                    textContent: 'Custom Components (.ts/.js)',
+                    style: { fontWeight: 'bold', color: theme.colors.text, display: 'inline' },
+                  }),
+                  new P({
+                    textContent: ': Scanned via regex for `customElements.define()` or `HTMLProps`.',
+                    style: { display: 'inline' },
+                  }),
+                ],
+              }),
+              new Li({
+                content: [
+                  new P({
+                    textContent: 'HTML Templates (.html)',
+                    style: { fontWeight: 'bold', color: theme.colors.text, display: 'inline' },
+                  }),
+                  new P({
+                    textContent: ': Static files treated as insertable templates.',
+                    style: { display: 'inline' },
+                  }),
+                ],
+              }),
+            ],
+          }),
+
+          // Section 3: Visual Editing (UI + Code)
+          new H2({
+            textContent: 'Visual Editing & Code Generation',
+            style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
+          }),
+          new P({
+            textContent: 'The visual editor is a WYSIWYG interface that writes standard HTML.',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+
+          new H3({
+            textContent: 'Drag & Drop Composition',
+            style: { fontSize: '1.4rem', marginTop: '1.5rem', marginBottom: '0.5rem', color: theme.colors.text },
+          }),
+          new P({
+            textContent:
+              'Dragging an element from the panel into the editor inserts the corresponding tag into your document.',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+          new P({
+            textContent: 'Technical Effect: Inserts the HTML tag at the cursor position or drop target.',
+            style: { marginBottom: '0.5rem', color: theme.colors.text, fontWeight: 'bold', fontSize: '0.9rem' },
+          }),
+          new CodeBlock({
+            code: `<!-- Before -->
+<div class="container"></div>
+
+<!-- After Dragging 'MyButton' -->
+<div class="container">
+  <my-button></my-button>
+</div>`,
+          }),
+
+          new H3({
+            textContent: 'Property Editing',
+            style: { fontSize: '1.4rem', marginTop: '1.5rem', marginBottom: '0.5rem', color: theme.colors.text },
+          }),
+          new P({
+            textContent:
+              'Selecting an element populates the Properties panel. Changing values here updates the element attributes in real-time.',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+          new P({
+            textContent:
+              'Technical Effect: Updates HTML attributes. For HTMLProps components, these attributes map to reactive props.',
+            style: { marginBottom: '0.5rem', color: theme.colors.text, fontWeight: 'bold', fontSize: '0.9rem' },
+          }),
+          new CodeBlock({
+            code: `<!-- Changing 'count' in Properties Panel -->
+<my-counter count="5"></my-counter>`,
+          }),
+
+          new H3({
+            textContent: 'Interface Panels',
+            style: { fontSize: '1.4rem', marginTop: '1.5rem', marginBottom: '0.5rem', color: theme.colors.text },
+          }),
+          new Ul({
+            style: { paddingLeft: '1.5rem', marginBottom: '2rem', color: '#94a3b8' },
+            content: [
+              new Li({ textContent: 'Elements: Built-in HTML tags.' }),
+              new Li({ textContent: 'Resources: Your custom components (configured via settings.json).' }),
+              new Li({ textContent: 'Layers: DOM tree view for reordering.' }),
+              new Li({ textContent: 'Properties: Attribute editor.' }),
+            ],
           }),
         ],
       });

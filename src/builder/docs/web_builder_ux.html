@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTML Props Builder - VSCode Native Panels (WebView Content)</title>
+    <link
+      rel="stylesheet"
+      href="https://microsoft.github.io/vscode-codicons/dist/codicon.css"
+    />
+    <style>
+      /* Codicons font face fix */
+      @font-face {
+        font-family: "codicon";
+        font-display: block;
+        src: url("https://microsoft.github.io/vscode-codicons/dist/codicon.ttf")
+          format("truetype");
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Segoe WPC",
+          sans-serif;
+        background: #1e1e1e;
+        color: #cccccc;
+        font-size: 13px;
+      }
+
+      .vscode-layout {
+        display: flex;
+        height: 100%;
+      }
+
+      /* Activity Bar */
+      .activity-bar {
+        width: 48px;
+        background: #333333;
+        border-right: 1px solid #252525;
+        display: flex;
+        flex-direction: column;
+        padding: 8px 0;
+      }
+
+      .activity-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #858585;
+        cursor: pointer;
+        position: relative;
+      }
+
+      .activity-icon:hover {
+        color: #ffffff;
+      }
+
+      .activity-icon.active {
+        color: #ffffff;
+      }
+
+      .activity-icon.active::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #007acc;
+      }
+
+      /* Sidebar with multiple native panels */
+      .sidebar {
+        width: 320px;
+        background: #252526;
+        border-right: 1px solid #1e1e1e;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* Individual panel (native VSCode panel structure) */
+      .panel {
+        display: flex;
+        flex-direction: column;
+        border-bottom: 1px solid #1e1e1e;
+        flex: 1 1 0;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .panel.collapsed {
+        flex: 0 0 auto;
+      }
+
+      .panel-header {
+        padding: 0 8px 0 8px;
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #cccccc;
+        font-weight: 600;
+        background: #252526;
+        border-bottom: 1px solid #1e1e1e;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        user-select: none;
+        height: 22px;
+      }
+
+      .panel-header:hover {
+        background: #2a2d2e;
+      }
+
+      .panel-title {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .chevron {
+        transition: transform 0.2s;
+        font-size: 16px;
+      }
+
+      .panel.collapsed .chevron {
+        transform: rotate(-90deg);
+      }
+
+      .panel-actions {
+        display: flex;
+        gap: 2px;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+
+      .panel-header:hover .panel-actions {
+        opacity: 1;
+      }
+
+      .action-btn {
+        width: 22px;
+        height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #cccccc;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+
+      .action-btn:hover {
+        background: #3c3c3c;
+      }
+
+      /* Panel content (this is the WebView) */
+      .panel-content {
+        flex: 1 1 0;
+        min-height: 0;
+        overflow-y: auto;
+        background: #1e1e1e;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .panel.collapsed .panel-content {
+        display: none;
+      }
+
+      /* WebView content styles */
+      .webview-content {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+
+      /* Search box (inside WebView) */
+      .search-box {
+        padding: 6px 8px;
+        background: #1e1e1e;
+        border-bottom: 1px solid #2d2d2d;
+      }
+
+      .search-wrapper {
+        position: relative;
+      }
+
+      .search-input {
+        width: 100%;
+        background: #3c3c3c;
+        border: 1px solid #3c3c3c;
+        border-radius: 3px;
+        padding: 4px 8px 4px 28px;
+        color: #cccccc;
+        font-size: 13px;
+        outline: none;
+      }
+
+      .search-input:focus {
+        border-color: #007acc;
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #858585;
+        pointer-events: none;
+      }
+
+      /* Tree items */
+      .tree-item {
+        padding: 2px 8px;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        color: #cccccc;
+      }
+
+      .tree-item:hover {
+        background: #2a2d2e;
+      }
+
+      .tree-item.selected {
+        background: #04395e;
+      }
+
+      .tree-item-icon {
+        margin-right: 6px;
+        display: flex;
+        align-items: center;
+      }
+
+      .tree-item-label {
+        flex: 1;
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .tree-item-value {
+        font-size: 12px;
+        color: #858585;
+        margin-left: 8px;
+      }
+
+      .tree-item-badge {
+        background: #4d4d4d;
+        color: #cccccc;
+        padding: 1px 6px;
+        border-radius: 10px;
+        font-size: 11px;
+        margin-left: 6px;
+      }
+
+      /* Nested tree items (Layers) */
+      .tree-item-children {
+        padding-left: 16px;
+      }
+
+      .tree-item-expandable .tree-item-icon {
+        width: 16px;
+      }
+
+      .tree-item-expandable.collapsed .chevron {
+        transform: rotate(-90deg);
+      }
+
+      /* Section headers in WebView - collapsible */
+      .section-header {
+        padding: 2px 8px 2px 8px;
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #858585;
+        font-weight: 600;
+        background: #1e1e1e;
+        border-bottom: 1px solid #2d2d2d;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .section-header:hover {
+        background: #2a2d2e;
+      }
+
+      .section-header .chevron {
+        font-size: 14px;
+        transition: transform 0.2s;
+      }
+
+      .section-header.collapsed .chevron {
+        transform: rotate(-90deg);
+      }
+
+      .section-header.collapsed + .section-items {
+        display: none;
+      }
+
+      .section-items {
+        display: block;
+      }
+
+      /* Property editors (WebView content) */
+      .property-row {
+        padding: 6px 8px;
+        border-bottom: 1px solid #2d2d2d;
+      }
+
+      .property-label {
+        font-size: 11px;
+        color: #858585;
+        margin-bottom: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .property-reset {
+        color: #007acc;
+        font-size: 11px;
+        cursor: pointer;
+        padding: 2px 4px;
+      }
+
+      .property-reset:hover {
+        background: #094771;
+        border-radius: 3px;
+      }
+
+      .property-input {
+        width: 100%;
+        background: #3c3c3c;
+        border: 1px solid #3c3c3c;
+        border-radius: 2px;
+        padding: 3px 6px;
+        color: #cccccc;
+        font-size: 13px;
+        outline: none;
+      }
+
+      .property-input:focus {
+        border-color: #007acc;
+      }
+
+      /* Toggle switch */
+      .toggle-switch {
+        position: relative;
+        width: 36px;
+        height: 20px;
+        background: #3c3c3c;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .toggle-switch.active {
+        background: #007acc;
+      }
+
+      .toggle-knob {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        background: white;
+        border-radius: 50%;
+        top: 2px;
+        left: 2px;
+        transition: left 0.2s;
+      }
+
+      .toggle-switch.active .toggle-knob {
+        left: 18px;
+      }
+
+      /* Color picker */
+      .color-input-group {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .color-swatch {
+        width: 24px;
+        height: 24px;
+        border-radius: 2px;
+        border: 1px solid #454545;
+        cursor: pointer;
+      }
+
+      /* Number stepper */
+      .number-stepper {
+        display: flex;
+        gap: 4px;
+      }
+
+      .stepper-btn {
+        width: 24px;
+        height: 24px;
+        background: #3c3c3c;
+        border: none;
+        border-radius: 2px;
+        color: #cccccc;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .stepper-btn:hover {
+        background: #505050;
+      }
+
+      /* Class chips */
+      .class-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .chip {
+        background: #094771;
+        color: #cccccc;
+        padding: 2px 6px;
+        border-radius: 2px;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .chip-remove {
+        cursor: pointer;
+        opacity: 0.7;
+      }
+
+      .chip-remove:hover {
+        opacity: 1;
+      }
+
+      .chip-add {
+        background: #3c3c3c;
+        cursor: pointer;
+      }
+
+      .chip-add:hover {
+        background: #505050;
+      }
+
+      /* Editor area */
+      .editor-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #1e1e1e;
+      }
+
+      .editor-tabs {
+        background: #252526;
+        border-bottom: 1px solid #1e1e1e;
+        padding: 0;
+        display: flex;
+        height: 35px;
+      }
+
+      .editor-tab {
+        padding: 0 12px;
+        display: flex;
+        align-items: center;
+        color: #969696;
+        cursor: pointer;
+        border-right: 1px solid #1e1e1e;
+        position: relative;
+      }
+
+      .editor-tab.active {
+        background: #1e1e1e;
+        color: #ffffff;
+        border-bottom: 1px solid #007acc;
+      }
+
+      .editor-content {
+        flex: 1;
+        padding: 20px;
+        overflow: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .visual-preview {
+        background: white;
+        border-radius: 4px;
+        padding: 40px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        max-width: 700px;
+      }
+
+      .selected-element {
+        border: 2px solid #007acc;
+        padding: 12px 24px;
+        border-radius: 4px;
+        position: relative;
+      }
+
+      /* Info box */
+      .info-box {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #252526;
+        border: 1px solid #454545;
+        border-radius: 4px;
+        padding: 16px;
+        max-width: 300px;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      }
+
+      .info-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #cccccc;
+        margin-bottom: 8px;
+      }
+
+      .info-text {
+        font-size: 11px;
+        color: #858585;
+        line-height: 1.5;
+      }
+
+      .info-highlight {
+        color: #4ec9b0;
+      }
+
+      /* Section headers in WebView - collapsible */
+      .section-header {
+        padding: 4px 8px;
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #858585;
+        font-weight: 600;
+        background: #1e1e1e;
+        border-bottom: 1px solid #2d2d2d;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .section-header:hover {
+        background: #2a2d2e;
+      }
+
+      .section-header .chevron {
+        font-size: 14px;
+        transition: transform 0.2s;
+      }
+
+      .section-header.collapsed .chevron {
+        transform: rotate(-90deg);
+      }
+
+      .section-header.collapsed + .section-items {
+        display: none;
+      }
+
+      .section-items {
+        display: block;
+      }
+
+      /* Empty state */
+      .empty-state {
+        padding: 20px;
+        text-align: center;
+        color: #858585;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="vscode-layout">
+      <!-- Activity Bar -->
+      <div class="activity-bar">
+        <div class="activity-icon">
+          <i class="codicon codicon-files"></i>
+        </div>
+        <div class="activity-icon">
+          <i class="codicon codicon-search"></i>
+        </div>
+        <div class="activity-icon active">
+          <i class="codicon codicon-browser"></i>
+        </div>
+        <div class="activity-icon">
+          <i class="codicon codicon-gear"></i>
+        </div>
+      </div>
+
+      <!-- Sidebar with 3 native panels -->
+      <div class="sidebar">
+        <!-- ELEMENTS PANEL (Native VSCode Panel) -->
+        <div class="panel">
+          <div class="panel-header" onclick="togglePanel(this)">
+            <div class="panel-title">
+              <i class="codicon codicon-chevron-down chevron"></i>
+              <span>ELEMENTS</span>
+            </div>
+            <div class="panel-actions">
+              <div class="action-btn" title="Refresh">
+                <i class="codicon codicon-refresh"></i>
+              </div>
+              <div class="action-btn" title="More Actions">
+                <i class="codicon codicon-ellipsis"></i>
+              </div>
+            </div>
+          </div>
+          <div class="panel-content">
+            <!-- WebView content starts here -->
+            <div class="webview-content">
+              <div class="search-box">
+                <div class="search-wrapper">
+                  <i class="codicon codicon-search search-icon"></i>
+                  <input
+                    type="text"
+                    class="search-input"
+                    placeholder="Search elements..."
+                  />
+                </div>
+              </div>
+
+              <div class="section-header" onclick="toggleSection(this)">
+                <i class="codicon codicon-chevron-down chevron"></i>
+                Built-in Elements
+              </div>
+              <div class="section-items">
+                <div class="tree-item">
+                  <span class="tree-item-icon"
+                    ><i class="codicon codicon-symbol-class"></i
+                  ></span>
+                  <span class="tree-item-label">div</span>
+                  <span class="tree-item-value">container</span>
+                </div>
+                <div class="tree-item">
+                  <span class="tree-item-icon"
+                    ><i class="codicon codicon-symbol-method"></i
+                  ></span>
+                  <span class="tree-item-label">button</span>
+                  <span class="tree-item-value">interactive</span>
+                </div>
+                <div class="tree-item">
+                  <span class="tree-item-icon"
+                    ><i class="codicon codicon-symbol-field"></i
+                  ></span>
+                  <span class="tree-item-label">input</span>
+                  <span class="tree-item-value">form</span>
+                </div>
+                <div class="tree-item">
+                  <span class="tree-item-icon"
+                    ><i class="codicon codicon-symbol-string"></i
+                  ></span>
+                  <span class="tree-item-label">span</span>
+                  <span class="tree-item-value">inline</span>
+                </div>
+              </div>
+
+              <div class="section-header" onclick="toggleSection(this)">
+                <i class="codicon codicon-chevron-down chevron"></i>
+                Fluent UI
+              </div>
+              <div class="section-items">
+                <div class="tree-item">
+                  <span class="tree-item-icon"
+                    ><i
+                      class="codicon codicon-symbol-misc"
+                      style="color: #4ec9b0"
+                    ></i
+                  ></span>
+                  <span class="tree-item-label">fluent-button</span>
+                </div>
+                <div class="tree-item">
+                  <span class="tree-item-icon"
+                    ><i
+                      class="codicon codicon-symbol-misc"
+                      style="color: #4ec9b0"
+                    ></i
+                  ></span>
+                  <span class="tree-item-label">fluent-card</span>
+                </div>
+                <div class="tree-item">
+                  <span class="tree-item-icon"
+                    ><i
+                      class="codicon codicon-symbol-misc"
+                      style="color: #4ec9b0"
+                    ></i
+                  ></span>
+                  <span class="tree-item-label">fluent-text-field</span>
+                </div>
+              </div>
+
+              <div class="section-header" onclick="toggleSection(this)">
+                <i class="codicon codicon-chevron-down chevron"></i>
+                Material Design
+              </div>
+              <div class="section-items">
+                <div class="tree-item">
+                  <span class="tree-item-icon"
+                    ><i
+                      class="codicon codicon-symbol-misc"
+                      style="color: #4ec9b0"
+                    ></i
+                  ></span>
+                  <span class="tree-item-label">material-card</span>
+                </div>
+                <div class="tree-item">
+                  <span class="tree-item-icon"
+                    ><i
+                      class="codicon codicon-symbol-misc"
+                      style="color: #4ec9b0"
+                    ></i
+                  ></span>
+                  <span class="tree-item-label">material-button</span>
+                </div>
+                <div class="tree-item">
+                  <span class="tree-item-icon"
+                    ><i
+                      class="codicon codicon-symbol-misc"
+                      style="color: #4ec9b0"
+                    ></i
+                  ></span>
+                  <span class="tree-item-label">material-input</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LAYERS PANEL (Native VSCode Panel) -->
+        <div class="panel">
+          <div class="panel-header" onclick="togglePanel(this)">
+            <div class="panel-title">
+              <i class="codicon codicon-chevron-down chevron"></i>
+              <span>LAYERS</span>
+            </div>
+            <div class="panel-actions">
+              <div class="action-btn" title="Expand All">
+                <i class="codicon codicon-expand-all"></i>
+              </div>
+              <div class="action-btn" title="Collapse All">
+                <i class="codicon codicon-collapse-all"></i>
+              </div>
+            </div>
+          </div>
+          <div class="panel-content">
+            <!-- WebView content starts here -->
+            <div class="webview-content">
+              <div class="tree-item tree-item-expandable">
+                <span class="tree-item-icon"
+                  ><i class="codicon codicon-chevron-down chevron"></i
+                ></span>
+                <span class="tree-item-icon"
+                  ><i class="codicon codicon-symbol-structure"></i
+                ></span>
+                <span class="tree-item-label">html</span>
+              </div>
+              <div class="tree-item-children">
+                <div class="tree-item tree-item-expandable">
+                  <span class="tree-item-icon"
+                    ><i class="codicon codicon-chevron-down chevron"></i
+                  ></span>
+                  <span class="tree-item-icon"
+                    ><i class="codicon codicon-symbol-class"></i
+                  ></span>
+                  <span class="tree-item-label">body</span>
+                </div>
+                <div class="tree-item-children">
+                  <div class="tree-item tree-item-expandable">
+                    <span class="tree-item-icon"
+                      ><i class="codicon codicon-chevron-down chevron"></i
+                    ></span>
+                    <span class="tree-item-icon"
+                      ><i class="codicon codicon-symbol-class"></i
+                    ></span>
+                    <span class="tree-item-label">div</span>
+                    <span class="tree-item-value">.container</span>
+                  </div>
+                  <div class="tree-item-children">
+                    <div class="tree-item selected">
+                      <span class="tree-item-icon"></span>
+                      <span class="tree-item-icon"
+                        ><i class="codicon codicon-symbol-string"></i
+                      ></span>
+                      <span class="tree-item-label">h1</span>
+                    </div>
+                    <div class="tree-item">
+                      <span class="tree-item-icon"></span>
+                      <span class="tree-item-icon"
+                        ><i class="codicon codicon-symbol-string"></i
+                      ></span>
+                      <span class="tree-item-label">p</span>
+                      <span class="tree-item-value">.subtitle</span>
+                    </div>
+                    <div class="tree-item">
+                      <span class="tree-item-icon"></span>
+                      <span class="tree-item-icon"
+                        ><i class="codicon codicon-symbol-method"></i
+                      ></span>
+                      <span class="tree-item-label">button</span>
+                      <span class="tree-item-value">#submit-btn</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROPERTIES PANEL (Native VSCode Panel) -->
+        <div class="panel">
+          <div class="panel-header" onclick="togglePanel(this)">
+            <div class="panel-title">
+              <i class="codicon codicon-chevron-down chevron"></i>
+              <span>PROPERTIES</span>
+            </div>
+            <div class="panel-actions">
+              <div class="action-btn" title="Filter">
+                <i class="codicon codicon-filter"></i>
+              </div>
+            </div>
+          </div>
+          <div class="panel-content">
+            <!-- WebView content starts here -->
+            <div class="webview-content">
+              <div class="section-header" onclick="toggleSection(this)">
+                <i class="codicon codicon-chevron-down chevron"></i>
+                <i class="codicon codicon-star"></i> Custom
+              </div>
+              <div class="section-items">
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>appearance</span>
+                    <span class="property-reset">reset</span>
+                  </div>
+                  <select class="property-input">
+                    <option>filled</option>
+                    <option>outline</option>
+                    <option>stealth</option>
+                  </select>
+                </div>
+
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>size</span>
+                  </div>
+                  <select class="property-input">
+                    <option>small</option>
+                    <option selected>medium</option>
+                    <option>large</option>
+                  </select>
+                </div>
+
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>disabled</span>
+                  </div>
+                  <div
+                    class="toggle-switch"
+                    onclick="this.classList.toggle('active')"
+                  >
+                    <div class="toggle-knob"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section-header" onclick="toggleSection(this)">
+                <i class="codicon codicon-chevron-down chevron"></i>
+                <i class="codicon codicon-tag"></i> Basic
+              </div>
+              <div class="section-items">
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>tag</span>
+                  </div>
+                  <div
+                    style="
+                      color: #4ec9b0;
+                      font-family: monospace;
+                      font-size: 12px;
+                    "
+                  >
+                    h1
+                  </div>
+                </div>
+
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>id</span>
+                    <span class="property-reset">reset</span>
+                  </div>
+                  <input
+                    type="text"
+                    class="property-input"
+                    value="main-title"
+                  />
+                </div>
+
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>class</span>
+                  </div>
+                  <div class="class-chips">
+                    <div class="chip">
+                      title
+                      <i
+                        class="codicon codicon-close chip-remove"
+                        onclick="removeChip(this.parentElement)"
+                      ></i>
+                    </div>
+                    <div class="chip">
+                      highlight
+                      <i
+                        class="codicon codicon-close chip-remove"
+                        onclick="removeChip(this.parentElement)"
+                      ></i>
+                    </div>
+                    <div class="chip chip-add" onclick="addClassChip(event)">
+                      <i class="codicon codicon-add"></i> Add
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section-header" onclick="toggleSection(this)">
+                <i class="codicon codicon-chevron-down chevron"></i>
+                <i class="codicon codicon-symbol-color"></i> Appearance
+              </div>
+              <div class="section-items">
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>color</span>
+                  </div>
+                  <div class="color-input-group">
+                    <div class="color-swatch" style="background: #007acc"></div>
+                    <input type="text" class="property-input" value="#007acc" />
+                  </div>
+                </div>
+
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>background-color</span>
+                  </div>
+                  <div class="color-input-group">
+                    <div class="color-swatch" style="background: #ffffff"></div>
+                    <input type="text" class="property-input" value="#ffffff" />
+                  </div>
+                </div>
+
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>font-size</span>
+                    <span class="property-reset">reset</span>
+                  </div>
+                  <div class="number-stepper">
+                    <button class="stepper-btn">
+                      <i class="codicon codicon-remove"></i>
+                    </button>
+                    <input
+                      type="text"
+                      class="property-input"
+                      value="24px"
+                      style="text-align: center; max-width: 80px"
+                    />
+                    <button class="stepper-btn">
+                      <i class="codicon codicon-add"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>font-weight</span>
+                  </div>
+                  <select class="property-input">
+                    <option>300</option>
+                    <option>400</option>
+                    <option>500</option>
+                    <option>600</option>
+                    <option selected>700</option>
+                    <option>800</option>
+                  </select>
+                </div>
+
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>text-align</span>
+                  </div>
+                  <select class="property-input">
+                    <option selected>left</option>
+                    <option>center</option>
+                    <option>right</option>
+                    <option>justify</option>
+                  </select>
+                </div>
+
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>display</span>
+                  </div>
+                  <select class="property-input">
+                    <option selected>block</option>
+                    <option>inline</option>
+                    <option>inline-block</option>
+                    <option>flex</option>
+                    <option>grid</option>
+                    <option>none</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="section-header" onclick="toggleSection(this)">
+                <i class="codicon codicon-chevron-down chevron"></i>
+                <i class="codicon codicon-symbol-boolean"></i> Attributes
+              </div>
+              <div class="section-items">
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>contenteditable</span>
+                  </div>
+                  <div
+                    class="toggle-switch"
+                    onclick="this.classList.toggle('active')"
+                  >
+                    <div class="toggle-knob"></div>
+                  </div>
+                </div>
+
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>draggable</span>
+                  </div>
+                  <div
+                    class="toggle-switch"
+                    onclick="this.classList.toggle('active')"
+                  >
+                    <div class="toggle-knob"></div>
+                  </div>
+                </div>
+
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>hidden</span>
+                  </div>
+                  <div
+                    class="toggle-switch"
+                    onclick="this.classList.toggle('active')"
+                  >
+                    <div class="toggle-knob"></div>
+                  </div>
+                </div>
+
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>spellcheck</span>
+                  </div>
+                  <div
+                    class="toggle-switch active"
+                    onclick="this.classList.toggle('active')"
+                  >
+                    <div class="toggle-knob"></div>
+                  </div>
+                </div>
+
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>tabindex</span>
+                  </div>
+                  <div class="number-stepper">
+                    <button class="stepper-btn">
+                      <i class="codicon codicon-remove"></i>
+                    </button>
+                    <input
+                      type="text"
+                      class="property-input"
+                      value="0"
+                      style="text-align: center; max-width: 60px"
+                    />
+                    <button class="stepper-btn">
+                      <i class="codicon codicon-add"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>title</span>
+                    <span class="property-reset">reset</span>
+                  </div>
+                  <input
+                    type="text"
+                    class="property-input"
+                    value="Main heading"
+                    placeholder="Tooltip text"
+                  />
+                </div>
+
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>lang</span>
+                  </div>
+                  <select class="property-input">
+                    <option value="">-</option>
+                    <option selected>en</option>
+                    <option>fi</option>
+                    <option>sv</option>
+                    <option>de</option>
+                    <option>fr</option>
+                  </select>
+                </div>
+
+                <div class="property-row">
+                  <div class="property-label">
+                    <span>dir</span>
+                  </div>
+                  <select class="property-input">
+                    <option value="">-</option>
+                    <option selected>ltr</option>
+                    <option>rtl</option>
+                    <option>auto</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Editor Area -->
+      <div class="editor-area">
+        <div class="editor-tabs">
+          <div class="editor-tab active">
+            <i class="codicon codicon-file-code" style="margin-right: 6px"></i>
+            index.html
+          </div>
+        </div>
+        <div class="editor-content">
+          <div class="visual-preview">
+            <h2 style="color: #333; margin-bottom: 16px">Visual Editor</h2>
+            <p style="color: #666; margin-bottom: 24px">
+              Three native VSCode panels with WebView content
+            </p>
+
+            <div class="selected-element">
+              <h1
+                id="main-title"
+                class="title highlight"
+                style="color: #007acc"
+              >
+                🎨 Selected Element
+              </h1>
+            </div>
+
+            <p style="margin-top: 20px; color: #666; font-size: 14px">
+              Click elements in Layers panel to select them
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="info-box">
+      <div class="info-title">
+        <i class="codicon codicon-info"></i> WebView Panels Architecture
+      </div>
+      <div class="info-text">
+        <strong class="info-highlight">Native Panel Structure:</strong><br />
+        • 3 separate VSCode panels<br />
+        • Each panel header is native<br />
+        • Panel content is WebView<br /><br />
+
+        <strong class="info-highlight">WebView Benefits:</strong><br />
+        • Custom search & filter<br />
+        • Rich editors (color, toggle, chips)<br />
+        • Drag handles<br />
+        • Element previews<br />
+        • Number steppers<br /><br />
+
+        <strong class="info-highlight">VSCode Icons:</strong><br />
+        Using Codicons font for consistency
+      </div>
+    </div>
+
+    <script>
+      function togglePanel(header) {
+        const panel = header.parentElement;
+        panel.classList.toggle("collapsed");
+      }
+
+      function toggleSection(header) {
+        header.classList.toggle("collapsed");
+      }
+
+      // Class chips functionality
+      function removeChip(chipElement) {
+        chipElement.remove();
+      }
+
+      function addClassChip(event) {
+        const addButton = event.currentTarget;
+        const chipsContainer = addButton.parentElement;
+
+        // Create input for new class name
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "property-input";
+        input.placeholder = "class-name";
+        input.style.maxWidth = "120px";
+        input.style.fontSize = "11px";
+        input.style.padding = "2px 6px";
+
+        // Replace add button temporarily with input
+        addButton.style.display = "none";
+        chipsContainer.insertBefore(input, addButton);
+        input.focus();
+
+        let completed = false;
+
+        // Handle input completion
+        const completeInput = () => {
+          if (completed) return;
+          completed = true;
+
+          const className = input.value.trim();
+          if (className) {
+            // Create new chip
+            const chip = document.createElement("div");
+            chip.className = "chip";
+            chip.innerHTML = `
+            ${className}
+            <i class="codicon codicon-close chip-remove" onclick="removeChip(this.parentElement)"></i>
+          `;
+            chipsContainer.insertBefore(chip, addButton);
+          }
+          input.remove();
+          addButton.style.display = "flex";
+        };
+
+        input.addEventListener("blur", completeInput);
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            completeInput();
+          } else if (e.key === "Escape") {
+            completed = true;
+            input.remove();
+            addButton.style.display = "flex";
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
