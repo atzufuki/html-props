@@ -32,7 +32,7 @@ export interface ElementData {
    * Selector format used by the adapter
    * Helps UI understand how to work with selectors
    */
-  selectorFormat?: "css" | "ast" | "path" | "custom";
+  selectorFormat?: 'css' | 'ast' | 'path' | 'custom';
 }
 
 /**
@@ -44,13 +44,13 @@ export interface PropertyData {
 
   /** Property type for correct parsing and code generation */
   type:
-    | "string"
-    | "number"
-    | "boolean"
-    | "function"
-    | "signal"
-    | "object"
-    | "array";
+    | 'string'
+    | 'number'
+    | 'boolean'
+    | 'function'
+    | 'signal'
+    | 'object'
+    | 'array';
 }
 
 /**
@@ -73,7 +73,7 @@ export interface LayerData {
     tag: string;
     attributes?: Record<string, string>;
     selector?: string;
-    selectorFormat?: "css" | "ast" | "path" | "custom";
+    selectorFormat?: 'css' | 'ast' | 'path' | 'custom';
   };
 
   /** Display label */
@@ -90,81 +90,81 @@ export interface LayerData {
  * to narrow types in switch statements.
  */
 export type WebviewMessage =
-  | { type: "webviewReady" }
-  | { type: "ready" }
+  | { type: 'webviewReady' }
+  | { type: 'ready' }
   | {
-    type: "selectElement";
+    type: 'selectElement';
     tag: string;
     attributes: Record<string, string>;
     selector?: string;
     textContent?: string;
   }
   | {
-    type: "hoverElement";
+    type: 'hoverElement';
     tag: string;
     attributes: Record<string, string>;
     selector?: string;
   }
-  | { type: "clearHover" }
+  | { type: 'clearHover' }
   | {
-    type: "updateProperty";
+    type: 'updateProperty';
     name: string;
     value: string;
     propertyType: string;
     selector?: string;
   }
   | {
-    type: "deleteElement";
+    type: 'deleteElement';
     tag: string;
     attributes: Record<string, string>;
     selector?: string;
   }
   | {
-    type: "duplicateElement";
+    type: 'duplicateElement';
     tag: string;
     attributes: Record<string, string>;
     selector?: string;
   }
   | {
-    type: "copyElement";
+    type: 'copyElement';
     tag: string;
     attributes: Record<string, string>;
     selector?: string;
   }
   | {
-    type: "moveElement";
+    type: 'moveElement';
     sourceTag: string;
     sourceAttributes: Record<string, string>;
     sourceSelector?: string;
     targetTag: string;
     targetAttributes: Record<string, string>;
     targetSelector?: string;
-    position: "before" | "after" | "inside";
+    position: 'before' | 'after' | 'inside';
   }
   | {
-    type: "insertElement";
+    type: 'insertElement';
     element: unknown;
     html?: string;
     tag?: string;
   }
   | {
-    type: "dragStarted";
+    type: 'dragStarted';
     html: string;
     tag: string;
   }
   | {
-    type: "updateTree";
+    type: 'updateTree';
     layers: unknown[];
   }
   | {
-    type: "createComponent";
+    type: 'createResource';
   }
   | {
-    type: "createComponentInCategory";
+    type: 'createResourceInCategory';
     categoryPath: string;
   }
   | {
-    type: "deleteDirectory";
+    type: 'deleteDirectory';
     directoryPath: string;
   };
 

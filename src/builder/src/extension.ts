@@ -1,35 +1,30 @@
-import * as vscode from "vscode";
-import { ResourcesWebviewViewProvider } from "./views/ResourcesWebviewViewProvider";
-import { LayersWebviewViewProvider } from "./views/LayersWebviewViewProvider";
-import {
-  ElementProperty,
-  PropertiesWebviewViewProvider,
-} from "./views/PropertiesWebviewViewProvider";
-import { WebBuilderEditorProvider } from "./editors/WebBuilderEditorProvider";
+import * as vscode from 'vscode';
+import { ResourcesWebviewViewProvider } from './views/ResourcesWebviewViewProvider';
+import { LayersWebviewViewProvider } from './views/LayersWebviewViewProvider';
+import { ElementProperty, PropertiesWebviewViewProvider } from './views/PropertiesWebviewViewProvider';
+import { WebBuilderEditorProvider } from './editors/WebBuilderEditorProvider';
 
-import { HtmlDropEditProvider } from "./providers/HtmlDropEditProvider";
-import { AttributeRegistry } from "./services/AttributeRegistry";
-import { CustomElementScanner } from "./services/CustomElementScanner";
-import { AdapterManager } from "./adapters";
-import { CreateComponentCommand } from "./commands/CreateComponentCommand";
-import { DevServer } from "./services/DevServer";
-import { ElementData, InsertElementData, LayerData } from "./types/interfaces";
+import { HtmlDropEditProvider } from './providers/HtmlDropEditProvider';
+import { AttributeRegistry } from './services/AttributeRegistry';
+import { CustomElementScanner } from './services/CustomElementScanner';
+import { AdapterManager } from './adapters';
+import { CreateResourceCommand } from './commands/CreateResourceCommand';
+import { DevServer } from './services/DevServer';
+import { ElementData, InsertElementData, LayerData } from './types/interfaces';
 
 // Output channel for diagnostic information
-const outputChannel = vscode.window.createOutputChannel("HTML Props Builder");
+const outputChannel = vscode.window.createOutputChannel('HTML Props Builder');
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
-  outputChannel.appendLine("HTML Props Builder extension is now active!");
+  outputChannel.appendLine('HTML Props Builder extension is now active!');
   context.subscriptions.push(outputChannel);
 
   // Initialize Code Style Adapter Manager
   const adapterManager = new AdapterManager();
   outputChannel.appendLine(
-    `Registered adapters: ${
-      adapterManager.getAllAdapters().map((a) => a.id).join(", ")
-    }`,
+    `Registered adapters: ${adapterManager.getAllAdapters().map((a) => a.id).join(', ')}`,
   );
 
   // Start development server for component bundling
@@ -43,7 +38,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
       // Set DevServer on all adapters that support it
       for (const adapter of adapterManager.getAllAdapters()) {
-        if (typeof (adapter as any).setDevServer === "function") {
+        if (typeof (adapter as any).setDevServer === 'function') {
           (adapter as any).setDevServer(devServer);
           outputChannel.appendLine(`DevServer set on adapter: ${adapter.id}`);
         }
@@ -60,17 +55,17 @@ export async function activate(context: vscode.ExtensionContext) {
   let isWebBuilderVisible = false;
 
   // Check configuration to determine which panel types to use
-  const config = vscode.workspace.getConfiguration("webBuilder");
-  const useTreeViewPanels = config.get<boolean>("useTreeViewPanels", false);
+  const config = vscode.workspace.getConfiguration('webBuilder');
+  const useTreeViewPanels = config.get<boolean>('useTreeViewPanels', false);
 
   // Create Resources panel provider with custom element scanner (WebView-based)
   const customElementScanner = new CustomElementScanner();
 
   // Initialize custom element scanner with configuration
-  const customElementConfig = vscode.workspace.getConfiguration("webBuilder");
+  const customElementConfig = vscode.workspace.getConfiguration('webBuilder');
   const resourceDirectories = customElementConfig.get<
     Array<{ name: string; path: string }>
-  >("resourceDirectories", []);
+  >('resourceDirectories', []);
 
   if (resourceDirectories.length > 0) {
     outputChannel.appendLine(
@@ -105,7 +100,7 @@ export async function activate(context: vscode.ExtensionContext) {
   if (resourcesWebviewProvider) {
     context.subscriptions.push(
       vscode.window.registerWebviewViewProvider(
-        "webBuilder.resourcesWebview",
+        'webBuilder.resourcesWebview',
         resourcesWebviewProvider,
       ),
       resourcesWebviewProvider,
@@ -117,7 +112,7 @@ export async function activate(context: vscode.ExtensionContext) {
   if (useTreeViewPanels) {
     // TODO: Implement TreeView-based elements provider if needed
     outputChannel.appendLine(
-      "[WARNING] TreeView-based elements panel not yet implemented in refactored architecture",
+      '[WARNING] TreeView-based elements panel not yet implemented in refactored architecture',
     );
   }
 
@@ -136,9 +131,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
         // Wait for tabs to settle, then check if visual editor is open
         setTimeout(async () => {
-          const tabs = vscode.window.tabGroups.all.flatMap((group) =>
-            group.tabs
-          );
+          const tabs = vscode.window.tabGroups.all.flatMap((group) => group.tabs);
           const visualEditorTab = tabs.find((tab) =>
             tab.input instanceof vscode.TabInputCustom &&
             tab.input.viewType === WebBuilderEditorProvider.viewType &&
@@ -147,7 +140,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
           if (visualEditorTab) {
             await vscode.window.tabGroups.close(visualEditorTab);
-            await vscode.commands.executeCommand("vscode.open", docUri);
+            await vscode.commands.executeCommand('vscode.open', docUri);
           }
         }, 100);
       }
@@ -156,21 +149,21 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Opening HTML Props Builder sidebar - open active HTML/TypeScript file in visual mode
     const activeEditor = vscode.window.activeTextEditor;
-    if (activeEditor?.document.uri.scheme === "file") {
+    if (activeEditor?.document.uri.scheme === 'file') {
       const languageId = activeEditor.document.languageId;
       const adapter = await adapterManager.getAdapter(
         activeEditor.document.uri.fsPath,
       );
 
       // Open in visual editor if we have an adapter for this file type
-      if (adapter && (languageId === "html" || languageId === "typescript")) {
+      if (adapter && (languageId === 'html' || languageId === 'typescript')) {
         const document = activeEditor.document;
         visualEditorDocument = document.uri;
         await vscode.commands.executeCommand(
-          "workbench.action.closeActiveEditor",
+          'workbench.action.closeActiveEditor',
         );
         await vscode.commands.executeCommand(
-          "vscode.openWith",
+          'vscode.openWith',
           document.uri,
           WebBuilderEditorProvider.viewType,
         );
@@ -193,7 +186,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
-      "html-props-builder-layers",
+      'html-props-builder-layers',
       layersWebviewProvider,
     ),
   );
@@ -206,7 +199,7 @@ export async function activate(context: vscode.ExtensionContext) {
   propertiesWebviewProvider.setCustomElementScanner(customElementScanner);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
-      "webBuilder.propertiesWebview",
+      'webBuilder.propertiesWebview',
       propertiesWebviewProvider,
     ),
   );
@@ -215,8 +208,8 @@ export async function activate(context: vscode.ExtensionContext) {
   const dropProvider = new HtmlDropEditProvider(adapterManager);
   const dropRegistration = vscode.languages.registerDocumentDropEditProvider(
     // Support all file types that have adapters
-    [{ language: "html" }, { language: "javascript" }, {
-      language: "typescript",
+    [{ language: 'html' }, { language: 'javascript' }, {
+      language: 'typescript',
     }],
     dropProvider,
   );
@@ -252,21 +245,21 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Register refresh command
   const refreshCommand = vscode.commands.registerCommand(
-    "html-props-builder.refreshElements",
+    'html-props-builder.refreshElements',
     () => {
       resourcesWebviewProvider.getBuiltinElements(); // Trigger refresh
-      vscode.window.showInformationMessage("Elements refreshed!");
+      vscode.window.showInformationMessage('Elements refreshed!');
     },
   );
 
   // Register command to open a page
   const openPageCommand = vscode.commands.registerCommand(
-    "html-props-builder.openPage",
+    'html-props-builder.openPage',
     async (filePath: string) => {
       try {
         const fileUri = vscode.Uri.file(filePath);
         await vscode.commands.executeCommand(
-          "vscode.openWith",
+          'vscode.openWith',
           fileUri,
           WebBuilderEditorProvider.viewType,
         );
@@ -280,43 +273,43 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Register command to insert element
   const insertElementCommand = vscode.commands.registerCommand(
-    "html-props-builder.insertElement",
+    'html-props-builder.insertElement',
     async (elementData: InsertElementData) => {
       const activeEditor = vscode.window.activeTextEditor;
 
-      if (activeEditor && activeEditor.document.languageId === "html") {
+      if (activeEditor && activeEditor.document.languageId === 'html') {
         // Insert into text editor at cursor position
         const position = activeEditor.selection.active;
         const line = activeEditor.document.lineAt(position.line);
-        const indent = line.text.match(/^\s*/)?.[0] || "";
+        const indent = line.text.match(/^\s*/)?.[0] || '';
 
-        let snippet = "";
+        let snippet = '';
         const tag = elementData.tag;
 
         // Generate snippet
-        if (tag === "img") {
+        if (tag === 'img') {
           snippet = `${indent}<img src="" alt="">`;
-        } else if (tag === "input") {
+        } else if (tag === 'input') {
           snippet = `${indent}<input type="text">`;
-        } else if (tag === "a") {
+        } else if (tag === 'a') {
           snippet = `${indent}<a href="">Link text</a>`;
         } else if (
-          ["h1", "h2", "h3", "h4", "h5", "h6", "p", "button"].includes(tag)
+          ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'button'].includes(tag)
         ) {
           const placeholders: Record<string, string> = {
-            "h1": "Heading 1",
-            "h2": "Heading 2",
-            "h3": "Heading 3",
-            "p": "Paragraph text",
-            "button": "Button",
+            'h1': 'Heading 1',
+            'h2': 'Heading 2',
+            'h3': 'Heading 3',
+            'p': 'Paragraph text',
+            'button': 'Button',
           };
-          snippet = `${indent}<${tag}>${placeholders[tag] || "Text"}</${tag}>`;
+          snippet = `${indent}<${tag}>${placeholders[tag] || 'Text'}</${tag}>`;
         } else {
           snippet = `${indent}<${tag}>\n${indent}\t\n${indent}</${tag}>`;
         }
 
         await activeEditor.edit((editBuilder) => {
-          editBuilder.insert(position, snippet + "\n");
+          editBuilder.insert(position, snippet + '\n');
         });
       }
       // Note: Element insertion into visual editor is not yet implemented
@@ -329,7 +322,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Register command to edit property
   const editPropertyCommand = vscode.commands.registerCommand(
-    "html-props-builder.editProperty",
+    'html-props-builder.editProperty',
     async (property: ElementProperty) => {
       const selectedTag = propertiesWebviewProvider.getSelectedElementTag();
       if (!selectedTag) {
@@ -340,12 +333,12 @@ export async function activate(context: vscode.ExtensionContext) {
       let newValue: string | undefined;
 
       switch (property.attrType) {
-        case "boolean":
+        case 'boolean':
           // Use QuickPick for boolean properties
           const boolChoice = await vscode.window.showQuickPick(
             [
-              { label: "true", description: "Enable this property" },
-              { label: "false", description: "Disable this property" },
+              { label: 'true', description: 'Enable this property' },
+              { label: 'false', description: 'Disable this property' },
             ],
             {
               placeHolder: `Select value for ${property.name}`,
@@ -357,7 +350,7 @@ export async function activate(context: vscode.ExtensionContext) {
           }
           break;
 
-        case "enum":
+        case 'enum':
           // Use QuickPick for enum properties
           if (property.enumValues && property.enumValues.length > 0) {
             const items: { label: string; description?: string }[] = [
@@ -370,8 +363,8 @@ export async function activate(context: vscode.ExtensionContext) {
             // Add option to remove property (if not required)
             if (property.isSet) {
               items.push({
-                label: "",
-                description: "(remove property)",
+                label: '',
+                description: '(remove property)',
               });
             }
 
@@ -388,52 +381,52 @@ export async function activate(context: vscode.ExtensionContext) {
           }
           break;
 
-        case "number":
+        case 'number':
           // Use InputBox with validation for number properties
           newValue = await vscode.window.showInputBox({
             prompt: `Edit ${property.name}`,
-            value: property.isSet ? property.value : "",
-            placeHolder: "Enter a number",
+            value: property.isSet ? property.value : '',
+            placeHolder: 'Enter a number',
             title: property.description,
             validateInput: (value) => {
-              if (value === "") {
+              if (value === '') {
                 return null; // Allow empty to unset
               }
               const num = Number(value);
               if (isNaN(num)) {
-                return "Must be a valid number";
+                return 'Must be a valid number';
               }
               return null;
             },
           });
           break;
 
-        case "url":
+        case 'url':
           // Use InputBox for URL properties
           newValue = await vscode.window.showInputBox({
             prompt: `Edit ${property.name}`,
-            value: property.isSet ? property.value : "",
-            placeHolder: "Enter URL (e.g., https://example.com)",
+            value: property.isSet ? property.value : '',
+            placeHolder: 'Enter URL (e.g., https://example.com)',
             title: property.description,
             validateInput: (value) => {
-              if (value === "") {
+              if (value === '') {
                 return null; // Allow empty to unset
               }
               // Basic URL validation
               if (!value.match(/^(https?:\/\/|\/|\.\/|#)/)) {
-                return "URL should start with http://, https://, /, ./, or #";
+                return 'URL should start with http://, https://, /, ./, or #';
               }
               return null;
             },
           });
           break;
 
-        case "string":
+        case 'string':
         default:
           // Use InputBox for string properties
           newValue = await vscode.window.showInputBox({
             prompt: `Edit ${property.name}`,
-            value: property.isSet ? property.value : "",
+            value: property.isSet ? property.value : '',
             placeHolder: `Enter value for ${property.name}`,
             title: property.description,
           });
@@ -445,7 +438,7 @@ export async function activate(context: vscode.ExtensionContext) {
         // TODO: updateElementProperty not implemented in refactored EditorWebviewViewProvider
         // visualEditorProvider.updateElementProperty(property.name, newValue, property.type);
         vscode.window.showInformationMessage(
-          "Property editing not yet implemented in refactored backend",
+          'Property editing not yet implemented in refactored backend',
         );
       }
     },
@@ -536,28 +529,28 @@ export async function activate(context: vscode.ExtensionContext) {
   // });
 
   // Command to create a custom web component
-  const createComponentCommand = vscode.commands.registerCommand(
-    "webBuilder.createComponent",
+  const createResourceCommand = vscode.commands.registerCommand(
+    'webBuilder.createResource',
     async () => {
-      const command = new CreateComponentCommand(customElementScanner);
+      const command = new CreateResourceCommand(customElementScanner);
       await command.execute();
     },
   );
 
-  // Alias for create component (for Elements panel button)
-  const createComponentAlias = vscode.commands.registerCommand(
-    "html-props-builder.createComponent",
+  // Alias for create resource (for Elements panel button)
+  const createResourceAlias = vscode.commands.registerCommand(
+    'html-props-builder.createResource',
     async () => {
-      const command = new CreateComponentCommand(customElementScanner);
+      const command = new CreateResourceCommand(customElementScanner);
       await command.execute();
     },
   );
 
-  // Command to create component in specific category directory
-  const createComponentInCategoryCommand = vscode.commands.registerCommand(
-    "html-props-builder.createComponentInCategory",
+  // Command to create resource in specific category directory
+  const createResourceInCategoryCommand = vscode.commands.registerCommand(
+    'html-props-builder.createResourceInCategory',
     async (categoryPath: string) => {
-      const command = new CreateComponentCommand(customElementScanner);
+      const command = new CreateResourceCommand(customElementScanner);
       await command.execute(categoryPath);
     },
   );
@@ -574,9 +567,9 @@ export async function activate(context: vscode.ExtensionContext) {
     openPageCommand,
     insertElementCommand,
     editPropertyCommand,
-    createComponentCommand,
-    createComponentAlias,
-    createComponentInCategoryCommand,
+    createResourceCommand,
+    createResourceAlias,
+    createResourceInCategoryCommand,
   );
 }
 

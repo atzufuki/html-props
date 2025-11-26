@@ -1,9 +1,9 @@
 import { HTMLPropsMixin } from '@html-props/core';
 import { Article, Div, H1, H2, H3, Img, Li, P, Ul } from '@html-props/built-ins';
-import { NavBar } from './components/NavBar.ts';
-import { Sidebar } from './components/Sidebar.ts';
-import { CodeBlock } from './components/CodeBlock.ts';
-import { theme } from './theme.ts';
+import { NavBar } from '../components/NavBar.ts';
+import { Sidebar } from '../components/Sidebar.ts';
+import { CodeBlock } from '../components/CodeBlock.ts';
+import { theme } from '../theme.ts';
 
 export class DocsPage extends HTMLPropsMixin(HTMLElement) {
   static props = {

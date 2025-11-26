@@ -120,8 +120,8 @@
         "category": "HTML Props Builder"
       },
       {
-        "command": "webBuilder.createComponent",
-        "title": "HTML Props Builder: Create Resource Directory",
+        "command": "webBuilder.createResource",
+        "title": "HTML Props Builder: Create Resource",
         "category": "HTML Props Builder"
       },
       {

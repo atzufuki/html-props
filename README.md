@@ -1,211 +1,304 @@
 # HTML Props - Props API for Web Components
 
-HTML Props is a JavaScript library that provides a set of mixins for building web components with declarative props and
-nested child trees. This library simplifies the process of templating and enables passing complex properties via custom
-element's constructor.
+Reactive Custom Elements, Simplified.
+
+A lightweight mixin for building native custom elements with reactive props API.
 
 ## Features
 
-- **Props Management**: Define props for custom elements.
-- **Templating**: Implement a `render` method to create a child tree for the component.
-- **Utilities**: Includes utility methods for defining custom elements, and generating selectors.
-- **TypeScript Support**: Written in TypeScript for type safety.
-- **Inheritance Support**: Build component hierarchies with proper mixin application.
-
-## Quick Start
-
-Scaffold a new project with the create tool:
-
-```sh
-deno run --reload jsr:@html-props/create my-app
-cd my-app
-# Start hacking!
-```
+- **Zero Dependencies**: Extremely lightweight. No framework lock-in. Just a simple mixin for your native HTMLElement
+  classes.
+- **Reactive Signals**: Built-in signal-based reactivity. Props automatically map to signals and trigger efficient
+  updates.
+- **TypeScript First**: Designed with strong type inference in mind. Define props via static config and get full type
+  safety.
+- **Native DOM**: Works seamlessly with standard DOM APIs. Use it with vanilla JS.
 
 ## Installation
 
-Add the package to your project.
+You can install `@html-props/core` via JSR.
 
-```sh
-deno add jsr:@html-props/core
+### Using Deno
+
+```bash
+deno add @html-props/core
 ```
 
-Then, import it in your project.
+### Using npm
 
-```ts
-import HTMLProps from '@html-props/core';
-
-// Or each mixin separately.
-import { HTMLPropsMixin, HTMLTemplateMixin, HTMLUtilityMixin } from '@html-props/core';
+```bash
+npx jsr add @html-props/core
 ```
 
-## Usage
+## CLI Tool
 
-### Defining a Custom Element
+Scaffold new projects quickly with the html-props CLI.
 
-The default export gives you a mixin including every feature of `HTMLPropsMixin`, `HTMLTemplateMixin` and
-`HTMLUtilityMixin`. Extend it and pass in HTMLElement to create a custom element enabling all features.
+### Creating a New Project
 
-```ts
-import HTMLProps from '@html-props/core';
+```bash
+deno run jsr:@html-props/create my-app
+```
 
-interface MyElementProps {
-  text?: string;
-}
+This will create a new directory called "my-app" with a basic project structure.
 
-class MyElement extends HTMLProps(HTMLElement)<MyElementProps>() {
-  text?: string;
+## Basic Usage
+
+Create a new component by extending `HTMLPropsMixin(HTMLElement)`.
+
+```typescript
+import { HTMLPropsMixin } from '@html-props/core';
+import { Button, Div } from '@html-props/built-ins';
+
+class Counter extends HTMLPropsMixin(HTMLElement) {
+  static props = {
+    count: { type: Number, default: 0 },
+  };
 
   render() {
-    return this.text ?? '-';
+    return new Div({
+      content: [
+        new Div({ textContent: `Count: ${this.count}` }),
+        new Button({
+          textContent: 'Increment',
+          onclick: () => this.count++,
+        }),
+      ],
+    });
   }
 }
 
-MyElement.define('my-element');
+Counter.define('my-counter');
 ```
 
-Finally use the custom element declaratively as follows:
+## Signals
 
-```ts
-const element = new MyElement({ text: 'Hello world!' });
-document.body.appendChild(element); // <my-element>Hello world!</my-element>
-```
+Fine-grained reactivity for your components. Signals are the backbone of reactivity in html-props. They allow you to
+create state that automatically updates your UI when changed.
 
-### Building Component Hierarchies
+```typescript
+import { effect, signal } from '@html-props/signals';
 
-You can extend components that already use HTMLProps to build inheritance hierarchies:
+const count = signal(0);
 
-```ts
-import HTMLProps from '@html-props/core';
-import { signal } from '@html-props/signals';
-
-// Base widget
-class Widget extends HTMLProps(HTMLElement)<{ visible: boolean }>() {
-  visible = signal(true);
-}
-
-Widget.define('base-widget');
-
-// Extended widget - mixins are automatically handled!
-interface BoxProps {
-  visible?: boolean;
-  orientation: 'horizontal' | 'vertical';
-}
-
-class Box extends HTMLProps(Widget)<BoxProps>() {
-  orientation = signal<'horizontal' | 'vertical'>('horizontal');
-
-  render() {
-    return `Box: ${this.orientation()}`;
-  }
-}
-
-Box.define('widget-box');
-
-// Use it
-const box = new Box({ visible: true, orientation: 'vertical' });
-document.body.appendChild(box);
-```
-
-### Converting an existing Custom Element
-
-You can also convert existing custom elements, like built-in elements to support props. In this case it's unnecessary to
-use `HTMLTemplateMixin`, since we are not implementing a child tree using it's render method. Especially if a component
-already implements it's own rendering logic, it's likely to conflict if used.
-
-```ts
-const Button = HTMLUtilityMixin(HTMLPropsMixin(HTMLButtonElement)<HTMLButtonElement>()).define('html-button', {
-  extends: 'button',
+// Effects run whenever dependencies change
+effect(() => {
+  console.log(`The count is ${count()}`);
 });
 
-// Or without the utilities
-const Button = HTMLPropsMixin(HTMLButtonElement)<HTMLButtonElement>();
-customElements.define('html-button', Button, { extends: 'button' });
+count(1); // Logs: "The count is 1"
+count(2); // Logs: "The count is 2"
 ```
 
-### Defining Default Props
+### Using Signals in Components
 
-You can define default properties for your custom element by overriding the `getDefaultProps` method.
+Component props are internally backed by signals. You can also use standalone signals for local state.
 
-```ts
-interface MyElementProps {
-  text?: string;
-  textColor?: string;
+```typescript
+class Counter extends HTMLPropsMixin(HTMLElement) {
+  // Local state
+  count = signal(0);
+
+  render() {
+    return new Button({
+      textContent: `Count: ${this.count()}`,
+      onclick: () => this.count.update((n) => n + 1),
+    });
+  }
 }
+```
 
-class MyElement extends HTMLProps(HTMLElement)<MyElementProps>() {
-  text?: string;
-  textColor?: string;
+### Computed Values
 
-  getDefaultProps(): this['props'] {
-    return {
-      text: 'Default text',
-      style: {
-        color: this.textColor ?? 'blue',
-      },
-    };
+Computed signals derive their value from other signals and update automatically.
+
+```typescript
+import { computed } from '@html-props/signals';
+
+const count = signal(1);
+const double = computed(() => count() * 2);
+
+console.log(double()); // 2
+count(2);
+console.log(double()); // 4
+```
+
+### Batch Updates
+
+Group multiple signal updates into a single effect run.
+
+```typescript
+import { batch } from '@html-props/signals';
+
+batch(() => {
+  count(10);
+  count(20);
+}); // Effects run only once
+```
+
+## Lifecycle Hooks
+
+Hook into the lifecycle of your components.
+
+### onMount()
+
+Called when the component is connected to the DOM. This is a good place to fetch data or set up subscriptions.
+
+### onUnmount()
+
+Called when the component is disconnected from the DOM. Use this to clean up timers or subscriptions.
+
+```typescript
+class Timer extends HTMLPropsMixin(HTMLElement) {
+  count = signal(0);
+  intervalId = null;
+
+  onMount() {
+    console.log('Timer mounted');
+    this.intervalId = setInterval(() => {
+      this.count.update((c) => c + 1);
+    }, 1000);
+  }
+
+  onUnmount() {
+    console.log('Timer unmounted');
+    clearInterval(this.intervalId);
   }
 
   render() {
-    return this.text ?? '-';
+    return new Div({ textContent: `Seconds: ${this.count()}` });
   }
 }
-
-MyElement.define('my-element');
-
-new MyElement({ text: 'Hello world!', textColor: 'red' }); // <my-element style="color: red;">Hello world!</my-element>
-new MyElement({}); // <my-element style="color: blue;">Default text</my-element>
 ```
 
-### Can I use JSX syntax for templating?
+## JSX Support
 
-Yes you can! Add this package to your project
+Use JSX syntax for templating in your components.
 
-```sh
+### Installation
+
+```bash
 deno add jsr:@html-props/jsx
 ```
 
-Configurate your compiler options like so to enable JSX typings.
+### Configuration
 
-```jsonc
-"compilerOptions": {
-  // ...
-  "jsx": "react-jsx",
-  "jsxImportSource": "@html-props/jsx"
-}
-```
+Configure your compiler options in `deno.json`:
 
-Finally configurate your transpiler to enable the JSX runtime.
-
-```ts
-esbuild.build({
-  // ...
-  jsxFactory: 'JSX.createElement',
-  jsxImportSource: '@html-props/jsx',
-  inject: ['@html-props/jsx/jsx-runtime'],
-});
-```
-
-You can now start writing render methods with JSX syntax.
-
-```tsx
-const Button = HTMLUtilityMixin(HTMLPropsMixin(HTMLButtonElement)<HTMLButtonElement>()).define('html-button', {
-  extends: 'button',
-});
-
-class MyElement extends HTMLProps(HTMLElement)<{ text?: string }>() {
-  text?: string;
-
-  render() {
-    return <Button>{this.text ?? '-'}</Button>;
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "@html-props/jsx"
   }
 }
+```
+
+### Usage
+
+```typescript
+import { HTMLPropsMixin } from '@html-props/core';
+
+class MyElement extends HTMLPropsMixin(HTMLElement) {
+  render() {
+    return (
+      <div class='container'>
+        <h1>Hello JSX</h1>
+        <p>This is rendered using JSX!</p>
+      </div>
+    );
+  }
+}
+```
+
+## Builder
+
+Visual HTML page building tool for VS Code.
+
+The Builder allows you to construct web pages visually while maintaining full control over the underlying code. It
+bridges the gap between design and development by directly manipulating your source files.
+
+### Getting Started
+
+To open the visual editor:
+
+- Right-click on any `.html` or `.ts` file in the explorer
+- Select "Open With..."
+- Choose "HTML Props Builder Visual Editor"
+
+### Resource Management
+
+The Resources panel lets you manage your component libraries. Actions here directly affect your project configuration.
+
+#### Adding Resource Directories
+
+Click the "+" button in the Resources panel to select a folder containing your components. **Technical Effect**: This
+updates your VS Code workspace settings (`settings.json`) to include the new path.
+
+#### Creating Components
+
+Use the category menu (three dots) in the Resources panel to "Create Resource". The wizard guides you through defining
+the tag name, properties, and base element. **Technical Effect**: Generates a new TypeScript file with the component
+class definition.
+
+### Visual Editing & Code Generation
+
+The visual editor is a WYSIWYG interface that writes standard HTML. It supports editing both static HTML files and the
+render methods of your `.ts`/`.js` web components.
+
+#### Drag & Drop Composition
+
+Dragging an element from the panel into the editor inserts the corresponding tag into your document. **Technical
+Effect**: Inserts the HTML tag at the cursor position or drop target. For `.ts`/`.js` components, it updates the render
+method code.
+
+#### Property Editing
+
+Selecting an element populates the Properties panel. Changing values here updates the element attributes in real-time.
+**Technical Effect**: Updates HTML attributes. For HTMLProps components, these attributes map to reactive props.
+
+## API Reference
+
+### HTMLPropsMixin(Base)
+
+The core mixin that adds reactivity to your Custom Elements.
+
+### static props
+
+Define reactive properties. Each key becomes a property on the instance and an observed attribute.
+
+```typescript
+static props = {
+  myProp: { 
+    type: String, // Number, Boolean, Array, Object
+    default: 'value',
+    reflect: true, // Reflect to attribute
+    attr: 'my-prop' // Custom attribute name
+  }
+}
+```
+
+### Built-in Elements
+
+A collection of type-safe wrappers for standard HTML elements. They accept all standard HTML attributes plus `style`,
+`class`, and `content`.
+
+```typescript
+import { Button, Div, Input } from '@html-props/built-ins';
+
+// Usage
+new Div({
+  style: { padding: '1rem' },
+  class: 'container',
+  content: [
+    new Button({
+      textContent: 'Click me',
+      onclick: () => console.log('Clicked'),
+    }),
+  ],
+});
 ```
 
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request on GitHub.

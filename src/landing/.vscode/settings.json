@@ -1,0 +1,16 @@
+{
+    "webBuilder.resourceDirectories": [
+        {
+            "name": "components",
+            "path": "./components"
+        },
+        {
+            "name": "views",
+            "path": "./views"
+        },
+        {
+            "name": "pages",
+            "path": "./pages"
+        }
+    ]
+}

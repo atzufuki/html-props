@@ -1,15 +1,8 @@
-import * as vscode from "vscode";
-import {
-  CustomElement,
-  CustomElementScanner,
-} from "../services/CustomElementScanner";
-import { AttributeRegistry } from "../services/AttributeRegistry";
-import {
-  AdapterManager,
-  ElementDefinition,
-  ICodeStyleAdapter,
-} from "../adapters";
-import { WebBuilderEditorProvider } from "../editors/WebBuilderEditorProvider";
+import * as vscode from 'vscode';
+import { CustomElement, CustomElementScanner } from '../services/CustomElementScanner';
+import { AttributeRegistry } from '../services/AttributeRegistry';
+import { AdapterManager, ElementDefinition, ICodeStyleAdapter } from '../adapters';
+import { WebBuilderEditorProvider } from '../editors/WebBuilderEditorProvider';
 
 /**
  * WebView-based Resources Panel provider with enhanced UX
@@ -20,9 +13,8 @@ import { WebBuilderEditorProvider } from "../editors/WebBuilderEditorProvider";
  * - Providing elements data to webview
  * - Handling element insertion, drag, and component creation
  */
-export class ResourcesWebviewViewProvider
-  implements vscode.WebviewViewProvider {
-  public static readonly viewType = "webBuilder.resourcesWebview";
+export class ResourcesWebviewViewProvider implements vscode.WebviewViewProvider {
+  public static readonly viewType = 'webBuilder.resourcesWebview';
 
   private _view?: vscode.WebviewView;
   private _onDidChangeVisibility = new vscode.EventEmitter<
@@ -47,7 +39,7 @@ export class ResourcesWebviewViewProvider
     this.scanner = scanner || new CustomElementScanner();
 
     // Get HTML adapter for built-in elements (default adapter)
-    this.currentAdapter = this.adapterManager.getAdapterById("html") ||
+    this.currentAdapter = this.adapterManager.getAdapterById('html') ||
       undefined;
 
     // Set initial adapter for scanner
@@ -63,7 +55,7 @@ export class ResourcesWebviewViewProvider
 
     // Listen to configuration changes
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration("webBuilder.resourceDirectories")) {
+      if (e.affectsConfiguration('webBuilder.resourceDirectories')) {
         this.loadCustomElements();
       }
     });
@@ -100,7 +92,7 @@ export class ResourcesWebviewViewProvider
   private async loadBuiltinElements(): Promise<void> {
     if (!this.currentAdapter) {
       this.outputChannel.appendLine(
-        "[WARN] [ElementsWebviewViewProvider] No adapter available for built-in elements",
+        '[WARN] [ElementsWebviewViewProvider] No adapter available for built-in elements',
       );
       this.builtinElements = [];
       return;
@@ -121,9 +113,9 @@ export class ResourcesWebviewViewProvider
    * Load custom elements from configured directories
    */
   private async loadCustomElements(): Promise<void> {
-    const config = vscode.workspace.getConfiguration("webBuilder");
+    const config = vscode.workspace.getConfiguration('webBuilder');
     const directories = config.get<Array<{ name: string; path: string }>>(
-      "resourceDirectories",
+      'resourceDirectories',
       [],
     );
 
@@ -206,13 +198,13 @@ export class ResourcesWebviewViewProvider
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [
-        vscode.Uri.joinPath(this._extensionUri, "webview"),
+        vscode.Uri.joinPath(this._extensionUri, 'webview'),
         vscode.Uri.joinPath(
           this._extensionUri,
-          "node_modules",
-          "@vscode",
-          "codicons",
-          "dist",
+          'node_modules',
+          '@vscode',
+          'codicons',
+          'dist',
         ),
       ],
     };
@@ -236,7 +228,7 @@ export class ResourcesWebviewViewProvider
     this._onDidChangeVisibility.fire({ visible: webviewView.visible });
 
     this.outputChannel.appendLine(
-      "[ElementsWebviewViewProvider] WebView resolved, waiting for ready signal",
+      '[ElementsWebviewViewProvider] WebView resolved, waiting for ready signal',
     );
   }
 
@@ -246,7 +238,7 @@ export class ResourcesWebviewViewProvider
   private async _updateElements() {
     if (!this._view) {
       this.outputChannel.appendLine(
-        "[ElementsWebviewViewProvider] Cannot update - webview not ready",
+        '[ElementsWebviewViewProvider] Cannot update - webview not ready',
       );
       return;
     }
@@ -259,7 +251,7 @@ export class ResourcesWebviewViewProvider
 
     // Send data to webview
     this._view.webview.postMessage({
-      type: "updateElements",
+      type: 'updateElements',
       builtinElements,
       customElementCategories,
     });
@@ -280,31 +272,31 @@ export class ResourcesWebviewViewProvider
     },
   ) {
     switch (data.type) {
-      case "webviewReady":
+      case 'webviewReady':
         this.outputChannel.appendLine(
-          "[ElementsWebviewViewProvider] WebView ready, sending elements data",
+          '[ElementsWebviewViewProvider] WebView ready, sending elements data',
         );
         this._updateElements();
         break;
 
-      case "startDragFromElements":
+      case 'startDragFromElements':
         // Call editor provider directly
         if (this.editorProvider) {
           this.editorProvider.notifyStartDragFromElements(
-            data.html || "",
-            data.tag || "",
+            data.html || '',
+            data.tag || '',
           );
         }
         break;
 
-      case "stopDragFromElements":
+      case 'stopDragFromElements':
         // Call editor provider directly
         if (this.editorProvider) {
           this.editorProvider.notifyStopDragFromElements();
         }
         break;
 
-      case "updateDragPosition":
+      case 'updateDragPosition':
         // Call editor provider directly
         if (this.editorProvider) {
           this.editorProvider.updateDragPositionFromElements(
@@ -314,32 +306,32 @@ export class ResourcesWebviewViewProvider
         }
         break;
 
-      case "openElement":
+      case 'openElement':
         // Open element source file in HTML Props Builder editor
         if (data.filePath) {
           const fileUri = vscode.Uri.file(data.filePath);
           vscode.commands.executeCommand(
-            "vscode.openWith",
+            'vscode.openWith',
             fileUri,
-            "webBuilder.visualHtmlEditor",
+            'webBuilder.visualHtmlEditor',
           );
         }
         break;
 
-      case "createComponent":
+      case 'createResource':
         this.outputChannel.appendLine(
-          "[ElementsWebviewViewProvider] Create component (main button)",
+          '[ElementsWebviewViewProvider] Create resource (main button)',
         );
-        vscode.commands.executeCommand("html-props-builder.createComponent");
+        vscode.commands.executeCommand('html-props-builder.createResource');
         break;
 
-      case "createComponentInCategory":
+      case 'createResourceInCategory':
         if (data.categoryPath) {
           this.outputChannel.appendLine(
-            `[ElementsWebviewViewProvider] Create component in category: ${data.categoryPath}`,
+            `[ElementsWebviewViewProvider] Create resource in category: ${data.categoryPath}`,
           );
           vscode.commands.executeCommand(
-            "html-props-builder.createComponentInCategory",
+            'html-props-builder.createResourceInCategory',
             data.categoryPath,
           );
         }
@@ -352,20 +344,20 @@ export class ResourcesWebviewViewProvider
    */
   private _getHtmlForWebview(webview: vscode.Webview) {
     const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, "webview", "resources-panel.js"),
+      vscode.Uri.joinPath(this._extensionUri, 'webview', 'resources-panel.js'),
     );
     const styleUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, "webview", "resources-panel.css"),
+      vscode.Uri.joinPath(this._extensionUri, 'webview', 'resources-panel.css'),
     );
 
     // Codicons CSS for icons
     const codiconsUri = webview.asWebviewUri(
       vscode.Uri.joinPath(
         this._extensionUri,
-        "node_modules",
-        "@vscode/codicons",
-        "dist",
-        "codicon.css",
+        'node_modules',
+        '@vscode/codicons',
+        'dist',
+        'codicon.css',
       ),
     );
 

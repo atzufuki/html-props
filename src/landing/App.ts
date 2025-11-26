@@ -1,6 +1,6 @@
 import { HTMLPropsMixin } from '@html-props/core';
-import { LandingPage } from './LandingPage.ts';
-import { DocsPage } from './DocsPage.ts';
+import { LandingPage } from './views/LandingPage.ts';
+import { DocsPage } from './views/DocsPage.ts';
 
 export class App extends HTMLPropsMixin(HTMLElement) {
   static props = {

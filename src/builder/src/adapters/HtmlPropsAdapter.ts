@@ -1,18 +1,10 @@
-import * as ts from "typescript";
-import * as vscode from "vscode";
-import * as path from "path";
-import {
-  ElementDefinition,
-  ElementMetadata,
-  ICodeStyleAdapter,
-  ValidationResult,
-} from "./ICodeStyleAdapter";
-import {
-  HTMLElement as ParsedHTMLElement,
-  parse,
-} from "node-html-parser";
-import { GLOBAL_PROPERTIES, HTML_ELEMENT_PROPERTIES } from "../schemas/htmlProperties";
-import { CustomElementScanner } from "../services/CustomElementScanner";
+import * as ts from 'typescript';
+import * as vscode from 'vscode';
+import * as path from 'path';
+import { ElementDefinition, ElementMetadata, ICodeStyleAdapter, ValidationResult } from './ICodeStyleAdapter';
+import { HTMLElement as ParsedHTMLElement, parse } from 'node-html-parser';
+import { GLOBAL_PROPERTIES, HTML_ELEMENT_PROPERTIES } from '../schemas/htmlProperties';
+import { CustomElementScanner } from '../services/CustomElementScanner';
 
 /**
  * HTML Props Adapter
@@ -27,9 +19,9 @@ import { CustomElementScanner } from "../services/CustomElementScanner";
  * - Proper textContent vs content array handling
  */
 export class HtmlPropsAdapter implements ICodeStyleAdapter {
-  readonly id = "html-props";
-  readonly displayName = "html-props (Signals)";
-  readonly fileExtensions = [".ts"];
+  readonly id = 'html-props';
+  readonly displayName = 'html-props (Signals)';
+  readonly fileExtensions = ['.ts'];
   readonly priority = 10;
 
   private currentFilePath?: string;
@@ -47,9 +39,6 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
 
   // === Parsing & Serialization ===
 
-
-  
-
   async parsePreview(code: string): Promise<ParsedHTMLElement> {
     try {
       return parse(code, {
@@ -61,16 +50,14 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
         },
       });
     } catch (error) {
-      console.error("[HtmlAdapter.parse]", error);
+      console.error('[HtmlAdapter.parse]', error);
       throw error;
     }
   }
 
-
-
   async parse(code: string): Promise<ts.SourceFile> {
     return ts.createSourceFile(
-      "component.ts",
+      'component.ts',
       code,
       ts.ScriptTarget.ES2020,
       true,
@@ -96,7 +83,7 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
         return {
           valid: false,
           errors: [
-            "Not a valid html-props component (no class extending HTMLProps found)",
+            'Not a valid html-props component (no class extending HTMLProps found)',
           ],
         };
       }
@@ -130,7 +117,7 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
     try {
       // Extract component name from source code
       const sourceAst = ts.createSourceFile(
-        "component.ts",
+        'component.ts',
         sourceCode,
         ts.ScriptTarget.ES2020,
         true,
@@ -138,23 +125,23 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
       );
       const htmlPropsClass = this.findHtmlPropsClass(sourceAst);
       const componentName = htmlPropsClass?.name?.text || null;
-      console.log("[applyHTMLDiff] Component name:", componentName);
+      console.log('[applyHTMLDiff] Component name:', componentName);
 
       // Use domJson from frontend (contains props and element structure)
-      console.log("[applyHTMLDiff] Generating code from JSON");
+      console.log('[applyHTMLDiff] Generating code from JSON');
       const htmlPropsCode = this.generateHtmlPropsCodeFromJson(domJson, componentName);
 
       // Extract imports and return array from generated code using AST
       const codeAst = ts.createSourceFile(
-        "generated.ts",
+        'generated.ts',
         htmlPropsCode,
         ts.ScriptTarget.ES2020,
         true,
       );
-      
+
       const importStatements: string[] = [];
-      let returnArrayBody = "";
-      
+      let returnArrayBody = '';
+
       // Extract all imports and return statement from AST
       const extractCodeParts = (node: ts.Node): void => {
         // Collect all import statements
@@ -164,27 +151,27 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
         // Find return statement with array
         if (ts.isReturnStatement(node) && node.expression && ts.isArrayLiteralExpression(node.expression)) {
           let arrayText = node.expression.getText(codeAst);
-          console.log("[applyHTMLDiff] Raw arrayText first 50:", arrayText.substring(0, 50));
-          
+          console.log('[applyHTMLDiff] Raw arrayText first 50:', arrayText.substring(0, 50));
+
           // Remove outer [ and ]
-          while (arrayText.startsWith("[")) {
+          while (arrayText.startsWith('[')) {
             arrayText = arrayText.slice(1);
           }
-          while (arrayText.endsWith("]")) {
+          while (arrayText.endsWith(']')) {
             arrayText = arrayText.slice(0, -1);
           }
           returnArrayBody = arrayText.trim();
-          
-          console.log("[applyHTMLDiff] Extracted returnArrayBody length:", returnArrayBody.length);
-          console.log("[applyHTMLDiff] First 100 chars:", returnArrayBody.substring(0, 100));
+
+          console.log('[applyHTMLDiff] Extracted returnArrayBody length:', returnArrayBody.length);
+          console.log('[applyHTMLDiff] First 100 chars:', returnArrayBody.substring(0, 100));
         }
         ts.forEachChild(node, extractCodeParts);
       };
-      
+
       extractCodeParts(codeAst);
-      
-      console.log("[applyHTMLDiff] importStatements count:", importStatements.length);
-      console.log("[applyHTMLDiff] returnArrayBody starts with:", returnArrayBody.substring(0, 50));
+
+      console.log('[applyHTMLDiff] importStatements count:', importStatements.length);
+      console.log('[applyHTMLDiff] returnArrayBody starts with:', returnArrayBody.substring(0, 50));
 
       // Replace render() method
       const newSourceCode = this.replaceRenderMethodAst(
@@ -194,11 +181,11 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
         returnArrayBody,
       );
 
-      console.log("[applyHTMLDiff] Updated source:\n", newSourceCode);
+      console.log('[applyHTMLDiff] Updated source:\n', newSourceCode);
 
       return newSourceCode;
     } catch (error) {
-      console.error("[HtmlPropsAdapter.applyHTMLDiff] Error:", error);
+      console.error('[HtmlPropsAdapter.applyHTMLDiff] Error:', error);
       // On error, return original code to prevent breaking component
       return sourceCode;
     }
@@ -217,17 +204,17 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
     if (attributes) {
       const attrs = Object.entries(attributes).map(([key, value]) => {
         return `${key}: '${value}'`;
-      }).join(", ");
+      }).join(', ');
       snippet += attrs;
     }
 
-    snippet += "}";
+    snippet += '}';
 
     if (textContent) {
       snippet += `, '${textContent}'`;
     }
 
-    snippet += ")";
+    snippet += ')';
 
     return snippet;
   }
@@ -237,7 +224,97 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
     structure: ElementMetadata[],
   ): Promise<string> {
     // TODO: Implement component generation
-    return "";
+    return '';
+  }
+
+  /**
+   * Generate code for a new component
+   */
+  generateNewComponentCode(
+    className: string,
+    tagName: string,
+    baseElement: string,
+    baseTag: string | undefined,
+    properties: Array<{ name: string; type: string; defaultValue?: string }>,
+  ): string {
+    // Generate interface properties
+    const interfaceProps = properties
+      .map((p) => {
+        const type = p.type === 'function' ? '() => void' : p.type;
+        return `  ${p.name}?: ${type};`;
+      })
+      .join('\n');
+
+    // Generate static props config
+    const propsConfig = properties
+      .filter((p) => p.type !== 'function')
+      .map((p) => {
+        const typeConstructor = p.type === 'string'
+          ? 'String'
+          : p.type === 'number'
+          ? 'Number'
+          : p.type === 'boolean'
+          ? 'Boolean'
+          : p.type === 'array'
+          ? 'Array'
+          : 'Object';
+
+        const defaultVal = p.defaultValue !== undefined ? p.defaultValue : 'undefined';
+
+        return `    ${p.name}: { type: ${typeConstructor}, default: ${defaultVal} },`;
+      })
+      .join('\n');
+
+    // Generate property declarations
+    const propDeclarations = properties
+      .map((p) => {
+        const type = p.type === 'function' ? '() => void' : p.type;
+        return `  declare ${p.name}: ${type};`;
+      })
+      .join('\n');
+
+    // Generate define call with extends support
+    const defineCall = baseTag
+      ? `${className}.define('${tagName}', { extends: '${baseTag}' });`
+      : `${className}.define('${tagName}');`;
+
+    return `import { HTMLPropsMixin } from '@html-props/core';
+import { Div } from '@html-props/built-ins';
+
+/**
+ * Props interface for ${className}
+ */
+interface ${className}Props {
+${interfaceProps}
+}
+
+/**
+ * ${className} component
+ * Generated by HTML Props Builder
+ */
+class ${className} extends HTMLPropsMixin(${baseElement})<${className}Props> {
+  static props = {
+${propsConfig}
+  };
+
+${propDeclarations}
+
+  render() {
+    return [
+      new Div({
+        content: [
+          // Build your component structure here
+          new Div({ textContent: '${className} works!' })
+        ]
+      })
+    ];
+  }
+}
+
+${defineCall}
+
+export default ${className};
+`;
   }
 
   // === Services ===
@@ -266,9 +343,7 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
 
     // Return the preview endpoint URL that returns HTML
     // This endpoint generates HTML that loads the bundled component
-    const previewUrl = `${devServerUrl}/preview?file=${
-      encodeURIComponent(this.currentFilePath)
-    }`;
+    const previewUrl = `${devServerUrl}/preview?file=${encodeURIComponent(this.currentFilePath)}`;
     return previewUrl;
   }
 
@@ -285,14 +360,14 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
    */
   async renderPreview(ast: ts.SourceFile): Promise<string> {
     if (!this.currentFilePath) {
-      return this.generateErrorHtml("File path not available");
+      return this.generateErrorHtml('File path not available');
     }
 
     try {
       // Extract component tag name from define() call
       const tagName = this.extractTagName(ast);
       if (!tagName) {
-        return this.generateErrorHtml("No component.define() call found");
+        return this.generateErrorHtml('No component.define() call found');
       }
 
       // Check if user provided a bundle path
@@ -304,17 +379,15 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
         if (this.devServer) {
           const devServerUrl = this.devServer.getUrl?.();
           if (devServerUrl) {
-            scriptUrl = `${devServerUrl}/bundle?file=${
-              encodeURIComponent(bundlePath)
-            }`;
+            scriptUrl = `${devServerUrl}/bundle?file=${encodeURIComponent(bundlePath)}`;
           } else {
             console.warn(
-              "[HtmlPropsAdapter.renderPreview] DevServer URL not available",
+              '[HtmlPropsAdapter.renderPreview] DevServer URL not available',
             );
           }
         } else {
           console.warn(
-            "[HtmlPropsAdapter.renderPreview] DevServer not available",
+            '[HtmlPropsAdapter.renderPreview] DevServer not available',
           );
         }
       }
@@ -329,13 +402,13 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
 
       if (!scriptUrl) {
         const errorMsg = `Cannot determine script URL (DevServer: ${
-          this.devServer ? "available" : "missing"
-        }, bundlePath: ${bundlePath || "not set"})`;
+          this.devServer ? 'available' : 'missing'
+        }, bundlePath: ${bundlePath || 'not set'})`;
         return this.generateErrorHtml(errorMsg);
       }
 
       // Add cache buster (use & if URL already has query params, ? otherwise)
-      const separator = scriptUrl.includes("?") ? "&" : "?";
+      const separator = scriptUrl.includes('?') ? '&' : '?';
       const cacheBuster = Date.now();
       const finalScriptUrl = `${scriptUrl}${separator}t=${cacheBuster}`;
 
@@ -372,7 +445,7 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
 </body>
 </html>`;
     } catch (error) {
-      console.error("[HtmlPropsAdapter.renderPreview] Error:", error);
+      console.error('[HtmlPropsAdapter.renderPreview] Error:', error);
       return this.generateErrorHtml((error as Error).message);
     }
   }
@@ -393,39 +466,39 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
         // Skip whitespace
         while (i < attrs.length && /\s/.test(attrs[i])) i++;
         if (i >= attrs.length) break;
-        
+
         // Read attribute name
-        let name = "";
+        let name = '';
         while (i < attrs.length && /[\w-]/.test(attrs[i])) name += attrs[i++];
         if (!name) break;
-        
+
         // Skip to =
         while (i < attrs.length && /\s/.test(attrs[i])) i++;
-        if (i >= attrs.length || attrs[i] !== "=") continue;
+        if (i >= attrs.length || attrs[i] !== '=') continue;
         i++; // skip =
-        
+
         // Skip to "
         while (i < attrs.length && /\s/.test(attrs[i])) i++;
         if (i >= attrs.length || attrs[i] !== '"') continue;
         i++; // skip opening "
-        
+
         // Read value
-        let value = "";
+        let value = '';
         while (i < attrs.length && attrs[i] !== '"') value += attrs[i++];
-        
+
         attributes[name] = value;
         i++; // skip closing "
       }
     }
 
     return {
-      tag: element.tagName?.toLowerCase() || "",
-      id: element.getAttribute("id"),
-      className: element.getAttribute("class"),
+      tag: element.tagName?.toLowerCase() || '',
+      id: element.getAttribute('id'),
+      className: element.getAttribute('class'),
       attributes,
       textContent: element.textContent,
       selector,
-      selectorFormat: "css",
+      selectorFormat: 'css',
     };
   }
 
@@ -439,24 +512,26 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
     properties?: Record<string, unknown>,
     textContent?: string,
     sourceCode?: string,
-    currentFilePath?: string
-  ): Promise<Array<{
-    id: string;
-    label: string;
-    description?: string;
-    properties: Array<{
-      name: string;
-      value: string;
-      type: 'tag' | 'id' | 'class' | 'attribute' | 'property' | 'text';
-      editable: boolean;
-      attrType?: string;
-      category?: string;
-      isSet?: boolean;
-      source?: 'attribute' | 'property';
+    currentFilePath?: string,
+  ): Promise<
+    Array<{
+      id: string;
+      label: string;
       description?: string;
-      enumValues?: string[];
-    }>;
-  }>> {
+      properties: Array<{
+        name: string;
+        value: string;
+        type: 'tag' | 'id' | 'class' | 'attribute' | 'property' | 'text';
+        editable: boolean;
+        attrType?: string;
+        category?: string;
+        isSet?: boolean;
+        source?: 'attribute' | 'property';
+        description?: string;
+        enumValues?: string[];
+      }>;
+    }>
+  > {
     const categories: Array<{
       id: string;
       label: string;
@@ -484,7 +559,7 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
           name: 'tag',
           value: tag,
           type: 'tag',
-          editable: false
+          editable: false,
         },
         {
           name: 'id',
@@ -492,7 +567,7 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
           type: 'id',
           editable: true,
           attrType: 'string',
-          isSet: 'id' in attributes
+          isSet: 'id' in attributes,
         },
         {
           name: 'className',
@@ -501,7 +576,7 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
           editable: true,
           attrType: 'string',
           isSet: 'class' in attributes,
-          source: 'property'
+          source: 'property',
         },
         {
           name: 'text',
@@ -509,9 +584,9 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
           type: 'text',
           editable: true,
           attrType: 'string',
-          isSet: !!textContent
-        }
-      ]
+          isSet: !!textContent,
+        },
+      ],
     });
 
     // Category 2: Custom Properties (extracted from CustomElementScanner)
@@ -530,21 +605,21 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
             isSet: attr.name in (properties || {}),
             source: 'property' as const,
             description: attr.description,
-            enumValues: attr.enumValues
+            enumValues: attr.enumValues,
           };
         });
         if (customProps.length > 0) {
           categories.push({
             id: 'custom',
             label: 'Custom Properties',
-            properties: customProps
+            properties: customProps,
           });
         }
       }
     }
 
     // Category 3: Global Properties
-    const globalPropsToShow = GLOBAL_PROPERTIES.filter((p: any) => 
+    const globalPropsToShow = GLOBAL_PROPERTIES.filter((p: any) =>
       ['title', 'role', 'ariaLabel', 'ariaDescribedby'].includes(p.name)
     );
     if (globalPropsToShow.length > 0) {
@@ -559,8 +634,8 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
           attrType: prop.type,
           isSet: (prop.name in (properties || {})) || (prop.htmlAttribute in attributes),
           source: 'property',
-          description: prop.description
-        }))
+          description: prop.description,
+        })),
       });
     }
 
@@ -577,52 +652,52 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
   async getBuiltinElements(): Promise<ElementDefinition[]> {
     return [
       {
-        tag: "div",
-        displayName: "Div",
-        description: "Generic container",
-        category: "Layout",
+        tag: 'div',
+        displayName: 'Div',
+        description: 'Generic container',
+        category: 'Layout',
       },
       {
-        tag: "span",
-        displayName: "Span",
-        description: "Inline container",
-        category: "Layout",
+        tag: 'span',
+        displayName: 'Span',
+        description: 'Inline container',
+        category: 'Layout',
       },
       {
-        tag: "p",
-        displayName: "Paragraph",
-        description: "Paragraph text",
-        category: "Text",
+        tag: 'p',
+        displayName: 'Paragraph',
+        description: 'Paragraph text',
+        category: 'Text',
       },
       {
-        tag: "h1",
-        displayName: "Heading 1",
-        description: "Main heading",
-        category: "Text",
+        tag: 'h1',
+        displayName: 'Heading 1',
+        description: 'Main heading',
+        category: 'Text',
       },
       {
-        tag: "h2",
-        displayName: "Heading 2",
-        description: "Subheading",
-        category: "Text",
+        tag: 'h2',
+        displayName: 'Heading 2',
+        description: 'Subheading',
+        category: 'Text',
       },
       {
-        tag: "button",
-        displayName: "Button",
-        description: "Click button",
-        category: "Interactive",
+        tag: 'button',
+        displayName: 'Button',
+        description: 'Click button',
+        category: 'Interactive',
       },
       {
-        tag: "input",
-        displayName: "Input",
-        description: "Text input",
-        category: "Interactive",
+        tag: 'input',
+        displayName: 'Input',
+        description: 'Text input',
+        category: 'Interactive',
       },
       {
-        tag: "a",
-        displayName: "Link",
-        description: "Hyperlink",
-        category: "Interactive",
+        tag: 'a',
+        displayName: 'Link',
+        description: 'Hyperlink',
+        category: 'Interactive',
       },
     ];
   }
@@ -673,8 +748,8 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
     const builtInElements = new Set<string>();
     const customElements = new Map<string, string>(); // className -> import path
 
-    console.log("[generateHtmlPropsCodeFromJson] Starting JSON conversion, componentName:", componentName);
-    console.log("[generateHtmlPropsCodeFromJson] Input JSON:", JSON.stringify(json).substring(0, 200));
+    console.log('[generateHtmlPropsCodeFromJson] Starting JSON conversion, componentName:', componentName);
+    console.log('[generateHtmlPropsCodeFromJson] Input JSON:', JSON.stringify(json).substring(0, 200));
 
     // Collect used elements from JSON
     if (json && Array.isArray(json)) {
@@ -685,12 +760,12 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
       this.collectElementsFromJson(json, builtInElements, customElements, componentName);
     }
 
-    console.log("[generateHtmlPropsCodeFromJson] Built-in elements:", Array.from(builtInElements));
-    console.log("[generateHtmlPropsCodeFromJson] Custom elements:", Array.from(customElements.entries()));
+    console.log('[generateHtmlPropsCodeFromJson] Built-in elements:', Array.from(builtInElements));
+    console.log('[generateHtmlPropsCodeFromJson] Custom elements:', Array.from(customElements.entries()));
 
     // Generate imports for built-in elements
     if (builtInElements.size > 0) {
-      const builtInImports = Array.from(builtInElements).sort().join(", ");
+      const builtInImports = Array.from(builtInElements).sort().join(', ');
       lines.push(`import { ${builtInImports} } from '@html-props/built-ins';`);
     }
 
@@ -702,31 +777,31 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
     }
 
     if (builtInElements.size > 0 || customElements.size > 0) {
-      lines.push("");
+      lines.push('');
     }
 
-    lines.push("    return [");
+    lines.push('    return [');
 
     // Convert JSON to html-props code
     if (Array.isArray(json)) {
-      console.log("[generateHtmlPropsCodeFromJson] Processing array with", json.length, "items");
+      console.log('[generateHtmlPropsCodeFromJson] Processing array with', json.length, 'items');
       json.forEach((item, index) => {
         const isLast = index === json.length - 1;
         const elementLines = this.jsonNodeToHtmlProps(item, 2, componentName, isLast);
-        console.log("[generateHtmlPropsCodeFromJson] Item", index, "generated", elementLines.length, "lines");
+        console.log('[generateHtmlPropsCodeFromJson] Item', index, 'generated', elementLines.length, 'lines');
         lines.push(...elementLines);
       });
     } else if (json) {
-      console.log("[generateHtmlPropsCodeFromJson] Processing single object");
+      console.log('[generateHtmlPropsCodeFromJson] Processing single object');
       const elementLines = this.jsonNodeToHtmlProps(json, 2, componentName, true);
-      console.log("[generateHtmlPropsCodeFromJson] Generated", elementLines.length, "lines");
+      console.log('[generateHtmlPropsCodeFromJson] Generated', elementLines.length, 'lines');
       lines.push(...elementLines);
     }
 
-    lines.push("    ];");
-    const result = lines.join("\n");
-    console.log("[generateHtmlPropsCodeFromJson] Final result length:", result.length);
-    console.log("[generateHtmlPropsCodeFromJson] First 500 chars:", result.substring(0, 500));
+    lines.push('    ];');
+    const result = lines.join('\n');
+    console.log('[generateHtmlPropsCodeFromJson] Final result length:', result.length);
+    console.log('[generateHtmlPropsCodeFromJson] First 500 chars:', result.substring(0, 500));
     return result;
   }
 
@@ -737,27 +812,27 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
    */
   private getRelativeImportPath(targetFilePath: string): string {
     if (!this.currentFilePath) {
-      console.warn("[getRelativeImportPath] currentFilePath not set, using raw path:", targetFilePath);
+      console.warn('[getRelativeImportPath] currentFilePath not set, using raw path:', targetFilePath);
       return targetFilePath;
     }
 
     const currentDir = path.dirname(this.currentFilePath);
     const relativePath = path.relative(currentDir, targetFilePath);
-    
+
     // Normalize path separators to forward slashes for imports
     let importPath = relativePath.replace(/\\/g, '/');
-    
+
     // Ensure it starts with ./ or ../
     if (!importPath.startsWith('.')) {
       importPath = './' + importPath;
     }
-    
+
     // Keep .ts extension for custom element imports (TypeScript/Deno requires it)
     if (!importPath.endsWith('.ts')) {
       importPath += '.ts';
     }
-    
-    console.log("[getRelativeImportPath] from:", this.currentFilePath, "to:", targetFilePath, "result:", importPath);
+
+    console.log('[getRelativeImportPath] from:', this.currentFilePath, 'to:', targetFilePath, 'result:', importPath);
     return importPath;
   }
 
@@ -770,7 +845,7 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
     node: any,
     builtInElements: Set<string>,
     customElements: Map<string, string>,
-    componentName: string | null = null
+    componentName: string | null = null,
   ): void {
     if (node.type === 'element' && node.tag) {
       const tag = node.tag.toLowerCase();
@@ -778,7 +853,7 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
 
       // Skip if this is the component itself (don't import yourself!)
       if (componentName && className === componentName) {
-        console.log("[collectElementsFromJson] Skipping self-reference:", className);
+        console.log('[collectElementsFromJson] Skipping self-reference:', className);
         // Still process children
         if (node.children && Array.isArray(node.children)) {
           for (const child of node.children) {
@@ -792,8 +867,8 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
       if (!tag.includes('-')) {
         // Built-in element
         builtInElements.add(className);
-        console.log("[collectElementsFromJson] Added built-in element:", className, "from tag:", tag);
-        
+        console.log('[collectElementsFromJson] Added built-in element:', className, 'from tag:', tag);
+
         // Process children of built-in elements
         if (node.children && Array.isArray(node.children)) {
           for (const child of node.children) {
@@ -808,12 +883,19 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
           if (customElem && customElem.filePath) {
             const importPath = this.getRelativeImportPath(customElem.filePath);
             customElements.set(className, importPath);
-            console.log("[collectElementsFromJson] Added custom element:", className, "from tag:", tag, "path:", importPath);
+            console.log(
+              '[collectElementsFromJson] Added custom element:',
+              className,
+              'from tag:',
+              tag,
+              'path:',
+              importPath,
+            );
           } else {
-            console.warn("[collectElementsFromJson] Custom element not found or no filePath:", tag);
+            console.warn('[collectElementsFromJson] Custom element not found or no filePath:', tag);
           }
         } else {
-          console.warn("[collectElementsFromJson] CustomElementScanner not available");
+          console.warn('[collectElementsFromJson] CustomElementScanner not available');
         }
       }
     } else if (node.type === 'text') {
@@ -832,12 +914,12 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
     isLast: boolean = true,
   ): string[] {
     const lines: string[] = [];
-    const indentStr = " ".repeat(indent);
-    const comma = isLast ? "" : ",";
+    const indentStr = ' '.repeat(indent);
+    const comma = isLast ? '' : ',';
 
     if (node.type === 'text') {
       // Text node - return as string literal with proper indentation
-      const text = (node.content || "").trim();
+      const text = (node.content || '').trim();
       if (text) {
         lines.push(`${indentStr}'${text.replace(/'/g, "\\'")}'${comma}`);
       }
@@ -850,10 +932,10 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
 
     const tag = node.tag.toLowerCase();
     const className = this.getHtmlPropsClassName(tag);
-    
+
     // Skip if this is the component itself (don't render yourself!)
     if (componentName && className === componentName) {
-      console.log("[jsonNodeToHtmlProps] Skipping self-reference:", className, "componentName:", componentName);
+      console.log('[jsonNodeToHtmlProps] Skipping self-reference:', className, 'componentName:', componentName);
       // Render only children instead
       if (node.children && Array.isArray(node.children)) {
         for (let i = 0; i < node.children.length; i++) {
@@ -864,21 +946,21 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
       }
       return lines;
     }
-    
+
     // Determine if this is a third-party web component (has hyphen in name)
     const isThirdPartyWebComponent = tag.includes('-');
 
     // Build attributes object from HTML attributes + props
     const attrs: string[] = [];
-    
+
     if (node.attributes && typeof node.attributes === 'object') {
       for (const [key, value] of Object.entries(node.attributes)) {
         // Skip the 'is' attribute (internal DOM marker) and 'title' (browser default tooltip)
         if (key === 'is' || key === 'title') continue;
-        
+
         // Map HTML attribute names to html-props names
         const propKey = key === 'class' ? 'className' : key;
-        
+
         // Escape value for JavaScript
         const escaped = (value as string).replace(/'/g, "\\'");
         attrs.push(`${propKey}: '${escaped}'`);
@@ -903,15 +985,15 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
 
     // Handle children
     let children: any[] = node.children || [];
-    
+
     // For third-party web components (with hyphen), don't render their children
     if (isThirdPartyWebComponent) {
       children = [];
     }
 
     // Build the element code
-    const attrStr = attrs.length > 0 ? `{ ${attrs.join(", ")} }` : "{}";
-    
+    const attrStr = attrs.length > 0 ? `{ ${attrs.join(', ')} }` : '{}';
+
     // No children - simple form
     if (children.length === 0) {
       lines.push(`${indentStr}new ${className}(${attrStr})${comma}`);
@@ -920,39 +1002,39 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
 
     // Has children - build with content property
     const childLines: string[] = [];
-    
+
     // Process each child
     children.forEach((child, idx) => {
       const isLastChild = idx === children.length - 1;
       const childOutput = this.jsonNodeToHtmlProps(child, indent + 2, componentName, isLastChild);
       childLines.push(...childOutput);
     });
-    
+
     // Build final attributes with content
     // Check if we only have text children
-    const hasOnlyText = childLines.every(line => {
+    const hasOnlyText = childLines.every((line) => {
       const trimmed = line.trim();
       return trimmed.startsWith("'") && trimmed.endsWith("'");
     });
-    
+
     let finalAttrs: string;
     if (hasOnlyText && childLines.length === 1) {
       // Single text child - use textContent instead of content
       const trimmedLine = childLines[0].trim();
       // Remove trailing comma only (keep quotes)
       const textContent = trimmedLine.endsWith(',') ? trimmedLine.slice(0, -1) : trimmedLine;
-      finalAttrs = attrs.length > 0 
-        ? `{ ${attrs.join(", ")}, textContent: ${textContent} }`
+      finalAttrs = attrs.length > 0
+        ? `{ ${attrs.join(', ')}, textContent: ${textContent} }`
         : `{ textContent: ${textContent} }`;
     } else {
       // Multiple children or mixed content - use content array
-      finalAttrs = attrs.length > 0 
-        ? `{ ${attrs.join(", ")}, content: [\n${childLines.join("\n")}\n${indentStr}] }`
-        : `{ content: [\n${childLines.join("\n")}\n${indentStr}] }`;
+      finalAttrs = attrs.length > 0
+        ? `{ ${attrs.join(', ')}, content: [\n${childLines.join('\n')}\n${indentStr}] }`
+        : `{ content: [\n${childLines.join('\n')}\n${indentStr}] }`;
     }
-    
+
     lines.push(`${indentStr}new ${className}(${finalAttrs})${comma}`);
-    
+
     return lines;
   }
 
@@ -1009,17 +1091,119 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
 
     // For unmapped HTML tags, use simple capitalization
     const builtins = [
-      "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi", "bdo",
-      "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code", "col",
-      "colgroup", "data", "datalist", "dd", "del", "details", "dfn", "dialog", "div", "dl",
-      "dt", "em", "embed", "fieldset", "figcaption", "figure", "footer", "form", "h1", "h2",
-      "h3", "h4", "h5", "h6", "head", "header", "hgroup", "hr", "html", "i", "iframe", "img",
-      "input", "ins", "kbd", "keygen", "label", "legend", "li", "link", "main", "map", "mark",
-      "menu", "menuitem", "meta", "meter", "nav", "noscript", "object", "ol", "optgroup",
-      "option", "output", "p", "param", "picture", "pre", "progress", "q", "rp", "rt", "ruby",
-      "s", "samp", "script", "section", "select", "small", "source", "span", "strong", "style",
-      "sub", "summary", "sup", "svg", "table", "tbody", "td", "textarea", "tfoot", "th", "thead",
-      "time", "title", "tr", "track", "u", "ul", "var", "video", "wbr",
+      'a',
+      'abbr',
+      'address',
+      'area',
+      'article',
+      'aside',
+      'audio',
+      'b',
+      'base',
+      'bdi',
+      'bdo',
+      'blockquote',
+      'body',
+      'br',
+      'button',
+      'canvas',
+      'caption',
+      'cite',
+      'code',
+      'col',
+      'colgroup',
+      'data',
+      'datalist',
+      'dd',
+      'del',
+      'details',
+      'dfn',
+      'dialog',
+      'div',
+      'dl',
+      'dt',
+      'em',
+      'embed',
+      'fieldset',
+      'figcaption',
+      'figure',
+      'footer',
+      'form',
+      'h1',
+      'h2',
+      'h3',
+      'h4',
+      'h5',
+      'h6',
+      'head',
+      'header',
+      'hgroup',
+      'hr',
+      'html',
+      'i',
+      'iframe',
+      'img',
+      'input',
+      'ins',
+      'kbd',
+      'keygen',
+      'label',
+      'legend',
+      'li',
+      'link',
+      'main',
+      'map',
+      'mark',
+      'menu',
+      'menuitem',
+      'meta',
+      'meter',
+      'nav',
+      'noscript',
+      'object',
+      'ol',
+      'optgroup',
+      'option',
+      'output',
+      'p',
+      'param',
+      'picture',
+      'pre',
+      'progress',
+      'q',
+      'rp',
+      'rt',
+      'ruby',
+      's',
+      'samp',
+      'script',
+      'section',
+      'select',
+      'small',
+      'source',
+      'span',
+      'strong',
+      'style',
+      'sub',
+      'summary',
+      'sup',
+      'svg',
+      'table',
+      'tbody',
+      'td',
+      'textarea',
+      'tfoot',
+      'th',
+      'thead',
+      'time',
+      'title',
+      'tr',
+      'track',
+      'u',
+      'ul',
+      'var',
+      'video',
+      'wbr',
     ];
 
     if (builtins.includes(tag)) {
@@ -1037,8 +1221,8 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
 
     // Fallback: muunna hyphenated-name to PascalCaseName
     // Esim: "md3-outlined-button" → "Md3OutlinedButton"
-    const parts = tag.split("-");
-    return parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join("");
+    const parts = tag.split('-');
+    return parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join('');
   }
 
   /**
@@ -1062,74 +1246,82 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
     // Keep imports like: import HTMLProps from "@html-props/core"
     // Remove imports like: import { Div, H1 } from '@html-props/built-ins'
     // Remove imports like: import { OutlinedButton } from '../md3/outlined_button'
-    
+
     // This regex matches lines with named imports: "import { ... } from '...'"
     // The /gm flags mean global and multiline, allowing ^ and $ to match line boundaries
-    updated = updated.replace(/^import\s+\{[^}]*\}\s+from\s+['"][^'"]*['"];?(\s*\n)?/gm, "");
-    
+    // We exclude @html-props/core to preserve the mixin import
+    updated = updated.replace(/^import\s+\{[^}]*\}\s+from\s+['"](?!@html-props\/core)[^'"]*['"];?(\s*\n)?/gm, '');
+
     // Clean up extra blank lines left by import removal (2+ consecutive newlines -> 1)
-    updated = updated.replace(/\n{3,}/g, "\n\n");
+    updated = updated.replace(/\n{3,}/g, '\n\n');
 
     // Step 2: Add new import statements after HTMLProps and comments
     if (importStatements.length > 0) {
       const lines = updated.split('\n');
       let insertLineIdx = 0;
-      
+
       // Find the insertion point: after HTMLProps imports, comments, and blank lines
       // But before any other code (interfaces, classes, functions)
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
-        
+
         // Continue scanning while we see comments, blank lines, or default imports
-        if (line === '' ||                                          // empty line
-            line.startsWith('//') ||                                // single-line comment
-            line.startsWith('/*') || line.startsWith('*') ||        // multi-line comment  
-            (line.startsWith('import ') && !line.includes('{'))) {  // default import like "import HTMLProps"
+        if (
+          line === '' || // empty line
+          line.startsWith('//') || // single-line comment
+          line.startsWith('/*') || line.startsWith('*') || // multi-line comment
+          (line.startsWith('import ') && !line.includes('{'))
+        ) { // default import like "import HTMLProps"
           insertLineIdx = i + 1;
         } else {
           // We've found actual code, stop here
           break;
         }
       }
-      
+
       // Build the updated code with new imports inserted
       const beforeLines = lines.slice(0, insertLineIdx);
       const afterLines = lines.slice(insertLineIdx);
-      
+
       // Add imports + blank line for separation
-      const importsWithSeparator = [...importStatements, ""];
-      
+      const importsWithSeparator = [...importStatements, ''];
+
       const allLines = [...beforeLines, ...importsWithSeparator, ...afterLines];
       updated = allLines.join('\n');
-      
-      console.log("[replaceRenderMethod] Inserted", importStatements.length, "new import statements at line", insertLineIdx);
+
+      console.log(
+        '[replaceRenderMethod] Inserted',
+        importStatements.length,
+        'new import statements at line',
+        insertLineIdx,
+      );
     }
-    
+
     // Step 3: Replace return statement content
-    const returnMatch = updated.indexOf("return [");
+    const returnMatch = updated.indexOf('return [');
     if (returnMatch === -1) {
-      console.warn("[replaceRenderMethod] return [ not found");
+      console.warn('[replaceRenderMethod] return [ not found');
       return updated;
     }
-    
-    const returnEnd = updated.indexOf("];", returnMatch);
+
+    const returnEnd = updated.indexOf('];', returnMatch);
     if (returnEnd === -1) {
-      console.warn("[replaceRenderMethod] ]; not found");
+      console.warn('[replaceRenderMethod] ]; not found');
       return updated;
     }
-    
-    console.log("[replaceRenderMethod] Found return [ at", returnMatch);
-    
+
+    console.log('[replaceRenderMethod] Found return [ at', returnMatch);
+
     // Replace content between "return [" and "];"
     const before = updated.substring(0, returnMatch + 8); // "return ["
     const after = updated.substring(returnEnd); // "];"
-    
+
     // returnArrayBody is already properly indented, just trim and use it
-    const newReturn = "\n" + returnArrayBody.trim() + "\n    ";
-    
+    const newReturn = '\n' + returnArrayBody.trim() + '\n    ';
+
     updated = before + newReturn + after;
-    
-    console.log("[replaceRenderMethod] Transformation complete, new length:", updated.length);
+
+    console.log('[replaceRenderMethod] Transformation complete, new length:', updated.length);
     return updated;
   }
 
@@ -1142,7 +1334,7 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
         const expr = node.expression;
         if (
           ts.isPropertyAccessExpression(expr) &&
-          expr.name.text === "define" &&
+          expr.name.text === 'define' &&
           node.arguments.length > 0
         ) {
           const arg = node.arguments[0];
@@ -1172,7 +1364,7 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
     let renderMethod: ts.MethodDeclaration | null = null;
 
     const visit = (node: ts.Node): void => {
-      if (ts.isMethodDeclaration(node) && node.name.getText() === "render") {
+      if (ts.isMethodDeclaration(node) && node.name.getText() === 'render') {
         renderMethod = node;
         return;
       }
@@ -1194,7 +1386,7 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
           if (heritage.token === ts.SyntaxKind.ExtendsKeyword) {
             for (const type of heritage.types) {
               const typeName = type.expression.getText(sourceFile);
-              if (typeName.startsWith("HTMLProps")) {
+              if (typeName.startsWith('HTMLProps')) {
                 htmlPropsClass = node;
                 return;
               }
@@ -1215,8 +1407,8 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
    * Resolves it relative to the workspace folder containing the file
    */
   private getBundlePath(): string | null {
-    const config = vscode.workspace.getConfiguration("webBuilder");
-    const bundlePathSetting = config.get<string>("bundlePath");
+    const config = vscode.workspace.getConfiguration('webBuilder');
+    const bundlePathSetting = config.get<string>('bundlePath');
 
     if (!bundlePathSetting || !bundlePathSetting.trim()) {
       return null;
@@ -1225,19 +1417,18 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
     // Normalize the path
     let normalizedPath = bundlePathSetting;
     // Remove leading ./
-    if (normalizedPath.startsWith("./")) {
+    if (normalizedPath.startsWith('./')) {
       normalizedPath = normalizedPath.slice(2);
     }
     // Remove leading /
-    while (normalizedPath.startsWith("/")) {
+    while (normalizedPath.startsWith('/')) {
       normalizedPath = normalizedPath.slice(1);
     }
 
     // If we have a workspace folder, resolve relative to it
     if (this.currentWorkspaceFolder) {
-      const absolutePath =
-        vscode.Uri.joinPath(this.currentWorkspaceFolder.uri, normalizedPath)
-          .fsPath;
+      const absolutePath = vscode.Uri.joinPath(this.currentWorkspaceFolder.uri, normalizedPath)
+        .fsPath;
       return absolutePath;
     }
 

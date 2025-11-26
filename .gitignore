@@ -1,2 +1,3 @@
 # Ignore JS files only in src/landing
 /src/landing/*.js
+dist/

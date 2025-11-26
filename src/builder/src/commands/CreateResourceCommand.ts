@@ -1,45 +1,48 @@
-import * as vscode from "vscode";
-import * as path from "path";
-import { AdapterManager } from "../adapters/AdapterManager";
-import { HtmlPropsAdapter } from "../adapters/HtmlPropsAdapter";
-import { CustomElementScanner } from "../services/CustomElementScanner";
-import { AttributeRegistry } from "../services/AttributeRegistry";
+import * as vscode from 'vscode';
+import * as path from 'path';
+import { AdapterManager } from '../adapters/AdapterManager';
+import { HtmlPropsAdapter } from '../adapters/HtmlPropsAdapter';
+import { CustomElementScanner } from '../services/CustomElementScanner';
+import { AttributeRegistry } from '../services/AttributeRegistry';
 
 /**
  * Property definition for component
  */
 interface ComponentProperty {
   name: string;
-  type: "string" | "number" | "boolean" | "function" | "object" | "array";
+  type: 'string' | 'number' | 'boolean' | 'function' | 'object' | 'array';
   defaultValue?: string;
 }
 
 /**
- * Component wizard result
+ * Resource wizard result
  */
-interface ComponentWizardResult {
-  tagName: string;
-  className: string;
-  componentType: "html-props" | "vanilla";
-  baseElement: string;
+interface ResourceWizardResult {
+  resourceType: 'component' | 'html';
+  // Component specific fields
+  tagName?: string;
+  className?: string;
+  componentType?: 'html-props' | 'vanilla';
+  baseElement?: string;
   baseTag?: string;
-  properties: ComponentProperty[];
+  properties?: ComponentProperty[];
+  // Common fields
   filePath: string;
 }
 
 /**
- * Create Component Command
+ * Create Resource Command
  *
- * Wizard for creating custom web components (html-props or vanilla).
- * Guides user through component creation with multi-step QuickPick UI.
+ * Wizard for creating new resources (components or HTML pages).
+ * Guides user through creation with multi-step QuickPick UI.
  */
-export class CreateComponentCommand {
+export class CreateResourceCommand {
   constructor(
     private scanner?: CustomElementScanner,
   ) {}
 
   /**
-   * Execute create component wizard
+   * Execute create resource wizard
    * @param defaultDirectory Optional directory path to use as default location.
    *                         If undefined, user selects a directory via file explorer
    *                         and it's added to resourceDirectories in settings
@@ -50,15 +53,15 @@ export class CreateComponentCommand {
       if (!defaultDirectory) {
         const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
         if (!workspaceFolder) {
-          throw new Error("No workspace folder open");
+          throw new Error('No workspace folder open');
         }
 
         const selectedUri = await vscode.window.showOpenDialog({
           canSelectFiles: false,
           canSelectFolders: true,
           canSelectMany: false,
-          title: "Select or create a resource directory",
-          openLabel: "Use as Resource Directory",
+          title: 'Select or create a resource directory',
+          openLabel: 'Use as Resource Directory',
           defaultUri: workspaceFolder.uri,
         });
 
@@ -72,12 +75,12 @@ export class CreateComponentCommand {
         await this.addResourceDirectory(selectedPath);
 
         vscode.window.showInformationMessage(
-          "Resource directory added to settings. You can now create components here.",
+          'Resource directory added to settings. You can now create resources here.',
         );
         return;
       }
 
-      // If defaultDirectory is provided, run the full component creation wizard
+      // If defaultDirectory is provided, run the full resource creation wizard
       const result = await this.runWizard(defaultDirectory);
 
       if (!result) {
@@ -85,22 +88,23 @@ export class CreateComponentCommand {
         return;
       }
 
-      // Generate component code
-      const code = await this.generateComponentCode(result);
+      // Generate code
+      const code = await this.generateCode(result);
 
-      // Create component file
-      const fileUri = await this.createComponentFile(result.filePath, code);
+      // Create file
+      const fileUri = await this.createFile(result.filePath, code);
 
       // Open in visual editor
       await this.openInVisualEditor(fileUri);
 
       // Show success message
+      const name = result.resourceType === 'component' ? result.className : path.basename(result.filePath);
       vscode.window.showInformationMessage(
-        `Component created: ${result.className} (<${result.tagName}>)`,
+        `${result.resourceType === 'component' ? 'Component' : 'Page'} created: ${name}`,
       );
     } catch (error) {
       vscode.window.showErrorMessage(
-        `Failed to create component: ${(error as Error).message}`,
+        `Failed to create resource: ${(error as Error).message}`,
       );
     }
   }
@@ -111,24 +115,24 @@ export class CreateComponentCommand {
   private async addResourceDirectory(directoryPath: string): Promise<void> {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
-      throw new Error("No workspace folder open");
+      throw new Error('No workspace folder open');
     }
 
     // Get the relative path from workspace root
     let relativePath = path.relative(workspaceFolder.uri.fsPath, directoryPath);
     // Normalize to forward slashes and ensure it starts with ./
-    relativePath = "./" + relativePath.replace(/\\/g, "/");
+    relativePath = './' + relativePath.replace(/\\/g, '/');
 
     // Get current configuration
-    const config = vscode.workspace.getConfiguration("webBuilder");
+    const config = vscode.workspace.getConfiguration('webBuilder');
     const resourceDirectories = config.get<
       Array<{ name: string; path: string }>
-    >("resourceDirectories", []);
+    >('resourceDirectories', []);
 
     // Check if already exists
     if (resourceDirectories.find((d) => d.path === relativePath)) {
       vscode.window.showWarningMessage(
-        "This directory is already in resourceDirectories",
+        'This directory is already in resourceDirectories',
       );
       return;
     }
@@ -143,7 +147,7 @@ export class CreateComponentCommand {
     });
 
     await config.update(
-      "resourceDirectories",
+      'resourceDirectories',
       resourceDirectories,
       vscode.ConfigurationTarget.Workspace,
     );
@@ -169,7 +173,58 @@ export class CreateComponentCommand {
    */
   private async runWizard(
     defaultDirectory?: string,
-  ): Promise<ComponentWizardResult | undefined> {
+  ): Promise<ResourceWizardResult | undefined> {
+    // Step 1: Resource Type
+    const resourceType = await this.promptResourceType();
+    if (!resourceType) {
+      return undefined;
+    }
+
+    if (resourceType === 'html') {
+      return this.runHtmlWizard(defaultDirectory);
+    } else {
+      return this.runComponentWizard(defaultDirectory);
+    }
+  }
+
+  /**
+   * Run HTML page wizard
+   */
+  private async runHtmlWizard(
+    defaultDirectory?: string,
+  ): Promise<ResourceWizardResult | undefined> {
+    const fileName = await vscode.window.showInputBox({
+      prompt: 'Enter HTML file name',
+      placeHolder: 'index.html',
+      validateInput: (value) => {
+        if (!value) {
+          return 'File name is required';
+        }
+        if (!value.endsWith('.html')) {
+          return 'File must have .html extension';
+        }
+        return undefined;
+      },
+    });
+
+    if (!fileName) {
+      return undefined;
+    }
+
+    const filePath = defaultDirectory ? `${defaultDirectory}/${fileName}` : `./${fileName}`;
+
+    return {
+      resourceType: 'html',
+      filePath,
+    };
+  }
+
+  /**
+   * Run Component wizard
+   */
+  private async runComponentWizard(
+    defaultDirectory?: string,
+  ): Promise<ResourceWizardResult | undefined> {
     // Step 1: Tag name
     const tagName = await this.promptTagName();
     if (!tagName) {
@@ -196,11 +251,11 @@ export class CreateComponentCommand {
     }
 
     // Parse base element
-    let baseClass = "HTMLElement";
+    let baseClass = 'HTMLElement';
     let baseTag: string | undefined;
 
-    if (baseElement !== "HTMLElement") {
-      const parts = baseElement.split(":");
+    if (baseElement !== 'HTMLElement') {
+      const parts = baseElement.split(':');
       baseClass = parts[0];
       baseTag = parts[1];
     }
@@ -212,15 +267,14 @@ export class CreateComponentCommand {
     }
 
     // Step 5: File location
-    const suggestedPath = defaultDirectory
-      ? `${defaultDirectory}/${tagName}.ts`
-      : `./components/${tagName}.ts`;
+    const suggestedPath = defaultDirectory ? `${defaultDirectory}/${tagName}.ts` : `./components/${tagName}.ts`;
     const filePath = await this.promptFilePath(suggestedPath);
     if (!filePath) {
       return undefined;
     }
 
     return {
+      resourceType: 'component',
       tagName,
       className,
       componentType,
@@ -232,21 +286,46 @@ export class CreateComponentCommand {
   }
 
   /**
+   * Prompt for resource type
+   */
+  private async promptResourceType(): Promise<'component' | 'html' | undefined> {
+    const selection = await vscode.window.showQuickPick([
+      {
+        label: '$(symbol-class) Web Component',
+        description: 'Create a reusable custom element',
+        detail: 'TypeScript component with props and signals',
+        value: 'component' as const,
+      },
+      {
+        label: '$(file-code) HTML Page',
+        description: 'Create a new HTML file',
+        detail: 'Standard HTML5 document',
+        value: 'html' as const,
+      },
+    ], {
+      placeHolder: 'Select resource type',
+      title: 'Create Resource',
+    });
+
+    return selection?.value;
+  }
+
+  /**
    * Prompt for tag name
    */
   private async promptTagName(): Promise<string | undefined> {
     return await vscode.window.showInputBox({
-      prompt: "Enter web component tag name (must contain hyphen)",
-      placeHolder: "my-component",
+      prompt: 'Enter web component tag name (must contain hyphen)',
+      placeHolder: 'my-component',
       validateInput: (value) => {
         if (!value) {
-          return "Tag name is required";
+          return 'Tag name is required';
         }
-        if (!value.includes("-")) {
-          return "Tag name must contain a hyphen (e.g., my-component)";
+        if (!value.includes('-')) {
+          return 'Tag name must contain a hyphen (e.g., my-component)';
         }
         if (!/^[a-z][a-z0-9-]*$/.test(value)) {
-          return "Tag name must start with a letter and contain only lowercase letters, numbers, and hyphens";
+          return 'Tag name must start with a letter and contain only lowercase letters, numbers, and hyphens';
         }
         return undefined;
       },
@@ -260,15 +339,15 @@ export class CreateComponentCommand {
     suggestion: string,
   ): Promise<string | undefined> {
     return await vscode.window.showInputBox({
-      prompt: "Enter TypeScript class name",
-      placeHolder: "MyComponent",
+      prompt: 'Enter TypeScript class name',
+      placeHolder: 'MyComponent',
       value: suggestion,
       validateInput: (value) => {
         if (!value) {
-          return "Class name is required";
+          return 'Class name is required';
         }
         if (!/^[A-Z][a-zA-Z0-9]*$/.test(value)) {
-          return "Class name must start with uppercase letter and contain only letters and numbers";
+          return 'Class name must start with uppercase letter and contain only letters and numbers';
         }
         return undefined;
       },
@@ -279,25 +358,24 @@ export class CreateComponentCommand {
    * Prompt for component type
    */
   private async promptComponentType(): Promise<
-    "html-props" | "vanilla" | undefined
+    'html-props' | 'vanilla' | undefined
   > {
     const selection = await vscode.window.showQuickPick([
       {
-        label: "$(sparkle) html-props Component",
-        description: "Recommended - TypeScript, signals, constructor props",
-        detail:
-          "Modern component with type-safe props, signals, and MyElement.define()",
-        value: "html-props" as const,
+        label: '$(sparkle) html-props Component',
+        description: 'Recommended - TypeScript, signals, constructor props',
+        detail: 'Modern component with type-safe props, signals, and MyElement.define()',
+        value: 'html-props' as const,
       },
       {
-        label: "$(code) Vanilla Web Component",
-        description: "Standard HTML Custom Element",
-        detail: "Traditional web component with attribute-based API",
-        value: "vanilla" as const,
+        label: '$(code) Vanilla Web Component',
+        description: 'Standard HTML Custom Element',
+        detail: 'Traditional web component with attribute-based API',
+        value: 'vanilla' as const,
       },
     ], {
-      placeHolder: "Select component type",
-      title: "Component Type",
+      placeHolder: 'Select component type',
+      title: 'Component Type',
     });
 
     return selection?.value;
@@ -309,38 +387,38 @@ export class CreateComponentCommand {
   private async promptBaseElement(): Promise<string | undefined> {
     const selection = await vscode.window.showQuickPick([
       {
-        label: "HTMLElement",
-        description: "Generic element (default)",
-        detail: "Autonomous custom element",
-        value: "HTMLElement",
+        label: 'HTMLElement',
+        description: 'Generic element (default)',
+        detail: 'Autonomous custom element',
+        value: 'HTMLElement',
       },
       {
-        label: "HTMLButtonElement",
-        description: "Extends <button>",
-        detail: "Customized built-in button element",
-        value: "HTMLButtonElement:button",
+        label: 'HTMLButtonElement',
+        description: 'Extends <button>',
+        detail: 'Customized built-in button element',
+        value: 'HTMLButtonElement:button',
       },
       {
-        label: "HTMLInputElement",
-        description: "Extends <input>",
-        detail: "Customized built-in input element",
-        value: "HTMLInputElement:input",
+        label: 'HTMLInputElement',
+        description: 'Extends <input>',
+        detail: 'Customized built-in input element',
+        value: 'HTMLInputElement:input',
       },
       {
-        label: "HTMLDivElement",
-        description: "Extends <div>",
-        detail: "Customized built-in div element",
-        value: "HTMLDivElement:div",
+        label: 'HTMLDivElement',
+        description: 'Extends <div>',
+        detail: 'Customized built-in div element',
+        value: 'HTMLDivElement:div',
       },
       {
-        label: "HTMLAnchorElement",
-        description: "Extends <a>",
-        detail: "Customized built-in anchor element",
-        value: "HTMLAnchorElement:a",
+        label: 'HTMLAnchorElement',
+        description: 'Extends <a>',
+        detail: 'Customized built-in anchor element',
+        value: 'HTMLAnchorElement:a',
       },
     ], {
-      placeHolder: "Select base HTML element",
-      title: "Base Element",
+      placeHolder: 'Select base HTML element',
+      title: 'Base Element',
     });
 
     return selection?.value;
@@ -355,20 +433,20 @@ export class CreateComponentCommand {
     while (true) {
       const action = await vscode.window.showQuickPick([
         {
-          label: "$(add) Add Property",
-          value: "add",
+          label: '$(add) Add Property',
+          value: 'add',
         },
         {
-          label: "$(check) Finish",
+          label: '$(check) Finish',
           description: `${properties.length} properties defined`,
-          value: "finish",
+          value: 'finish',
         },
       ], {
-        placeHolder: "Component properties",
+        placeHolder: 'Component properties',
         title: `Properties (${properties.length})`,
       });
 
-      if (!action || action.value === "finish") {
+      if (!action || action.value === 'finish') {
         return properties;
       }
 
@@ -385,14 +463,14 @@ export class CreateComponentCommand {
    */
   private async promptProperty(): Promise<ComponentProperty | undefined> {
     const name = await vscode.window.showInputBox({
-      prompt: "Property name (camelCase)",
-      placeHolder: "myProperty",
+      prompt: 'Property name (camelCase)',
+      placeHolder: 'myProperty',
       validateInput: (value) => {
         if (!value) {
-          return "Property name is required";
+          return 'Property name is required';
         }
         if (!/^[a-z][a-zA-Z0-9]*$/.test(value)) {
-          return "Property name must start with lowercase letter and be camelCase";
+          return 'Property name must start with lowercase letter and be camelCase';
         }
         return undefined;
       },
@@ -403,14 +481,14 @@ export class CreateComponentCommand {
     }
 
     const typeSelection = await vscode.window.showQuickPick([
-      { label: "string", value: "string" as const },
-      { label: "number", value: "number" as const },
-      { label: "boolean", value: "boolean" as const },
-      { label: "function", value: "function" as const },
-      { label: "object", value: "object" as const },
-      { label: "array", value: "array" as const },
+      { label: 'string', value: 'string' as const },
+      { label: 'number', value: 'number' as const },
+      { label: 'boolean', value: 'boolean' as const },
+      { label: 'function', value: 'function' as const },
+      { label: 'object', value: 'object' as const },
+      { label: 'array', value: 'array' as const },
     ], {
-      placeHolder: "Select property type",
+      placeHolder: 'Select property type',
     });
 
     if (!typeSelection) {
@@ -431,15 +509,15 @@ export class CreateComponentCommand {
     suggestion: string,
   ): Promise<string | undefined> {
     return await vscode.window.showInputBox({
-      prompt: "Component file path (relative to workspace)",
-      placeHolder: "./components/my-component.ts",
+      prompt: 'Component file path (relative to workspace)',
+      placeHolder: './components/my-component.ts',
       value: suggestion,
       validateInput: (value) => {
         if (!value) {
-          return "File path is required";
+          return 'File path is required';
         }
-        if (!value.endsWith(".ts")) {
-          return "File must have .ts extension";
+        if (!value.endsWith('.ts')) {
+          return 'File must have .ts extension';
         }
         return undefined;
       },
@@ -447,125 +525,74 @@ export class CreateComponentCommand {
   }
 
   /**
+   * Generate code
+   */
+  private async generateCode(
+    result: ResourceWizardResult,
+  ): Promise<string> {
+    if (result.resourceType === 'html') {
+      return this.generateHtmlCode();
+    } else {
+      return this.generateComponentCode(result);
+    }
+  }
+
+  /**
+   * Generate HTML code
+   */
+  private generateHtmlCode(): string {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Page</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>New Page</h1>
+  <p>Start building your page here.</p>
+</body>
+</html>`;
+  }
+
+  /**
    * Generate component code
    */
   private async generateComponentCode(
-    result: ComponentWizardResult,
+    result: ResourceWizardResult,
   ): Promise<string> {
-    if (result.componentType === "html-props") {
-      return this.generateHtmlPropsCode(result);
+    if (result.componentType === 'html-props') {
+      const adapter = new HtmlPropsAdapter();
+      return adapter.generateNewComponentCode(
+        result.className!,
+        result.tagName!,
+        result.baseElement!,
+        result.baseTag,
+        result.properties || [],
+      );
     } else {
       return this.generateVanillaCode(result);
     }
   }
 
   /**
-   * Generate html-props component code
-   */
-  private generateHtmlPropsCode(result: ComponentWizardResult): string {
-    const { className, tagName, baseElement, baseTag, properties } = result;
-
-    // Generate interface properties
-    const interfaceProps = properties
-      .map((p) => {
-        const type = p.type === "function" ? "() => void" : p.type;
-        return `  ${p.name}?: ${type};`;
-      })
-      .join("\n");
-
-    // Generate signal properties
-    const signalProps = properties
-      .filter((p) => p.type !== "function")
-      .map((p) => {
-        const tsType = p.type === "array" ? "any[]" : p.type;
-        const defaultVal = p.defaultValue ||
-          this.getDefaultValueForType(p.type);
-        return `  ${p.name} = signal<${tsType}>(${defaultVal});`;
-      })
-      .join("\n");
-
-    // Generate function properties
-    const functionProps = properties
-      .filter((p) => p.type === "function")
-      .map((p) => `  ${p.name}?: () => void;`)
-      .join("\n");
-
-    // Generate observedAttributes
-    const observedAttrs = properties
-      .filter((p) => p.type !== "function")
-      .map((p) => `'${this.toKebabCase(p.name)}'`)
-      .join(", ");
-
-    // Generate define call with extends support
-    const defineCall = baseTag
-      ? `${className}.define('${tagName}', { extends: '${baseTag}' });`
-      : `${className}.define('${tagName}');`;
-
-    return `import HTMLProps from '@html-props/core';
-import { signal } from '@html-props/signals';
-
-/**
- * Props interface for ${className}
- */
-interface ${className}Props extends ${baseElement} {
-${interfaceProps}
-}
-
-/**
- * ${className} component
- * Generated by HTML Props Builder
- */
-class ${className} extends HTMLProps(${baseElement})<${className}Props>() {
-  static override get observedAttributes() {
-    return [${observedAttrs}];
-  }
-
-${signalProps}
-${functionProps ? "\n" + functionProps : ""}
-
-  override attributeChangedCallback(name: string, _oldValue: string | null, newValue: string | null) {
-    mapAttributeToSignal(this, name, newValue);
-  }
-
-  override render(): this['content'] {
-    // Build your component structure using HTML Props Builder
-    // Drag elements from Elements panel to construct the DOM hierarchy
-    return [];
-  }
-}
-
-/**
- * Helper to map kebab-case attributes to camelCase signal properties
- */
-function mapAttributeToSignal(
-  // deno-lint-ignore no-explicit-any
-  component: any,
-  attrName: string,
-  value: string | null
-) {
-  if (value === null) return;
-  const propName = attrName.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
-  if (propName in component && typeof component[propName]?.set === 'function') {
-    component[propName].set(value);
-  }
-}
-
-${defineCall}
-
-export default ${className};
-`;
-  }
-
-  /**
    * Generate vanilla component code
    */
-  private generateVanillaCode(result: ComponentWizardResult): string {
+  private generateVanillaCode(result: ResourceWizardResult): string {
     const { className, tagName, properties } = result;
 
-    const observedAttrs = properties
-      .filter((p) => p.type !== "function")
+    const observedAttrs = (properties || [])
+      .filter((p) => p.type !== 'function')
       .map((p) => `'${this.toKebabCase(p.name)}'`)
-      .join(", ");
+      .join(', ');
 
     return `/**
  * ${className} component
@@ -599,21 +626,19 @@ export default ${className};
   }
 
   /**
-   * Create component file
+   * Create file
    */
-  private async createComponentFile(
+  private async createFile(
     filePath: string,
     code: string,
   ): Promise<vscode.Uri> {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
-      throw new Error("No workspace folder open");
+      throw new Error('No workspace folder open');
     }
 
     // Resolve absolute path
-    const absolutePath = path.isAbsolute(filePath)
-      ? filePath
-      : path.join(workspaceFolder.uri.fsPath, filePath);
+    const absolutePath = path.isAbsolute(filePath) ? filePath : path.join(workspaceFolder.uri.fsPath, filePath);
 
     const fileUri = vscode.Uri.file(absolutePath);
 
@@ -633,9 +658,9 @@ export default ${className};
    */
   private async openInVisualEditor(fileUri: vscode.Uri): Promise<void> {
     await vscode.commands.executeCommand(
-      "vscode.openWith",
+      'vscode.openWith',
       fileUri,
-      "webBuilder.visualHtmlEditor",
+      'webBuilder.visualHtmlEditor',
     );
   }
 
@@ -644,18 +669,18 @@ export default ${className};
    */
   private getDefaultValueForType(type: string): string {
     switch (type) {
-      case "string":
+      case 'string':
         return "''";
-      case "number":
-        return "0";
-      case "boolean":
-        return "false";
-      case "object":
-        return "{}";
-      case "array":
-        return "[]";
-      case "function":
-        return "null";
+      case 'number':
+        return '0';
+      case 'boolean':
+        return 'false';
+      case 'object':
+        return '{}';
+      case 'array':
+        return '[]';
+      case 'function':
+        return 'null';
       default:
         return "''";
     }
@@ -666,15 +691,15 @@ export default ${className};
    */
   private toPascalCase(str: string): string {
     return str
-      .split("-")
+      .split('-')
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join("");
+      .join('');
   }
 
   /**
    * Convert to kebab-case
    */
   private toKebabCase(str: string): string {
-    return str.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+    return str.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
   }
 }

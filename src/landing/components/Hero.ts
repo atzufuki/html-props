@@ -13,12 +13,12 @@ interface HeroProps {
 
 export class Hero extends HTMLPropsMixin<typeof HTMLElement, HeroProps>(HTMLElement) {
   static props = {
-    title: { type: String, default: '' },
-    subtitle: { type: String, default: '' },
-    primaryCta: { type: String, default: 'Get Started' },
-    secondaryCta: { type: String, default: 'View on GitHub' },
-    primaryCtaLink: { type: String, default: '#' },
-    secondaryCtaLink: { type: String, default: '#' },
+    title: { type: String, default: '', reflect: true },
+    subtitle: { type: String, default: '', reflect: true },
+    primaryCta: { type: String, default: 'Get Started', reflect: true },
+    secondaryCta: { type: String, default: 'View on GitHub', reflect: true },
+    primaryCtaLink: { type: String, default: '#', reflect: true },
+    secondaryCtaLink: { type: String, default: '#', reflect: true },
   };
 
   declare title: string;

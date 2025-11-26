@@ -11,6 +11,7 @@
   ],
   "tasks": {
     "dev": "deno run --watch --allow-read=src --allow-write=src/landing --allow-run=deno --allow-net --allow-env --unstable-bundle src/landing/dev_server.ts",
+    "install:builder": "npm install --prefix ./src/builder",
     "compile:builder": "npm run compile --prefix ./src/builder",
     "bundle": "deno bundle --unstable-sloppy-imports src/landing/main.ts --output src/landing/dist/main.bundle.js",
     "build": "deno task bundle",

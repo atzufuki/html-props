@@ -1,11 +1,11 @@
 import { HTMLPropsMixin } from '@html-props/core';
 import { Div, Footer, P, Section } from '@html-props/built-ins';
-import { NavBar } from './components/NavBar.ts';
-import { Hero } from './components/Hero.ts';
-import { FeatureCard } from './components/FeatureCard.ts';
-import { InstallBox } from './components/InstallBox.ts';
-import { LiveDemo } from './components/LiveDemo.ts';
-import { theme } from './theme.ts';
+import { NavBar } from '../components/NavBar.ts';
+import { Hero } from '../components/Hero.ts';
+import { FeatureCard } from '../components/FeatureCard.ts';
+import { InstallBox } from '../components/InstallBox.ts';
+import { LiveDemo } from '../components/LiveDemo.ts';
+import { theme } from '../theme.ts';
 
 export class LandingPage extends HTMLPropsMixin(HTMLElement) {
   render() {

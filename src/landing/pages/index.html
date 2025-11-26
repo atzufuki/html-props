@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>HTML Props Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="module" src="../dist/hmr-client.js"></script>
+    <script type="module" src="../dist/main.bundle.js"></script>
+  </head>
+  <body>
+    <app-navbar links='[{"label": "Documentation", "href": "#/docs"}, {"label": "Examples", "href": "#/examples"}, {"label": "GitHub", "href": "https://github.com/html-props/core"}]'></app-navbar>
+
+    <app-hero
+      title="Reactive Custom Elements,<br>Simplified."
+      subtitle="A lightweight mixin for building native Web Components with reactive props, signals, and zero dependencies. No build step required."
+      primary-cta="Get Started"
+      secondary-cta="View on GitHub"
+      primary-cta-link="#/docs"
+      secondary-cta-link="https://github.com/html-props/core"
+    ></app-hero>
+
+    <section style="padding: 4rem 2rem; background-color: #1e293b; border-top: 1px solid #334155; border-bottom: 1px solid #334155;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto;">
+        <feature-card
+          icon="⚡"
+          title="Zero Dependencies"
+          description="Extremely lightweight. No framework lock-in. Just a simple mixin for your native HTMLElement classes."
+        ></feature-card>
+        <feature-card
+          icon="🔄"
+          title="Reactive Signals"
+          description="Built-in signal-based reactivity. Props automatically map to signals and trigger efficient updates."
+        ></feature-card>
+        <feature-card
+          icon="📘"
+          title="TypeScript First"
+          description="Designed with strong type inference in mind. Define props via static config and get full type safety."
+        ></feature-card>
+        <feature-card
+          icon="🎨"
+          title="Native DOM"
+          description="Works seamlessly with standard DOM APIs. Use it with vanilla JS, or integrate into any framework."
+        ></feature-card>
+      </div>
+    </section>
+
+    <section style="padding: 6rem 2rem; max-width: 1200px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 3rem;">
+        <h2 style="font-size: 2.5rem; margin-bottom: 1rem; font-weight: 700;">Write Less, Do More</h2>
+        <p style="color: #94a3b8;">Define props, handle events, and render content with a clean, declarative API.</p>
+      </div>
+      <live-demo code="import { HTMLPropsMixin } from '@html-props/core';
+import { Button, Div } from '@html-props/built-ins';
+
+class CounterApp extends HTMLPropsMixin(HTMLElement) {
+  static props = {
+    count: { type: Number, default: 0 }
+  };
+
+  render() {
+    const { count } = this;
+    
+    return new Div({
+      style: { padding: '1rem', textAlign: 'center' },
+      content: [
+        new Div({ 
+            textContent: `Count is: ${count}`,
+            style: { marginBottom: '1rem' }
+        }),
+        new Button({
+          textContent: 'Increment',
+          style: {
+            backgroundColor: '#38bdf8',
+            color: '#0f172a',
+            border: 'none',
+            padding: '0.5rem 1rem',
+            borderRadius: '0.25rem',
+            cursor: 'pointer',
+            fontWeight: '600'
+          },
+          onclick: () => this.count++
+        })
+      ]
+    });
+  }
+}
+
+CounterApp.define('counter-app');"></live-demo>
+    </section>
+
+    <section style="padding: 4rem 2rem; text-align: center; background-color: #1e293b; border-top: 1px solid #334155;">
+      <h2 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem;">Ready to build?</h2>
+      <install-box command="deno add @html-props/core"></install-box>
+    </section>
+
+    <footer style="padding: 2rem; text-align: center; color: #64748b; border-top: 1px solid #334155; font-size: 0.9rem;">
+      <p>© 2025 HTML Props. MIT License.</p>
+    </footer>
+  </body>
+</html>
