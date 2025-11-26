@@ -558,7 +558,8 @@ MyButton.define('my-button');`,
             style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
           }),
           new P({
-            textContent: 'The visual editor is a WYSIWYG interface that writes standard HTML.',
+            textContent:
+              'The visual editor is a WYSIWYG interface that writes standard HTML. It supports editing both static HTML files and the render methods of your .ts/.js web components.',
             style: { marginBottom: '1rem', color: '#94a3b8' },
           }),
 
@@ -572,17 +573,23 @@ MyButton.define('my-button');`,
             style: { marginBottom: '1rem', color: '#94a3b8' },
           }),
           new P({
-            textContent: 'Technical Effect: Inserts the HTML tag at the cursor position or drop target.',
+            textContent:
+              'Technical Effect: Inserts the HTML tag at the cursor position or drop target. For .ts/.js components, it updates the render method code.',
             style: { marginBottom: '0.5rem', color: theme.colors.text, fontWeight: 'bold', fontSize: '0.9rem' },
           }),
           new CodeBlock({
-            code: `<!-- Before -->
-<div class="container"></div>
-
-<!-- After Dragging 'MyButton' -->
+            code: `<!-- HTML File -->
 <div class="container">
   <my-button></my-button>
-</div>`,
+</div>
+
+// TypeScript Component (html-props)
+new Div({
+  class: 'container',
+  content: [
+    new MyButton({})
+  ]
+})`,
           }),
 
           new H3({
@@ -600,8 +607,13 @@ MyButton.define('my-button');`,
             style: { marginBottom: '0.5rem', color: theme.colors.text, fontWeight: 'bold', fontSize: '0.9rem' },
           }),
           new CodeBlock({
-            code: `<!-- Changing 'count' in Properties Panel -->
-<my-counter count="5"></my-counter>`,
+            code: `<!-- HTML File -->
+<my-counter count="5"></my-counter>
+
+// TypeScript Component (html-props)
+new MyCounter({
+  count: 5
+})`,
           }),
 
           new H3({

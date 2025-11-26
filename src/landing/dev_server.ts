@@ -9,6 +9,8 @@ const clients = new Set<ReadableStreamDefaultController<any>>();
 
 async function bundle() {
   try {
+    await Deno.mkdir('src/landing/dist', { recursive: true });
+
     // @ts-ignore: Deno.bundle is unstable
     const mainResult = await Deno.bundle({
       entrypoints: ['src/landing/main.ts'],
@@ -19,7 +21,7 @@ async function bundle() {
 
     if (mainResult.outputFiles && mainResult.outputFiles.length > 0) {
       const text = await mainResult.outputFiles[0].text();
-      await Deno.writeTextFile('src/landing/main.bundle.js', text);
+      await Deno.writeTextFile('src/landing/dist/main.bundle.js', text);
     } else {
       console.error('[landing] main bundle failed: no output');
     }
@@ -34,7 +36,7 @@ async function bundle() {
 
     if (hmrResult.outputFiles && hmrResult.outputFiles.length > 0) {
       const text = await hmrResult.outputFiles[0].text();
-      await Deno.writeTextFile('src/landing/hmr-client.js', text);
+      await Deno.writeTextFile('src/landing/dist/hmr-client.js', text);
     } else {
       console.error('[landing] hmr bundle failed: no output');
     }
@@ -86,6 +88,10 @@ async function handleRequest(req: Request): Promise<Response> {
   let path = url.pathname;
   if (path === '/') path = '/index.html';
 
+  if (path === '/main.bundle.js' || path === '/hmr-client.js') {
+    path = '/dist' + path;
+  }
+
   try {
     const fileUrl = new URL('.' + path, import.meta.url);
     const file = await Deno.readFile(fileUrl);
@@ -117,7 +123,7 @@ async function main() {
     const watcher = Deno.watchFs(['src/landing']);
     for await (const event of watcher) {
       const shouldIgnore = event.paths.every((path) =>
-        path.endsWith('main.bundle.js') || path.endsWith('hmr-client.js')
+        path.includes('dist') || path.endsWith('main.bundle.js') || path.endsWith('hmr-client.js')
       );
       if (shouldIgnore) continue;
 

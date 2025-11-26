@@ -1,37 +1,46 @@
-# Demo SPA (`src/demo`)
+# Landing Page SPA (`src/landing`)
 
-This folder contains a tiny TypeScript SPA that showcases `@html-props/core`
-using native Custom Elements.
+This folder contains the documentation and landing page for HTML Props.
 
 ## Files
 
 - `index.html` – HTML entry served by the dev server.
-- `main.ts` – SPA entry that defines `<demo-app>` using `HTMLPropsMixin`.
-- `main.bundle.js` – generated bundle from `deno bundle` (git-ignored
-  recommended).
+- `main.ts` – SPA entry.
+- `dist/main.bundle.js` – generated bundle.
 - `hmr-client.ts` – tiny hot-reload client using Server-Sent Events.
 - `dev_server.ts` – Deno dev server with bundling + HMR.
+- `serve.ts` – Production server for Deno Deploy.
 
-## Run the demo (with hot reload)
+## Run locally (with hot reload)
 
 From the repository root:
 
 ```bash
-deno run --watch --allow-read=src --allow-write=src/demo --allow-run=deno --allow-net src/demo/dev_server.ts
+deno task dev
 ```
 
 Then open:
 
 - http://localhost:5173/
 
-### What hot reload does
+## Deployment to Deno Deploy
 
-- On startup, `dev_server.ts` runs:
-  - `deno bundle src/demo/main.ts src/demo/main.bundle.js`
-- The browser loads `main.bundle.js` from `index.html`.
-- `dev_server.ts` watches `src/demo/**` for changes.
-- On any change it re-runs the bundle and sends a `reload` event over `/hmr`.
-- `hmr-client.ts` listens to `/hmr` and triggers a full
-  `window.location.reload()` when it receives `reload`.
+This project is configured for automatic deployment via Deno Deploy's GitHub integration.
 
-This is intentionally simple: full-page reload with automatic re-bundle.
+### Setup
+
+1. Log in to [Deno Deploy](https://dash.deno.com).
+2. Create a **New Project**.
+3. Select the **GitHub** repository for this project.
+4. Configure the **Build Step**:
+   - **Build Command**: `deno task build`
+   - **Entrypoint**: `deno task start` (or `src/landing/serve.ts`)
+5. Click **Deploy Project**.
+
+### How it works
+
+- **Build**: Deno Deploy runs `deno task build`, which executes `deno bundle` to generate
+  `src/landing/dist/main.bundle.js`.
+- **Runtime**: Deno Deploy runs `src/landing/serve.ts`.
+- **Serving**: `serve.ts` serves the static files and the generated bundle. It automatically removes the HMR script from
+  `index.html` for production.
