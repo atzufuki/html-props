@@ -33,10 +33,11 @@ if (!globalThis.document) {
     HTMLTableSectionElement: HTMLTableSectionElementPolyfill,
     Node,
     CustomEvent,
-    Event,
     MutationObserver,
   });
 }
+
+const Event = (globalThis as any).window.Event;
 
 // --- Basic Functionality ---
 

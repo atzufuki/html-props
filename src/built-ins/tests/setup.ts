@@ -58,7 +58,6 @@ if (!globalThis.document) {
     HTMLPreElement,
     Node,
     CustomEvent,
-    Event,
     MutationObserver,
   });
 }

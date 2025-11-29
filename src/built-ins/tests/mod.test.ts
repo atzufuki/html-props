@@ -3,6 +3,8 @@ import './setup.ts';
 import { Button, Div, Span } from '../mod.ts';
 import { createRef } from '../../core/ref.ts';
 
+const Event = (globalThis as any).window.Event;
+
 Deno.test('Div creates a div element', () => {
   const div = new Div({ className: 'test' });
   assertEquals(div.tagName, 'DIV');
