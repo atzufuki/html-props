@@ -6,7 +6,7 @@
     "@html-props/signals/**/*": "../../signals"
   },
   "exports": {
-    ".": "./app.ts"
+    ".": "./App.ts"
   },
   "compilerOptions": {
     "lib": [
