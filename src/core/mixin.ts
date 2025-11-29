@@ -25,7 +25,7 @@ export interface HTMLPropsElementConstructor<T extends Constructor, P = {}> {
       [key: string]: any;
     },
     ...args: any[]
-  ): InstanceType<T> & P;
+  ): InstanceType<T> & P & { connectedCallback(): void; disconnectedCallback(): void };
   props: keyof P extends never ? PropsConfig : { [K in keyof P]: TypedPropConfig<P[K]> };
   define(tagName: string, options?: any): HTMLPropsElementConstructor<T, P> & Pick<T, keyof T>;
 }
@@ -56,7 +56,17 @@ export function HTMLPropsMixin<T extends Constructor, P = {}>(
 
     constructor(...args: any[]) {
       // @ts-ignore: Allow passing args to super even if Base doesn't declare them
-      super(...args);
+      if ('props' in Base) {
+        super(...args);
+      } else {
+        super();
+      }
+
+      // Workaround for linkedom: ownerDocument might be missing after constructor
+      if (!(this as any).ownerDocument && globalThis.document) {
+        Object.defineProperty(this, 'ownerDocument', { value: globalThis.document });
+      }
+
       this.__initializeProps();
 
       const props = args[0];

@@ -5,8 +5,8 @@ import { createRef } from '../../core/ref.ts';
 
 Deno.test('Div creates a div element', () => {
   const div = new Div({ className: 'test' });
-  assertEquals((div as any).tagName, 'DIV');
-  assertEquals((div as any).attributes['class'], 'test');
+  assertEquals(div.tagName, 'DIV');
+  assertEquals(div.getAttribute('class'), 'test');
 });
 
 Deno.test('Button handles onClick', () => {
@@ -15,7 +15,7 @@ Deno.test('Button handles onClick', () => {
     onClick: () => clicked = true,
   });
 
-  (btn as any).events['click']();
+  btn.dispatchEvent(new Event('click'));
   assertEquals(clicked, true);
 });
 
@@ -24,8 +24,8 @@ Deno.test('Element handles style object', () => {
     style: { color: 'red', fontSize: '12px' },
   });
 
-  assertEquals((span as any).style.color, 'red');
-  assertEquals((span as any).style.fontSize, '12px');
+  assertEquals(span.style.color, 'red');
+  assertEquals(span.style.fontSize, '12px');
 });
 
 Deno.test('Element handles ref', () => {
@@ -43,7 +43,7 @@ Deno.test('Element handles content', () => {
     ],
   });
 
-  assertEquals((div as any).children.length, 2);
-  assertEquals((div as any).children[0].tagName, 'SPAN');
-  assertEquals((div as any).children[1], 'World');
+  assertEquals(div.childNodes.length, 2);
+  assertEquals((div.childNodes[0] as Element).tagName, 'SPAN');
+  assertEquals(div.childNodes[1].textContent, 'World');
 });
