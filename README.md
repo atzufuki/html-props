@@ -257,6 +257,65 @@ method code.
 Selecting an element populates the Properties panel. Changing values here updates the element attributes in real-time.
 **Technical Effect**: Updates HTML attributes. For HTMLProps components, these attributes map to reactive props.
 
+## Custom Rendering
+
+By default, components re-render their entire content when properties change. You can optimize this by implementing a
+custom update strategy.
+
+### The update() Method
+
+Define an `update(newContent)` method to take control of subsequent renders. The initial render is always handled
+automatically.
+
+```typescript
+class MyElement extends HTMLPropsMixin(HTMLElement) {
+  static props = {
+    count: { type: Number, default: 0 },
+  };
+
+  render() {
+    // Called for initial render
+    // Also called before update() to generate new content
+    return document.createTextNode(`Count: ${this.count}`);
+  }
+
+  update() {
+    // Called ONLY for updates (not initial render)
+    // Manually call render() if needed
+    const newContent = this.render();
+
+    // Perform fine-grained DOM updates
+    this.firstChild.textContent = newContent.textContent;
+  }
+}
+```
+
+### Fallback to Default
+
+You can call `this.defaultUpdate()` to fall back to the default behavior (replacing all children) if needed.
+
+```typescript
+update() {
+  if (this.shouldOptimize) {
+    // Custom logic
+    const newContent = this.render();
+    this.applyOptimization(newContent);
+  } else {
+    // Fallback
+    this.defaultUpdate();
+  }
+}
+```
+
+### Manual Updates
+
+If you need to trigger a re-render manually (e.g., when external state changes), you can call `requestUpdate()`.
+
+```typescript
+// Trigger a re-render
+this.requestUpdate();
+```
+
 ## API Reference
 
 ### HTMLPropsMixin(Base)

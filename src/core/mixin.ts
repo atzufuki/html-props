@@ -29,7 +29,13 @@ export interface HTMLPropsElementConstructor<T extends Constructor, P = {}> {
       content?: any;
     } & P,
     ...args: any[]
-  ): InstanceType<T> & P & { connectedCallback(): void; disconnectedCallback(): void };
+  ): InstanceType<T> & P & {
+    connectedCallback(): void;
+    disconnectedCallback(): void;
+    update?(): void;
+    defaultUpdate(newContent?: any): void;
+    requestUpdate(): void;
+  };
   props: keyof P extends never ? PropsConfig : { [K in keyof P]: TypedPropConfig<P[K]> };
   define(tagName: string, options?: any): HTMLPropsElementConstructor<T, P> & Pick<T, keyof T>;
 }
@@ -49,6 +55,12 @@ export function HTMLPropsMixin<T extends Constructor, P = {}>(
     // Store signals for props
     private __signals: Record<string, Signal<any>> = {};
     private __cleanup: (() => void) | null = null;
+    private __isFirstRender = true;
+    private __updateSignal = signal(0);
+
+    requestUpdate() {
+      this.__updateSignal.update((n: number) => n + 1);
+    }
 
     static get observedAttributes() {
       const props = (this as any).props as PropsConfig;
@@ -143,55 +155,73 @@ export function HTMLPropsMixin<T extends Constructor, P = {}>(
       });
     }
 
+    defaultUpdate(newContent?: any) {
+      if (newContent === undefined && !(this as any).render) {
+        return;
+      }
+      const content = newContent === undefined && (this as any).render ? (this as any).render() : newContent;
+
+      this.replaceChildren(
+        ...(Array.isArray(content) ? content : [content]).filter((n: any) => n),
+      );
+    }
+
+    private __reflectAttributes() {
+      const props = (this.constructor as any).props as PropsConfig;
+      if (!props) return;
+
+      Object.entries(props).forEach(([key, config]) => {
+        if (config.reflect) {
+          const val = this.__signals[key]();
+          const attrName = config.attr || key.toLowerCase();
+
+          if (config.type === Boolean) {
+            if (val) {
+              if (!this.hasAttribute(attrName)) {
+                this.setAttribute(attrName, '');
+              }
+            } else {
+              if (this.hasAttribute(attrName)) {
+                this.removeAttribute(attrName);
+              }
+            }
+          } else {
+            // String or Number
+            if (val != null) {
+              const strVal = String(val);
+              if (this.getAttribute(attrName) !== strVal) {
+                this.setAttribute(attrName, strVal);
+              }
+            } else {
+              this.removeAttribute(attrName);
+            }
+          }
+        }
+      });
+    }
+
     override connectedCallback() {
       // @ts-ignore: super might have connectedCallback
       if (super.connectedCallback) super.connectedCallback();
-
       if ((this as any).onMount) (this as any).onMount();
-
-      // Setup render effect
-      this.__cleanup = effect(() => {
-        // Render
-        if ((this as any).render) {
-          const content = (this as any).render();
-          this.replaceChildren(
-            ...(Array.isArray(content) ? content : [content]).filter((n: any) => n),
-          );
-        }
-
-        // Reflect attributes
-        const props = (this.constructor as any).props as PropsConfig;
-        if (props) {
-          Object.entries(props).forEach(([key, config]) => {
-            if (config.reflect) {
-              const val = this.__signals[key]();
-              const attrName = config.attr || key.toLowerCase();
-
-              if (config.type === Boolean) {
-                if (val) {
-                  if (!this.hasAttribute(attrName)) {
-                    this.setAttribute(attrName, '');
-                  }
-                } else {
-                  if (this.hasAttribute(attrName)) {
-                    this.removeAttribute(attrName);
-                  }
-                }
-              } else {
-                // String or Number
-                if (val != null) {
-                  const strVal = String(val);
-                  if (this.getAttribute(attrName) !== strVal) {
-                    this.setAttribute(attrName, strVal);
-                  }
-                } else {
-                  this.removeAttribute(attrName);
-                }
-              }
-            }
-          });
+      // Setup effects
+      const renderDispose = effect(() => {
+        this.__updateSignal();
+        if (this.__isFirstRender) {
+          this.defaultUpdate();
+          this.__isFirstRender = false;
+        } else if (typeof (this as any).update === 'function') {
+          (this as any).update();
+        } else {
+          this.defaultUpdate();
         }
       });
+      const reflectDispose = effect(() => this.__reflectAttributes());
+
+      this.__cleanup = () => {
+        renderDispose();
+        reflectDispose();
+      };
     }
 
     override disconnectedCallback() {

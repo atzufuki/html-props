@@ -47,6 +47,11 @@ export class DocsPage extends HTMLPropsMixin<typeof HTMLElement, { route: string
                 { label: 'Basic Usage', href: '#/docs/usage', active: currentPath === '/docs/usage' },
                 { label: 'Signals', href: '#/docs/signals', active: currentPath === '/docs/signals' },
                 { label: 'Lifecycle Hooks', href: '#/docs/lifecycle', active: currentPath === '/docs/lifecycle' },
+                {
+                  label: 'Custom Rendering',
+                  href: '#/docs/custom-rendering',
+                  active: currentPath === '/docs/custom-rendering',
+                },
                 { label: 'JSX Support', href: '#/docs/jsx', active: currentPath === '/docs/jsx' },
                 { label: 'API Reference', href: '#/docs/api', active: currentPath === '/docs/api' },
               ],
@@ -628,6 +633,75 @@ new MyCounter({
               new Li({ textContent: 'Layers: DOM tree view for reordering.' }),
               new Li({ textContent: 'Properties: Attribute editor.' }),
             ],
+          }),
+        ],
+      });
+    }
+
+    if (path === '/docs/custom-rendering') {
+      return new Article({
+        style: { flex: '1', padding: '3rem 4rem', maxWidth: '800px' },
+        content: [
+          new H1({
+            textContent: 'Custom Rendering',
+            style: { fontSize: '2.5rem', marginBottom: '1.5rem', color: theme.colors.text },
+          }),
+          new P({
+            textContent:
+              'By default, components re-render their entire content when properties change. You can optimize this by implementing a custom update strategy.',
+            style: { marginBottom: '1.5rem', color: '#94a3b8' },
+          }),
+          new H2({
+            textContent: 'The update() Method',
+            style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
+          }),
+          new P({
+            textContent:
+              'Define an `update()` method to take control of subsequent renders. The initial render is always handled automatically.',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+          new CodeBlock({
+            code: `class MyElement extends HTMLPropsMixin(HTMLElement) {
+  static props = {
+    count: { type: Number, default: 0 }
+  };
+
+  render() {
+    // Called for initial render
+    // Also called manually in update() if needed
+    return document.createTextNode(\`Count: \${this.count}\`);
+  }
+
+  update() {
+    // Called ONLY for updates (not initial render)
+    // Manually call render() if needed
+    const newContent = this.render();
+    
+    // Perform fine-grained DOM updates
+    this.firstChild.textContent = newContent.textContent;
+  }
+}`,
+          }),
+          new H2({
+            textContent: 'Fallback to Default',
+            style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
+          }),
+          new P({
+            textContent:
+              'You can call `this.defaultUpdate()` to fall back to the default behavior (replacing all children) if needed.',
+            style: { marginBottom: '1rem', color: '#94a3b8' },
+          }),
+          new CodeBlock({
+            code: `update() {
+  if (this.shouldOptimize) {
+    // Custom logic
+    const newContent = this.render();
+    this.applyOptimization(newContent);
+  } else {
+    // Fallback
+    this.defaultUpdate();
+  }
+}`,
           }),
         ],
       });

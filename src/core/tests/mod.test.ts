@@ -672,3 +672,132 @@ Deno.test('HTMLPropsMixin: lifecycle safety - effect cleanup preserved', () => {
 
   document.body.removeChild(container);
 });
+
+Deno.test('HTMLPropsMixin: allows defining update for custom rendering', () => {
+  let renderCount = 0;
+  let updateCount = 0;
+
+  class CustomRender extends HTMLPropsMixin(HTMLElement) {
+    declare count: number;
+
+    static props = { count: { type: Number, default: 0 } };
+
+    render() {
+      renderCount++;
+      return document.createTextNode(`Count: ${this.count}`);
+    }
+
+    update() {
+      updateCount++;
+      // Manual update
+      // Verify we got new content
+      const newContent = this.render();
+      if (newContent.textContent !== `Count: ${this.count}`) {
+        throw new Error('Content mismatch');
+      }
+      this.firstChild!.textContent = `Count: ${this.count}`;
+    }
+  }
+
+  CustomRender.define('custom-render');
+  const el = new CustomRender();
+  document.body.appendChild(el);
+
+  // Initial render - update() should NOT be called
+  assertEquals(updateCount, 0);
+  assertEquals(renderCount, 1); // Default render logic called
+  assertEquals(el.textContent, 'Count: 0');
+
+  // Update prop
+  el.count = 1;
+
+  // update() called
+  assertEquals(updateCount, 1);
+  // render IS called again because the mixin calls it to pass to update()
+  assertEquals(renderCount, 2);
+  assertEquals(el.textContent, 'Count: 1');
+});
+
+Deno.test('HTMLPropsMixin: reflection works with overridden update', () => {
+  class ReflectedRender extends HTMLPropsMixin<typeof HTMLElement, { active: boolean; label: string }>(HTMLElement) {
+    declare active: boolean;
+    declare label: string;
+
+    static props = {
+      active: { type: Boolean, reflect: true },
+      label: { type: String, reflect: true },
+    };
+
+    update() {
+      // Do nothing, completely override render
+    }
+  }
+
+  ReflectedRender.define('reflected-render');
+  const el = new ReflectedRender();
+  document.body.appendChild(el);
+
+  el.active = true;
+  assert(el.hasAttribute('active'));
+
+  el.label = 'test';
+  assertEquals(el.getAttribute('label'), 'test');
+});
+
+Deno.test('HTMLPropsMixin: allows calling defaultUpdate from update', () => {
+  class DefaultUpdateRender extends HTMLPropsMixin(HTMLElement) {
+    declare count: number;
+    static props = { count: { type: Number, default: 0 } };
+
+    render() {
+      return document.createTextNode(`Count: ${this.count}`);
+    }
+
+    update() {
+      // Do some custom logic
+      if (this.count > 5) {
+        this.textContent = 'Too high!';
+      } else {
+        // Fallback to default
+        this.defaultUpdate();
+      }
+    }
+  }
+
+  DefaultUpdateRender.define('default-update-render');
+  const el = new DefaultUpdateRender();
+  document.body.appendChild(el);
+
+  // Initial render
+  assertEquals(el.textContent, 'Count: 0');
+
+  // Update prop < 5
+  el.count = 4;
+  assertEquals(el.textContent, 'Count: 4');
+
+  // Update prop > 5
+  el.count = 6;
+  assertEquals(el.textContent, 'Too high!');
+
+  // Update prop < 5 again
+  el.count = 2;
+  assertEquals(el.textContent, 'Count: 2');
+});
+
+Deno.test('HTMLPropsMixin: requestUpdate triggers rerender', () => {
+  let renderCount = 0;
+  class ManualUpdate extends HTMLPropsMixin(HTMLElement) {
+    render() {
+      renderCount++;
+      return document.createTextNode('test');
+    }
+  }
+  ManualUpdate.define('manual-update');
+  const el = new ManualUpdate();
+  document.body.appendChild(el);
+
+  assertEquals(renderCount, 1);
+
+  el.requestUpdate();
+  assertEquals(renderCount, 2);
+});
