@@ -1,4 +1,5 @@
 import { effect, type Signal, signal } from '../signals/mod.ts';
+import type { RefObject } from './ref.ts';
 import type { PropsConfig, TypedPropConfig } from './types.ts';
 
 // Minimal interface for DOM elements to avoid type errors if lib.dom is missing
@@ -21,9 +22,12 @@ type Constructor<T = HTMLElementLike> = new (...args: any[]) => T;
 
 export interface HTMLPropsElementConstructor<T extends Constructor, P = {}> {
   new (
-    props?: Omit<Partial<InstanceType<T>>, 'style'> & { style?: Partial<CSSStyleDeclaration> | string } & P & {
-      [key: string]: any;
-    },
+    props?: Omit<Partial<InstanceType<T>>, 'style'> & {
+      style?: Partial<CSSStyleDeclaration> | string;
+      ref?: RefObject<any>;
+      children?: any;
+      content?: any;
+    } & P,
     ...args: any[]
   ): InstanceType<T> & P & { connectedCallback(): void; disconnectedCallback(): void };
   props: keyof P extends never ? PropsConfig : { [K in keyof P]: TypedPropConfig<P[K]> };
@@ -35,7 +39,7 @@ export function HTMLPropsMixin<T extends Constructor, P = {}>(
 ): HTMLPropsElementConstructor<T, P> & Pick<T, keyof T> {
   class HTMLPropsElement extends Base {
     // @ts-ignore: static props will be defined by subclass
-    static props: PropsConfig;
+    static props: any;
 
     static define(tagName: string, options?: any) {
       customElements.define(tagName, this as any, options);

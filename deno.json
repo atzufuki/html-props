@@ -35,5 +35,9 @@
     "rules": {
       "tags": ["jsr"]
     }
+  },
+  "compilerOptions": {
+    "lib": ["dom", "deno.ns"],
+    "noImplicitOverride": false
   }
 }

@@ -41,7 +41,9 @@ if (!globalThis.document) {
 // --- Basic Functionality ---
 
 Deno.test('HTMLPropsMixin: initializes props', () => {
-  class TestElement extends HTMLPropsMixin(HTMLElement) {
+  class TestElement extends HTMLPropsMixin<typeof HTMLElement, { count: number; label: string; active: boolean }>(
+    HTMLElement,
+  ) {
     declare count: number;
     declare label: string;
     declare active: boolean;
@@ -64,7 +66,7 @@ Deno.test('HTMLPropsMixin: initializes props', () => {
 
 Deno.test('HTMLPropsMixin: updates props and renders', () => {
   let renderCount = 0;
-  class TestElement extends HTMLPropsMixin(HTMLElement) {
+  class TestElement extends HTMLPropsMixin<typeof HTMLElement, { count: number }>(HTMLElement) {
     declare count: number;
     static props = {
       count: { type: Number, default: 0 },
@@ -90,7 +92,7 @@ Deno.test('HTMLPropsMixin: updates props and renders', () => {
 });
 
 Deno.test('HTMLPropsMixin: reflects props to attributes', () => {
-  class TestElement extends HTMLPropsMixin(HTMLElement) {
+  class TestElement extends HTMLPropsMixin<typeof HTMLElement, { count: number; active: boolean }>(HTMLElement) {
     declare count: number;
     declare active: boolean;
     static props = {
@@ -118,7 +120,7 @@ Deno.test('HTMLPropsMixin: reflects props to attributes', () => {
 });
 
 Deno.test('HTMLPropsMixin: updates props from attributes', () => {
-  class TestElement extends HTMLPropsMixin(HTMLElement) {
+  class TestElement extends HTMLPropsMixin<typeof HTMLElement, { count: number; label: string }>(HTMLElement) {
     declare count: number;
     declare label: string;
     static props = {
@@ -142,7 +144,7 @@ Deno.test('HTMLPropsMixin: updates props from attributes', () => {
 });
 
 Deno.test('HTMLPropsMixin: dispatches events', () => {
-  class TestElement extends HTMLPropsMixin(HTMLElement) {
+  class TestElement extends HTMLPropsMixin<typeof HTMLElement, { count: number }>(HTMLElement) {
     declare count: number;
     static props = {
       count: { type: Number, default: 0, event: 'change' },
@@ -182,7 +184,6 @@ Deno.test('HTMLPropsMixin: typed props', () => {
 
   const Base = HTMLPropsMixin<typeof HTMLElement, TestProps>(HTMLElement);
 
-  // @ts-ignore
   class TestEl extends Base {
     static props = {
       count: { type: Number, default: 0 },
@@ -202,16 +203,16 @@ Deno.test('HTMLPropsMixin: typed props', () => {
 // --- Inheritance & Composition ---
 
 Deno.test('HTMLPropsMixin: inheritance', () => {
-  class MyElement extends HTMLPropsMixin(HTMLElement) {
+  class MyElement extends HTMLPropsMixin<typeof HTMLElement, { text: string }>(HTMLElement) {
     declare text: string;
-    static props: PropsConfig = {
+    static props = {
       text: { type: String, default: 'Default text' },
     };
   }
 
-  class MyElementFromInheritance extends HTMLPropsMixin(MyElement) {
+  class MyElementFromInheritance extends HTMLPropsMixin<typeof MyElement, { text: string }>(MyElement) {
     declare text: string;
-    static props: PropsConfig = {
+    static props = {
       text: { type: String, default: 'Default text from inheritance' },
     };
   }
@@ -235,18 +236,19 @@ Deno.test('HTMLPropsMixin: inheritance', () => {
 });
 
 Deno.test('HTMLPropsMixin: nested inheritance', () => {
-  class ParentElement extends HTMLPropsMixin(HTMLElement) {
+  class ParentElement extends HTMLPropsMixin<typeof HTMLElement, { foo: string }>(HTMLElement) {
     declare foo: string;
-    static props: PropsConfig = {
+    static props = {
       foo: { type: String, default: '' },
     };
   }
 
   customElements.define('parent-element', ParentElement);
 
-  class ChildElement extends HTMLPropsMixin(ParentElement) {
+  class ChildElement extends HTMLPropsMixin<typeof ParentElement, { bar: string }>(ParentElement) {
     declare bar: string;
-    static props: PropsConfig = {
+    static props = {
+      ...ParentElement.props,
       bar: { type: String, default: '' },
     };
 
@@ -307,7 +309,7 @@ Deno.test('HTMLPropsMixin: extends built-in element (class)', () => {
 // --- Signals & Reactivity ---
 
 Deno.test('HTMLPropsMixin: signal support in props mapping', () => {
-  class MyElement extends HTMLPropsMixin(HTMLElement) {
+  class MyElement extends HTMLPropsMixin<typeof HTMLElement, { text: string }>(HTMLElement) {
     declare text: string;
     static props = {
       text: { type: String, default: '' },
@@ -332,7 +334,7 @@ Deno.test('HTMLPropsMixin: signal support in props mapping', () => {
 });
 
 Deno.test('HTMLPropsMixin: signal support with click handler', () => {
-  class MyElement extends HTMLPropsMixin(HTMLElement) {
+  class MyElement extends HTMLPropsMixin<typeof HTMLElement, { text: string }>(HTMLElement) {
     declare text: string;
     static props = {
       text: { type: String, default: '' },
@@ -365,7 +367,7 @@ Deno.test('HTMLPropsMixin: signal support with click handler', () => {
 });
 
 Deno.test('HTMLPropsMixin: signal support with effect', () => {
-  class MyElement extends HTMLPropsMixin(HTMLElement) {
+  class MyElement extends HTMLPropsMixin<typeof HTMLElement, { text: string }>(HTMLElement) {
     declare text: string;
     static props = {
       text: { type: String, default: '' },
@@ -442,7 +444,7 @@ Deno.test('HTMLPropsMixin: refs', () => {
 Deno.test('HTMLPropsMixin: lifecycle safety - single level (baseline)', () => {
   let connectedCallCount = 0;
 
-  class Widget extends HTMLPropsMixin(HTMLElement) {
+  class Widget extends HTMLPropsMixin<typeof HTMLElement, { prop: string }>(HTMLElement) {
     declare prop: string;
     static props = {
       prop: { type: String, default: '' },
@@ -469,9 +471,9 @@ Deno.test('HTMLPropsMixin: lifecycle safety - multi-level inheritance', () => {
   let baseConnectCount = 0;
   let extendedConnectCount = 0;
 
-  class BaseWidget extends HTMLPropsMixin(HTMLElement) {
+  class BaseWidget extends HTMLPropsMixin<typeof HTMLElement, { baseProp: string }>(HTMLElement) {
     declare baseProp: string;
-    static props: PropsConfig = {
+    static props = {
       baseProp: { type: String, default: '' },
     };
 
@@ -483,9 +485,10 @@ Deno.test('HTMLPropsMixin: lifecycle safety - multi-level inheritance', () => {
 
   customElements.define('base-widget', BaseWidget);
 
-  class ExtendedWidget extends HTMLPropsMixin(BaseWidget) {
+  class ExtendedWidget extends HTMLPropsMixin<typeof BaseWidget, { extendedProp: string }>(BaseWidget) {
     declare extendedProp: string;
-    static props: PropsConfig = {
+    static props = {
+      ...BaseWidget.props,
       extendedProp: { type: String, default: '' },
     };
 
@@ -511,7 +514,7 @@ Deno.test('HTMLPropsMixin: lifecycle safety - children should NOT reconnect', ()
   let childConnectCount = 0;
   let childDisconnectCount = 0;
 
-  class ChildElement extends HTMLPropsMixin(HTMLElement) {
+  class ChildElement extends HTMLPropsMixin<typeof HTMLElement, { label: string }>(HTMLElement) {
     declare label: string;
     static props = {
       label: { type: String, default: '' },
@@ -530,18 +533,19 @@ Deno.test('HTMLPropsMixin: lifecycle safety - children should NOT reconnect', ()
 
   customElements.define('child-element-test', ChildElement);
 
-  class BaseContainer extends HTMLPropsMixin(HTMLElement) {
+  class BaseContainer extends HTMLPropsMixin<typeof HTMLElement, { prop1: string }>(HTMLElement) {
     declare prop1: string;
-    static props: PropsConfig = {
+    static props = {
       prop1: { type: String, default: '' },
     };
   }
 
   customElements.define('base-container', BaseContainer);
 
-  class ExtendedContainer extends HTMLPropsMixin(BaseContainer) {
+  class ExtendedContainer extends HTMLPropsMixin<typeof BaseContainer, { prop2: string }>(BaseContainer) {
     declare prop2: string;
-    static props: PropsConfig = {
+    static props = {
+      ...BaseContainer.props,
       prop2: { type: String, default: '' },
     };
   }
@@ -566,27 +570,27 @@ Deno.test('HTMLPropsMixin: lifecycle safety - children should NOT reconnect', ()
 });
 
 Deno.test('HTMLPropsMixin: lifecycle safety - deep inheritance chain (4 levels)', () => {
-  class L1 extends HTMLPropsMixin(HTMLElement) {
+  class L1 extends HTMLPropsMixin<typeof HTMLElement, { p1: string }>(HTMLElement) {
     declare p1: string;
-    static props: PropsConfig = { p1: { type: String, default: '' } };
+    static props = { p1: { type: String, default: '' } };
   }
   customElements.define('level-1-element', L1);
 
-  class L2 extends HTMLPropsMixin(L1) {
+  class L2 extends HTMLPropsMixin<typeof L1, { p2: string }>(L1) {
     declare p2: string;
-    static props: PropsConfig = { p2: { type: String, default: '' } };
+    static props = { ...L1.props, p2: { type: String, default: '' } };
   }
   customElements.define('level-2-element', L2);
 
-  class L3 extends HTMLPropsMixin(L2) {
+  class L3 extends HTMLPropsMixin<typeof L2, { p3: string }>(L2) {
     declare p3: string;
-    static props: PropsConfig = { p3: { type: String, default: '' } };
+    static props = { ...L2.props, p3: { type: String, default: '' } };
   }
   customElements.define('level-3-element', L3);
 
-  class L4 extends HTMLPropsMixin(L3) {
+  class L4 extends HTMLPropsMixin<typeof L3, { p4: string }>(L3) {
     declare p4: string;
-    static props: PropsConfig = { p4: { type: String, default: '' } };
+    static props = { ...L3.props, p4: { type: String, default: '' } };
   }
   customElements.define('level-4-element', L4);
 
@@ -607,7 +611,7 @@ Deno.test('HTMLPropsMixin: lifecycle safety - effect cleanup preserved', () => {
   let effectRunCount = 0;
   let effectCleanupCount = 0;
 
-  class ChildWithEffect extends HTMLPropsMixin(HTMLElement) {
+  class ChildWithEffect extends HTMLPropsMixin<typeof HTMLElement, { value: string }>(HTMLElement) {
     declare value: string;
     static props = {
       value: { type: String, default: '' },
@@ -627,18 +631,19 @@ Deno.test('HTMLPropsMixin: lifecycle safety - effect cleanup preserved', () => {
 
   customElements.define('child-with-effect', ChildWithEffect);
 
-  class BaseContainer extends HTMLPropsMixin(HTMLElement) {
+  class BaseContainer extends HTMLPropsMixin<typeof HTMLElement, { prop1: string }>(HTMLElement) {
     declare prop1: string;
-    static props: PropsConfig = {
+    static props = {
       prop1: { type: String, default: '' },
     };
   }
 
   customElements.define('base-container-effect', BaseContainer);
 
-  class ExtendedContainer extends HTMLPropsMixin(BaseContainer) {
+  class ExtendedContainer extends HTMLPropsMixin<typeof BaseContainer, { prop2: string }>(BaseContainer) {
     declare prop2: string;
-    static props: PropsConfig = {
+    static props = {
+      ...BaseContainer.props,
       prop2: { type: String, default: '' },
     };
   }
