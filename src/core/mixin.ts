@@ -1,4 +1,4 @@
-import { effect, type Signal, signal } from '../signals/mod.ts';
+import { effect, type Signal, signal } from '@html-props/signals';
 import type { RefObject } from './ref.ts';
 import type { PropsConfig, TypedPropConfig } from './types.ts';
 

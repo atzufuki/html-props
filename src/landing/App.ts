@@ -1,8 +1,14 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import { type HTMLPropsElementConstructor, HTMLPropsMixin } from '@html-props/core';
 import { LandingPage } from './views/LandingPage.ts';
 import { DocsPage } from './views/DocsPage.ts';
 
-export class App extends HTMLPropsMixin(HTMLElement) {
+const AppBase:
+  & HTMLPropsElementConstructor<typeof HTMLElement, { route: string }>
+  & Pick<typeof HTMLElement, keyof typeof HTMLElement> = HTMLPropsMixin<typeof HTMLElement, { route: string }>(
+    HTMLElement,
+  );
+
+export class App extends AppBase {
   static props = {
     route: { type: String, default: '/' },
   };
@@ -31,7 +37,7 @@ export class App extends HTMLPropsMixin(HTMLElement) {
     handleHashChange();
   }
 
-  render() {
+  render(): Node | Node[] | null {
     // Simple router
     if (this.route.startsWith('/docs')) {
       return new DocsPage({ route: this.route });

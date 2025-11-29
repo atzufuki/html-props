@@ -5,7 +5,7 @@ import { Sidebar } from '../components/Sidebar.ts';
 import { CodeBlock } from '../components/CodeBlock.ts';
 import { theme } from '../theme.ts';
 
-export class DocsPage extends HTMLPropsMixin(HTMLElement) {
+export class DocsPage extends HTMLPropsMixin<typeof HTMLElement, { route: string }>(HTMLElement) {
   static props = {
     route: { type: String, default: '/docs' },
   };

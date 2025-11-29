@@ -65,8 +65,8 @@ export class NavBar extends HTMLPropsMixin<typeof HTMLElement, NavBarProps>(HTML
                     transition: 'color 0.2s',
                   },
                   // Simple hover effect via mouse events since we can't use CSS :hover
-                  onMouseOver: (e: MouseEvent) => (e.target as HTMLElement).style.color = theme.colors.accent,
-                  onMouseOut: (e: MouseEvent) => (e.target as HTMLElement).style.color = theme.colors.text,
+                  onmouseover: (e: MouseEvent) => (e.target as HTMLElement).style.color = theme.colors.accent,
+                  onmouseout: (e: MouseEvent) => (e.target as HTMLElement).style.color = theme.colors.text,
                 }),
               })
             ),

@@ -86,12 +86,12 @@ export class Hero extends HTMLPropsMixin<typeof HTMLElement, HeroProps>(HTMLElem
                 backgroundColor: theme.colors.accent,
                 color: theme.colors.bg,
               },
-              onMouseOver: (e: MouseEvent) => {
+              onmouseover: (e: MouseEvent) => {
                 const el = e.target as HTMLElement;
                 el.style.backgroundColor = theme.colors.accentHover;
                 el.style.transform = 'translateY(-1px)';
               },
-              onMouseOut: (e: MouseEvent) => {
+              onmouseout: (e: MouseEvent) => {
                 const el = e.target as HTMLElement;
                 el.style.backgroundColor = theme.colors.accent;
                 el.style.transform = 'none';
@@ -106,12 +106,12 @@ export class Hero extends HTMLPropsMixin<typeof HTMLElement, HeroProps>(HTMLElem
                 color: theme.colors.text,
                 border: `1px solid ${theme.colors.border}`,
               },
-              onMouseOver: (e: MouseEvent) => {
+              onmouseover: (e: MouseEvent) => {
                 const el = e.target as HTMLElement;
                 el.style.borderColor = theme.colors.accent;
                 el.style.transform = 'translateY(-1px)';
               },
-              onMouseOut: (e: MouseEvent) => {
+              onmouseout: (e: MouseEvent) => {
                 const el = e.target as HTMLElement;
                 el.style.borderColor = theme.colors.border;
                 el.style.transform = 'none';
