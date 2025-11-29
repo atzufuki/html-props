@@ -9,10 +9,10 @@ Deno.test('Div creates a div element', () => {
   assertEquals(div.getAttribute('class'), 'test');
 });
 
-Deno.test('Button handles onClick', () => {
+Deno.test('Button handles onclick', () => {
   let clicked = false;
   const btn = new Button({
-    onClick: () => clicked = true,
+    onclick: () => clicked = true,
   });
 
   btn.dispatchEvent(new Event('click'));

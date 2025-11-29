@@ -40,9 +40,9 @@ export class InstallBox extends HTMLPropsMixin<typeof HTMLElement, InstallBoxPro
             marginLeft: '1rem',
             transition: 'color 0.2s',
           },
-          onMouseOver: (e: MouseEvent) => (e.target as HTMLElement).style.color = theme.colors.text,
-          onMouseOut: (e: MouseEvent) => (e.target as HTMLElement).style.color = '#64748b',
-          onClick: () => {
+          onmouseover: (e: MouseEvent) => (e.target as HTMLElement).style.color = theme.colors.text,
+          onmouseout: (e: MouseEvent) => (e.target as HTMLElement).style.color = '#64748b',
+          onclick: () => {
             navigator.clipboard.writeText(this.command);
             // Could add a toast or tooltip here
           },

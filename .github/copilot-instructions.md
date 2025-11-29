@@ -31,7 +31,7 @@ Each package has its own `deno.json` and tests.
 
 **Constructor Props Pattern**: Create elements with props directly:
 ```typescript
-new MyElement({ text: 'Hello', count: 5, onClick: () => {} })
+new MyElement({ text: 'Hello', count: 5, onclick: () => {} })
 ```
 Constructor accepts props object; applies style, class, content, refs, event listeners.
 

@@ -12,7 +12,7 @@ const myDiv = new Div({
   content: [
     new P({ textContent: 'Hello World' }),
     new Button({
-      onClick: () => console.log('Clicked!'),
+      onclick: () => console.log('Clicked!'),
       content: 'Click Me',
     }),
   ],
@@ -27,5 +27,5 @@ document.body.appendChild(myDiv);
 - Support for `ref` prop
 - Support for `style` object
 - Support for `content` (children)
-- Support for event listeners (`onClick`, etc.)
+- Support for event listeners (`onclick`, etc.)
 - Type-safe (when used with `lib.dom`)
