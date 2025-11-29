@@ -1,0 +1,266 @@
+/* VSCode Theme Variables */
+:root {
+  /* Backgrounds */
+  --bg-sidebar: var(--vscode-sideBar-background);
+  --bg-hover: var(--vscode-list-hoverBackground);
+  --bg-selected: var(--vscode-list-activeSelectionBackground);
+  --bg-inactive-selected: var(--vscode-list-inactiveSelectionBackground);
+  
+  /* Foregrounds */
+  --fg-primary: var(--vscode-list-foreground, var(--vscode-foreground));
+  --fg-description: var(--vscode-descriptionForeground);
+  --fg-selected: var(--vscode-list-activeSelectionForeground);
+  
+  /* Borders */
+  --border-focus: var(--vscode-focusBorder);
+  --border-indent: var(--vscode-tree-indentGuidesStroke);
+  
+  /* Icons */
+  --icon-custom-element: var(--vscode-charts-purple);
+  --icon-standard-element: var(--vscode-symbolIcon-classForeground);
+  --icon-chevron: var(--vscode-icon-foreground);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--fg-primary);
+  background-color: var(--bg-sidebar);
+  overflow: hidden;
+}
+
+.layers-tree {
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  user-select: none;
+}
+
+/* Tree structure */
+.tree-root {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tree-children {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: none;
+}
+
+.tree-item.expanded > .tree-children {
+  display: block;
+}
+
+.tree-item {
+  position: relative;
+}
+
+/* Tree item content */
+.tree-item-content {
+  display: flex;
+  align-items: center;
+  padding: 2px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 22px;
+  position: relative;
+}
+
+/* Indentation guides */
+.tree-item-content::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--border-indent);
+}
+
+/* Hover state */
+.tree-item-content:hover, .tree-item-content.hover {
+  background-color: var(--bg-hover);
+}
+
+/* Selected state */
+.tree-item-content.selected {
+  background-color: var(--bg-selected);
+  color: var(--fg-selected);
+}
+
+.tree-item-content.selected:focus {
+  outline: 1px solid var(--border-focus);
+  outline-offset: -1px;
+}
+
+/* Inactive selection (when panel loses focus) */
+.tree-item-content.selected.inactive {
+  background-color: var(--bg-inactive-selected);
+}
+
+/* Chevron icon */
+.tree-chevron {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--icon-chevron);
+  transition: transform 0.1s ease;
+  margin-right: 2px;
+}
+
+.tree-item.expanded > .tree-item-content > .tree-chevron {
+  transform: rotate(90deg);
+}
+
+.tree-chevron.hidden {
+  visibility: hidden;
+}
+
+/* Element type icon */
+.tree-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-right: 4px;
+  color: var(--icon-standard-element);
+}
+
+.tree-icon.custom {
+  color: var(--icon-custom-element);
+}
+
+/* Label and description */
+.tree-label {
+  flex-shrink: 0;
+  margin-right: 6px;
+  font-family: var(--vscode-editor-font-family);
+}
+
+.tree-description {
+  color: var(--fg-description);
+  font-size: 0.9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+}
+
+/* Indentation levels */
+.tree-item[data-depth="0"] > .tree-item-content {
+  padding-left: 8px;
+}
+
+.tree-item[data-depth="1"] > .tree-item-content {
+  padding-left: 24px;
+}
+
+.tree-item[data-depth="2"] > .tree-item-content {
+  padding-left: 40px;
+}
+
+.tree-item[data-depth="3"] > .tree-item-content {
+  padding-left: 56px;
+}
+
+.tree-item[data-depth="4"] > .tree-item-content {
+  padding-left: 72px;
+}
+
+.tree-item[data-depth="5"] > .tree-item-content {
+  padding-left: 88px;
+}
+
+.tree-item[data-depth="6"] > .tree-item-content {
+  padding-left: 104px;
+}
+
+.tree-item[data-depth="7"] > .tree-item-content {
+  padding-left: 120px;
+}
+
+/* Empty state */
+.empty-state {
+  padding: 20px;
+  text-align: center;
+  color: var(--fg-description);
+  font-size: 0.9em;
+}
+
+/* Focus outline for keyboard navigation */
+.tree-item-content:focus {
+  outline: 1px solid var(--border-focus);
+  outline-offset: -1px;
+}
+
+/* Drag & drop styles */
+.tree-item-content.dragging {
+  opacity: 0.5;
+}
+
+.tree-item.drop-before {
+  position: relative;
+}
+
+.tree-item.drop-before::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background-color: var(--vscode-focusBorder);
+  z-index: 10;
+}
+
+.tree-item.drop-after {
+  position: relative;
+}
+
+.tree-item.drop-after::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background-color: var(--vscode-focusBorder);
+  z-index: 10;
+}
+
+.tree-item.drop-inside > .tree-item-content {
+  background-color: var(--vscode-list-dropBackground);
+  border: 1px dashed var(--vscode-focusBorder);
+}
+
+/* Scrollbar styling */
+.layers-tree::-webkit-scrollbar {
+  width: 10px;
+}
+
+.layers-tree::-webkit-scrollbar-track {
+  background: var(--vscode-scrollbarSlider-background);
+}
+
+.layers-tree::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background);
+}
+
+.layers-tree::-webkit-scrollbar-thumb:hover {
+  background: var(--vscode-scrollbarSlider-hoverBackground);
+}
+
+.layers-tree::-webkit-scrollbar-thumb:active {
+  background: var(--vscode-scrollbarSlider-activeBackground);
+}

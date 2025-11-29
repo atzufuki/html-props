@@ -1,0 +1,420 @@
+/* VSCode Theme Variables */
+:root {
+  /* Backgrounds */
+  --bg-sidebar: var(--vscode-sideBar-background);
+  --bg-hover: var(--vscode-list-hoverBackground);
+  --bg-card: var(--vscode-editor-background);
+  
+  /* Foregrounds */
+  --fg-primary: var(--vscode-list-foreground, var(--vscode-foreground));
+  --fg-description: var(--vscode-descriptionForeground);
+  
+  /* Borders */
+  --border-primary: var(--vscode-panel-border);
+  --border-focus: var(--vscode-focusBorder);
+  --border-input: var(--vscode-input-border);
+  
+  /* Input */
+  --input-bg: var(--vscode-input-background);
+  --input-fg: var(--vscode-input-foreground);
+  
+  /* Icons */
+  --icon-custom-element: var(--vscode-charts-purple);
+  --icon-builtin-element: var(--vscode-symbolIcon-propertyForeground);
+  --icon-chevron: var(--vscode-icon-foreground);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--fg-primary);
+  background-color: var(--bg-sidebar);
+  overflow: hidden;
+}
+
+.resources-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Toolbar */
+.toolbar {
+  padding: 6px 6px 6px 0px;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+
+
+.search-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.search-icon {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--fg-description);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--border-input);
+  border-radius: 3px;
+  padding: 4px 8px 4px 28px;
+  color: var(--input-fg);
+  font-size: 13px;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: var(--border-focus);
+}
+
+.toolbar-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--vscode-icon-foreground);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.toolbar-btn:hover {
+  background: var(--bg-hover);
+}
+
+.toolbar-btn:active {
+  opacity: 0.7;
+}
+
+.toolbar-btn .codicon {
+  font-size: 16px;
+}
+
+/* Elements Container */
+.elements-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  user-select: none;
+}
+
+/* Category */
+.category {
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--border-primary);
+  position: relative;
+}
+
+.category-header:hover .category-header-content {
+  background: var(--bg-hover);
+}
+
+.category-header-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  width: 100%;
+  padding: 2px 2px;
+  margin: 0;
+}
+
+.category-header:hover ~ .category-hover-menu,
+.category-hover-menu:hover {
+  display: flex;
+}
+
+.category-header {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--fg-description);
+  font-weight: 600;
+  background: var(--bg-sidebar);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+  position: relative;
+}
+
+/* Kebab menu button */
+.category-menu-btn {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--fg-primary);
+  padding: 0;
+  flex-shrink: 0;
+  opacity: 1;
+}
+
+.category-menu-btn:hover {
+  border: 1px solid var(--border-primary);
+}
+
+.category-menu-btn .codicon {
+  font-size: 16px;
+}
+
+/* Dropdown menu */
+.category-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  flex-direction: column;
+  gap: 0;
+  background: var(--vscode-menu-background);
+  border: 1px solid var(--vscode-menu-border);
+  border-radius: 4px;
+  z-index: 100;
+  min-width: 200px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  padding: 4px;
+}
+
+.category-dropdown-menu.visible {
+  display: flex;
+}
+
+.dropdown-menu-item {
+  width: 100%;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: var(--vscode-menu-foreground);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.05s;
+  text-align: left;
+  border-radius: 4px;
+}
+
+.dropdown-menu-item:hover {
+  background: var(--vscode-menu-selectionBackground);
+  color: var(--vscode-menu-selectionForeground);
+}
+
+.dropdown-menu-item:active {
+  opacity: 0.7;
+}
+
+.dropdown-menu-item .codicon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* Old hover menu - keep for now but hidden */
+
+/* Old hover menu - keep for now but hidden */
+.category-hover-menu {
+  display: none !important;
+}
+
+.category-chevron {
+  font-size: 14px;
+  transition: transform 0.2s;
+  color: var(--icon-chevron);
+}
+
+.category.collapsed .category-chevron {
+  transform: rotate(-90deg);
+}
+
+.category-icon {
+  font-size: 14px;
+}
+
+.category-icon.custom {
+  color: var(--icon-custom-element);
+}
+
+.category-title {
+  flex: 1;
+}
+
+.category-badge {
+  background: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.category-items {
+  display: block;
+}
+
+.category.collapsed .category-items {
+  display: none;
+}
+
+/* Element Card */
+.element-card {
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid transparent;
+  min-height: 28px;
+}
+
+.element-card:hover {
+  background: var(--bg-hover);
+}
+
+.element-card:active {
+  opacity: 0.7;
+}
+
+/* Drag handle */
+.drag-handle {
+  width: 16px;
+  height: 16px;
+  color: var(--fg-description);
+  cursor: grab;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.element-card.dragging .drag-handle {
+  cursor: grabbing;
+}
+
+/* Element icon */
+.element-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--icon-builtin-element);
+}
+
+.element-icon.custom {
+  color: var(--icon-custom-element);
+}
+
+/* Element content */
+.element-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.element-name {
+  font-family: var(--vscode-editor-font-family);
+  font-size: 13px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.element-tag {
+  color: var(--fg-description);
+  font-size: 11px;
+  font-family: var(--vscode-editor-font-family);
+}
+
+.element-description {
+  color: var(--fg-description);
+  font-size: 11px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+/* Dragging state */
+.element-card.dragging {
+  opacity: 0.5;
+}
+
+/* Empty state */
+.empty-state {
+  padding: 20px;
+  text-align: center;
+  color: var(--fg-description);
+  font-size: 12px;
+}
+
+/* No results state */
+.no-results {
+  padding: 20px;
+  text-align: center;
+  color: var(--fg-description);
+  font-size: 12px;
+}
+
+.no-results .codicon {
+  font-size: 32px;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+
+/* Scrollbar styling */
+.elements-container::-webkit-scrollbar {
+  width: 10px;
+}
+
+.elements-container::-webkit-scrollbar-track {
+  background: var(--vscode-scrollbarSlider-background);
+}
+
+.elements-container::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background);
+}
+
+.elements-container::-webkit-scrollbar-thumb:hover {
+  background: var(--vscode-scrollbarSlider-hoverBackground);
+}
+
+.elements-container::-webkit-scrollbar-thumb:active {
+  background: var(--vscode-scrollbarSlider-activeBackground);
+}
+
+/* Hidden class */
+.hidden {
+  display: none !important;
+}

@@ -1,0 +1,26 @@
+{
+  "name": "@html-props/landing",
+  "version": "0.0.1",
+  "imports": {
+    "@html-props/core/**/*": "../../core",
+    "@html-props/signals/**/*": "../../signals"
+  },
+  "exports": {
+    ".": "./App.ts"
+  },
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "deno.window",
+      "DOM.Iterable",
+      "DOM.AsyncIterable"
+    ],
+    "strict": true,
+    "strictFunctionTypes": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": false
+  }
+}
