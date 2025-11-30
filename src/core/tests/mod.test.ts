@@ -711,3 +711,30 @@ Deno.test('HTMLPropsMixin: requestUpdate triggers rerender', () => {
   el.requestUpdate();
   assertEquals(renderCount, 2);
 });
+
+Deno.test('HTMLPropsMixin: filters null/undefined/boolean from content', () => {
+  class TestContentElement extends HTMLPropsMixin(HTMLElement) {}
+  TestContentElement.define('test-content-filter');
+
+  const el = new TestContentElement({
+    content: ['Hello', null, undefined, false, true, 'World', 0],
+  });
+
+  assertEquals(el.childNodes.length, 3);
+  assertEquals(el.textContent, 'HelloWorld0');
+});
+
+Deno.test('HTMLPropsMixin: filters null/undefined/boolean from render', () => {
+  class MyEl extends HTMLPropsMixin(HTMLElement) {
+    render() {
+      return ['Hello', null, undefined, false, true, 'World', 0];
+    }
+  }
+  MyEl.define('my-el-filter');
+
+  const el = new MyEl();
+  document.body.appendChild(el); // Trigger connectedCallback -> render
+
+  assertEquals(el.childNodes.length, 3);
+  assertEquals(el.textContent, 'HelloWorld0');
+});

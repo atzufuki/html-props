@@ -1,6 +1,6 @@
 import { effect, type Signal, signal } from '@html-props/signals';
 import type { RefObject } from './ref.ts';
-import type { InferProps, PropsConfig, TypedPropConfig } from './types.ts';
+import type { InferConstructorProps, InferProps, PropsConfig } from './types.ts';
 
 // Minimal interface for DOM elements to avoid type errors if lib.dom is missing
 interface HTMLElementLike {
@@ -20,7 +20,7 @@ interface HTMLElementLike {
 
 type Constructor<T = HTMLElementLike> = new (...args: any[]) => T;
 
-export interface HTMLPropsElementConstructor<T extends Constructor, P = {}> {
+export interface HTMLPropsElementConstructor<T extends Constructor, P = {}, IP = P> {
   new (
     props?: Omit<Partial<InstanceType<T>>, 'style'> & {
       style?: Partial<CSSStyleDeclaration> | string;
@@ -29,24 +29,24 @@ export interface HTMLPropsElementConstructor<T extends Constructor, P = {}> {
       content?: any;
     } & P,
     ...args: any[]
-  ): InstanceType<T> & P & {
+  ): InstanceType<T> & IP & {
     connectedCallback(): void;
     disconnectedCallback(): void;
     update?(): void;
     defaultUpdate(newContent?: any): void;
     requestUpdate(): void;
   };
-  define(tagName: string, options?: any): HTMLPropsElementConstructor<T, P> & Pick<T, keyof T>;
+  define(tagName: string, options?: any): HTMLPropsElementConstructor<T, P, IP> & Pick<T, keyof T>;
 }
 
 export function HTMLPropsMixin<T extends Constructor, C extends PropsConfig>(
   Base: T,
   config: C,
-): HTMLPropsElementConstructor<T, InferProps<C>> & Pick<T, keyof T>;
+): HTMLPropsElementConstructor<T, InferConstructorProps<C>, InferProps<C>> & Pick<T, keyof T>;
 
 export function HTMLPropsMixin<T extends Constructor, P = {}>(
   Base: T,
-): HTMLPropsElementConstructor<T, P> & Pick<T, keyof T>;
+): HTMLPropsElementConstructor<T, P, P> & Pick<T, keyof T>;
 
 export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
   Base: T,
@@ -113,7 +113,9 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
           const eventName = key.substring(2).toLowerCase();
           this.addEventListener(eventName, value as any);
         } else if (key === 'content' || key === 'children') {
-          const nodes = Array.isArray(value) ? value : [value];
+          const nodes = (Array.isArray(value) ? value : [value]).filter((n: any) =>
+            n != null && n !== false && n !== true
+          );
           this.replaceChildren(...nodes);
         } else {
           if (key in this) {
@@ -168,7 +170,7 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       const content = newContent === undefined && (this as any).render ? (this as any).render() : newContent;
 
       this.replaceChildren(
-        ...(Array.isArray(content) ? content : [content]).filter((n: any) => n),
+        ...(Array.isArray(content) ? content : [content]).filter((n: any) => n != null && n !== false && n !== true),
       );
     }
 

@@ -28,9 +28,19 @@ export type ConstructorType<T> = T extends StringConstructor ? string
   : T extends ObjectConstructor ? object
   : any;
 
+type HasDefault<T> = T extends { default: any } ? true : false;
+
 export type InferProps<C extends PropsConfig> = {
   [K in keyof C]: ConstructorType<C[K]['type']>;
 };
+
+export type InferConstructorProps<C extends PropsConfig> =
+  & {
+    [K in keyof C as HasDefault<C[K]> extends true ? never : K]: ConstructorType<C[K]['type']>;
+  }
+  & {
+    [K in keyof C as HasDefault<C[K]> extends true ? K : never]?: ConstructorType<C[K]['type']>;
+  };
 
 export interface TypedPropConfig<T> extends Omit<PropConfig, 'type' | 'default'> {
   type: InferPropType<T>;

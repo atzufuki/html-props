@@ -61,6 +61,7 @@ function broadcastReload() {
 
 async function handleRequest(req: Request): Promise<Response> {
   const url = new URL(req.url);
+  console.log('[landing] request:', req.method, url.pathname);
 
   if (url.pathname === '/hmr') {
     let controller: ReadableStreamDefaultController<any>;
@@ -86,6 +87,47 @@ async function handleRequest(req: Request): Promise<Response> {
   }
 
   let path = url.pathname;
+
+  if (path === '/api/docs') {
+    try {
+      const docsUrl = new URL('../../docs', import.meta.url);
+      const files = [];
+      for await (const dirEntry of Deno.readDir(docsUrl)) {
+        if (dirEntry.isFile && dirEntry.name.endsWith('.md')) {
+          files.push(dirEntry.name);
+        }
+      }
+      return new Response(JSON.stringify(files), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (e: any) {
+      return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+    }
+  }
+
+  // Serve docs from project root
+  if (path.startsWith('/docs/')) {
+    try {
+      const filename = path.replace('/docs/', '');
+      const docsUrl = new URL(`../../docs/${filename}`, import.meta.url);
+      const file = await Deno.readFile(docsUrl);
+
+      const ext = filename.split('.').pop()?.toLowerCase();
+      let contentType = 'text/markdown; charset=utf-8';
+
+      if (ext === 'png') contentType = 'image/png';
+      else if (ext === 'jpg' || ext === 'jpeg') contentType = 'image/jpeg';
+      else if (ext === 'gif') contentType = 'image/gif';
+      else if (ext === 'svg') contentType = 'image/svg+xml';
+
+      return new Response(file, {
+        headers: { 'Content-Type': contentType },
+      });
+    } catch (_) {
+      return new Response('Doc not found', { status: 404 });
+    }
+  }
+
   if (path === '/') path = '/index.html';
 
   if (path === '/main.bundle.js' || path === '/hmr-client.js') {
