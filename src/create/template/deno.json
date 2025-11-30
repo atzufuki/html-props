@@ -1,14 +1,10 @@
 {
   "tasks": {
-    "serve": "deno run --allow-net --allow-read --allow-sys @std/http/file-server public/",
-    "bundle": "deno bundle --watch --platform browser --output public/bundle.js src/main.ts",
-    "dev": {
-      "dependencies": ["bundle", "serve"]
-    }
+    "dev": "deno run -A --unstable-bundle dev_server.ts"
   },
   "imports": {
-    "@html-props/core": "jsr:@html-props/core@^0.5.0",
-    "@html-props/signals": "jsr:@html-props/signals@^0.2.0",
+    "@html-props/core": "jsr:@html-props/core@^1.0.0",
+    "@html-props/signals": "jsr:@html-props/signals@^1.0.0",
     "@std/http": "jsr:@std/http@^1.0.20"
   },
   "compilerOptions": {

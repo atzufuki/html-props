@@ -1,6 +1,6 @@
 {
   "name": "@html-props/landing",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "imports": {
     "@html-props/core/**/*": "../../core",
     "@html-props/signals/**/*": "../../signals"

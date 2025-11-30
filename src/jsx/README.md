@@ -19,12 +19,6 @@ Add the package to your project.
 deno add jsr:@html-props/jsx
 ```
 
-Then, import it in your project.
-
-```ts
-import { JSX } from '@html-props/jsx/jsx-runtime';
-```
-
 ## Usage
 
 ### Configuring the Compiler
@@ -46,9 +40,8 @@ Configure your transpiler to enable the JSX runtime.
 ```ts
 esbuild.build({
   // ...
-  jsxFactory: 'JSX.createElement',
+  jsx: 'automatic',
   jsxImportSource: '@html-props/jsx',
-  inject: ['@html-props/jsx/jsx-runtime'],
 });
 ```
 
@@ -57,22 +50,24 @@ esbuild.build({
 You can now start writing render methods with JSX syntax.
 
 ```tsx
-import HTMLProps, { HTMLPropsMixin, HTMLUtilityMixin } from '@html-props/core';
+import HTMLProps from '@html-props/core';
 
-const Button = HTMLUtilityMixin(
-  HTMLPropsMixin<HTMLButtonElement>(HTMLButtonElement),
-).define(
+const Button = HTMLProps(HTMLButtonElement).define(
   'html-button',
   {
     extends: 'button',
   },
 );
 
-class MyElement extends HTMLProps<MyElement>(HTMLElement) {
-  text?: string;
+class MyElement extends HTMLProps(HTMLElement) {
+  static props = {
+    text: { type: String, default: '-' },
+  };
+
+  declare text: string;
 
   render() {
-    return <Button>{this.text ?? '-'}</Button>;
+    return <Button>{this.text}</Button>;
   }
 }
 

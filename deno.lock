@@ -2714,8 +2714,8 @@
       },
       "src/create/template": {
         "dependencies": [
-          "jsr:@html-props/core@0.5",
-          "jsr:@html-props/signals@0.2",
+          "jsr:@html-props/core@1",
+          "jsr:@html-props/signals@1",
           "jsr:@std/http@^1.0.20"
         ]
       }

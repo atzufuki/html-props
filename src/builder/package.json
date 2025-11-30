@@ -2,7 +2,7 @@
   "name": "html-props-builder",
   "displayName": "HTML Props Builder",
   "description": "Visual HTML Props builder with drag and drop interface",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.95.0"
   },

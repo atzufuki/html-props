@@ -1,5 +1,4 @@
-import App from "./App.ts";
-import './index.css'
+import App from './App.ts';
 
 document.getElementById('root')!.appendChild(
   new App(),
