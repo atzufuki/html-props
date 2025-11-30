@@ -3,28 +3,46 @@ import { A, Div, H1, H2, H3, H4, H5, H6, Img, Li, Ol, P, Span, Ul } from '@html-
 import { CodeBlock } from './CodeBlock.ts';
 import { MarkdownService } from '../services/MarkdownService.ts';
 import { theme } from '../theme.ts';
+import { effect } from '@html-props/signals';
 
 export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
   src: { type: String, default: '' },
   version: { type: String, default: 'local' },
+  markdown: { type: String, default: '' }, // Add markdown prop
 }) {
   private service = MarkdownService.getInstance();
   private loading = false;
   private error: string | null = null;
   private tokens: any[] = [];
   private _lastSrc = '';
+  private _lastMarkdown = ''; // Track markdown changes
+  private _disposeEffect: (() => void) | null = null;
 
   onMount() {
-    if (this.src) {
-      this.loadDoc();
-    }
+    this._disposeEffect = effect(() => {
+      const markdown = this.markdown;
+      const src = this.src;
+
+      if (markdown) {
+        // Avoid infinite loops if parseMarkdown triggers update which triggers effect?
+        // parseMarkdown calls requestUpdate, which triggers render effect, not this effect.
+        // But we should check if value actually changed to avoid redundant work if effect runs for other reasons.
+        if (markdown !== this._lastMarkdown) {
+          this.parseMarkdown(markdown);
+        }
+      } else if (src) {
+        if (src !== this._lastSrc) {
+          this.loadDoc();
+        }
+      }
+    });
   }
 
-  update() {
-    if (this.src && this.src !== this._lastSrc) {
-      this.loadDoc();
+  onUnmount() {
+    if (this._disposeEffect) {
+      this._disposeEffect();
+      this._disposeEffect = null;
     }
-    this.defaultUpdate();
   }
 
   async loadDoc() {
@@ -44,6 +62,13 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
       this.loading = false;
       this.requestUpdate();
     }
+  }
+
+  // Helper to parse direct markdown
+  private parseMarkdown(content: string) {
+    this._lastMarkdown = content;
+    this.tokens = this.service.parse(content);
+    this.requestUpdate();
   }
 
   render() {

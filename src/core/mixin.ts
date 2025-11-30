@@ -209,8 +209,9 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
     }
 
     override connectedCallback() {
-      // @ts-ignore: super might have connectedCallback
+      // @ts-ignore
       if (super.connectedCallback) super.connectedCallback();
+
       if ((this as any).onMount) (this as any).onMount();
       // Setup effects
       const renderDispose = effect(() => {

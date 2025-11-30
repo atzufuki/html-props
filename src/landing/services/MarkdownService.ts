@@ -23,6 +23,10 @@ export class MarkdownService {
     return MarkdownService.instance;
   }
 
+  parse(text: string): any[] {
+    return marked.lexer(text);
+  }
+
   async fetchDoc(page: string, version: string = 'local'): Promise<DocContent> {
     const cacheKey = `${version}:${page}`;
     if (this.cache.has(cacheKey)) {
