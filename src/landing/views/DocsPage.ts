@@ -5,13 +5,9 @@ import { Sidebar } from '../components/Sidebar.ts';
 import { CodeBlock } from '../components/CodeBlock.ts';
 import { theme } from '../theme.ts';
 
-export class DocsPage extends HTMLPropsMixin<typeof HTMLElement, { route: string }>(HTMLElement) {
-  static props = {
-    route: { type: String, default: '/docs' },
-  };
-
-  declare route: string;
-
+export class DocsPage extends HTMLPropsMixin(HTMLElement, {
+  route: { type: String, default: '/docs' },
+}) {
   render() {
     const currentPath = this.route;
     console.log('DocsPage rendering with path:', currentPath);
@@ -130,11 +126,9 @@ export class DocsPage extends HTMLPropsMixin<typeof HTMLElement, { route: string
             code: `import { HTMLPropsMixin } from '@html-props/core';
 import { Div, Button } from '@html-props/built-ins';
 
-class Counter extends HTMLPropsMixin(HTMLElement) {
-  static props = {
-    count: { type: Number, default: 0 }
-  };
-
+class Counter extends HTMLPropsMixin(HTMLElement, {
+  count: { type: Number, default: 0 }
+}) {
   render() {
     return new Div({
       content: [
@@ -372,23 +366,23 @@ class MyElement extends HTMLPropsMixin(HTMLElement) {
             style: { marginBottom: '1rem', color: '#94a3b8' },
           }),
           new H2({
-            textContent: 'static props',
+            textContent: 'Props Configuration',
             style: { fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem' },
           }),
           new P({
             textContent:
-              'Define reactive properties. Each key becomes a property on the instance and an observed attribute.',
+              'Define reactive properties by passing a configuration object as the second argument to the mixin. Each key becomes a property on the instance and an observed attribute.',
             style: { marginBottom: '1rem', color: '#94a3b8' },
           }),
           new CodeBlock({
-            code: `static props = {
+            code: `class MyElement extends HTMLPropsMixin(HTMLElement, {
   myProp: { 
     type: String, // Number, Boolean, Array, Object
     default: 'value',
     reflect: true, // Reflect to attribute
     attr: 'my-prop' // Custom attribute name
   }
-}`,
+}) {}`,
           }),
           new H2({
             textContent: 'Built-in Elements',
@@ -514,10 +508,9 @@ new Div({
           }),
           new CodeBlock({
             code: `// Generated file: src/components/MyButton.ts
-class MyButton extends HTMLProps(HTMLElement)<MyButtonProps>() {
-  static props = {
-    label: { type: String, default: '' }
-  };
+class MyButton extends HTMLPropsMixin(HTMLElement, {
+  label: { type: String, default: '' }
+}) {
   // ...
 }
 MyButton.define('my-button');`,
@@ -661,11 +654,9 @@ new MyCounter({
             style: { marginBottom: '1rem', color: '#94a3b8' },
           }),
           new CodeBlock({
-            code: `class MyElement extends HTMLPropsMixin(HTMLElement) {
-  static props = {
-    count: { type: Number, default: 0 }
-  };
-
+            code: `class MyElement extends HTMLPropsMixin(HTMLElement, {
+  count: { type: Number, default: 0 }
+}) {
   render() {
     // Called for initial render
     // Also called manually in update() if needed
@@ -753,11 +744,9 @@ new MyCounter({
         new CodeBlock({
           code: `import { HTMLPropsMixin } from '@html-props/core';
 
-class MyElement extends HTMLPropsMixin(HTMLElement) {
-  static props = {
-    name: { type: String, default: 'World' }
-  };
-
+class MyElement extends HTMLPropsMixin(HTMLElement, {
+  name: { type: String, default: 'World' }
+}) {
   render() {
     return new Div({ textContent: \`Hello, \${this.name}!\` });
   }

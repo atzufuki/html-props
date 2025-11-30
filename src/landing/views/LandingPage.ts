@@ -98,19 +98,15 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
               code: `import { HTMLPropsMixin } from '@html-props/core';
 import { Button, Div } from '@html-props/built-ins';
 
-class CounterApp extends HTMLPropsMixin(HTMLElement) {
-  static props = {
-    count: { type: Number, default: 0 }
-  };
-
+class CounterApp extends HTMLPropsMixin(HTMLElement, {
+  count: { type: Number, default: 0 }
+}) {
   render() {
-    const { count } = this;
-    
     return new Div({
       style: { padding: '1rem', textAlign: 'center' },
       content: [
         new Div({ 
-            textContent: \`Count is: \${count}\`,
+            textContent: \`Count is: \${this.count}\`,
             style: { marginBottom: '1rem' }
         }),
         new Button({

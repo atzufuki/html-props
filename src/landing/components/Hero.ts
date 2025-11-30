@@ -2,32 +2,14 @@ import { HTMLPropsMixin } from '@html-props/core';
 import { A, Div, H1, P, Section } from '@html-props/built-ins';
 import { theme } from '../theme.ts';
 
-interface HeroProps {
-  title: string;
-  subtitle: string;
-  primaryCta: string;
-  secondaryCta: string;
-  primaryCtaLink?: string;
-  secondaryCtaLink?: string;
-}
-
-export class Hero extends HTMLPropsMixin<typeof HTMLElement, HeroProps>(HTMLElement) {
-  static props = {
-    title: { type: String, default: '', reflect: true },
-    subtitle: { type: String, default: '', reflect: true },
-    primaryCta: { type: String, default: 'Get Started', reflect: true },
-    secondaryCta: { type: String, default: 'View on GitHub', reflect: true },
-    primaryCtaLink: { type: String, default: '#', reflect: true },
-    secondaryCtaLink: { type: String, default: '#', reflect: true },
-  };
-
-  declare title: string;
-  declare subtitle: string;
-  declare primaryCta: string;
-  declare secondaryCta: string;
-  declare primaryCtaLink: string;
-  declare secondaryCtaLink: string;
-
+export class Hero extends HTMLPropsMixin(HTMLElement, {
+  title: { type: String, default: '', reflect: true },
+  subtitle: { type: String, default: '', reflect: true },
+  primaryCta: { type: String, default: 'Get Started', reflect: true },
+  secondaryCta: { type: String, default: 'View on GitHub', reflect: true },
+  primaryCtaLink: { type: String, default: '#', reflect: true },
+  secondaryCtaLink: { type: String, default: '#', reflect: true },
+}) {
   render() {
     const btnStyle = {
       display: 'inline-block',

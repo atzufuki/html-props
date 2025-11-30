@@ -4,23 +4,20 @@ A reactive props & state layer for native Custom Elements powered by signals.
 
 ## Features
 
-- Lit-style `static props` declaration
-- Automatic signal-based property storage
-- Automatic rerendering on changes
-- Attribute reflection
-- Optional event dispatching
-- Zero dependencies
+- **Declarative Props**: Define props via a simple config object.
+- **Type Inference**: Automatically infers prop types for class and constructor.
+- **Automatic Reactivity**: Props map to signals and trigger updates.
+- **Attribute Reflection**: Sync props to attributes automatically.
+- **Zero Dependencies**: Lightweight and standard-compliant.
 
 ## Usage
 
 ```typescript
 import { HTMLPropsMixin } from '@html-props/core';
 
-class MyElement extends HTMLPropsMixin(HTMLElement) {
-  static props = {
-    count: { type: Number, default: 0, reflect: true },
-  };
-
+class MyElement extends HTMLPropsMixin(HTMLElement, {
+  count: { type: Number, default: 0, reflect: true },
+}) {
   render() {
     return document.createTextNode(`Count: ${this.count}`);
   }
@@ -35,11 +32,9 @@ By default, the mixin re-renders the entire component content when props change.
 fine-grained updates using the `update()` method.
 
 ```typescript
-class MyElement extends HTMLPropsMixin(HTMLElement) {
-  static props = {
-    count: { type: Number, default: 0 },
-  };
-
+class MyElement extends HTMLPropsMixin(HTMLElement, {
+  count: { type: Number, default: 0 },
+}) {
   render() {
     // Called for initial render
     return document.createTextNode(`Count: ${this.count}`);

@@ -2,17 +2,9 @@ import { HTMLPropsMixin } from '@html-props/core';
 import { Button, Div, Span } from '@html-props/built-ins';
 import { theme } from '../theme.ts';
 
-interface InstallBoxProps {
-  command: string;
-}
-
-export class InstallBox extends HTMLPropsMixin<typeof HTMLElement, InstallBoxProps>(HTMLElement) {
-  static props = {
-    command: { type: String, default: '' },
-  };
-
-  declare command: string;
-
+export class InstallBox extends HTMLPropsMixin(HTMLElement, {
+  command: { type: String, default: '' },
+}) {
   render() {
     return new Div({
       style: {

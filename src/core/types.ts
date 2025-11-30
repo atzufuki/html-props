@@ -21,6 +21,17 @@ export type InferPropType<T> = T extends string ? StringConstructor
   : T extends any[] ? ArrayConstructor
   : ObjectConstructor;
 
+export type ConstructorType<T> = T extends StringConstructor ? string
+  : T extends NumberConstructor ? number
+  : T extends BooleanConstructor ? boolean
+  : T extends ArrayConstructor ? any[]
+  : T extends ObjectConstructor ? object
+  : any;
+
+export type InferProps<C extends PropsConfig> = {
+  [K in keyof C]: ConstructorType<C[K]['type']>;
+};
+
 export interface TypedPropConfig<T> extends Omit<PropConfig, 'type' | 'default'> {
   type: InferPropType<T>;
   default?: T;

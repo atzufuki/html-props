@@ -23,7 +23,7 @@ Each package has its own `deno.json` and tests.
 
 **Mixin-Based Architecture**: Components extend `HTMLPropsMixin(BaseClass)` to get props + rendering.
 - Supports inheritance: `class Box extends HTMLProps(Widget)` - mixins auto-compose.
-- Props defined as static `static props = { count: { type: Number, default: 0 } }`.
+- Props defined via config object: `HTMLPropsMixin(HTMLElement, { count: { type: Number, default: 0 } })`.
 
 **Signal-Based Reactivity**: Props backed by signals from `@html-props/signals`.
 - Signals are callable: `this.count()` gets value, `.count(5)` sets value.
@@ -66,12 +66,14 @@ Deno's bundler with sloppy imports for JSX compatibility.
 
 ### Defining Custom Elements
 ```typescript
-import HTMLProps from '@html-props/core';
+import { HTMLPropsMixin } from '@html-props/core';
 
-class MyElement extends HTMLProps(HTMLElement)<MyElementProps>() {
-  // Props auto-initialized from static props config
+class MyElement extends HTMLPropsMixin(HTMLElement, {
+  text: { type: String, default: 'default' }
+}) {
+  // Props auto-initialized from config
   render() {
-    return this.text ?? 'default';
+    return this.text;
   }
 }
 
@@ -80,16 +82,16 @@ MyElement.define('my-element');
 
 - `render()` returns `Node | Node[] | null`. Called whenever props change.
 - Optional: `onMount()` and `onUnmount()` lifecycle hooks.
-- Type props with generics: `HTMLProps(HTMLElement)<{ count: number }>()`.
+- Props are inferred from the config object passed to the mixin.
 
 ### Props Configuration
 ```typescript
-static props = {
+class MyElement extends HTMLPropsMixin(HTMLElement, {
   count: { type: Number, default: 0, reflect: true },
-  label: { type: String, attr: 'data-label', event: 'labelChange' },
-  active: { type: Boolean },
-  items: { type: Array },
-};
+  label: { type: String, attr: 'data-label', event: 'labelChange', default: '' },
+  active: { type: Boolean, default: false },
+  items: { type: Array, default: [] },
+}) {}
 ```
 
 - `type`: String, Number, Boolean, Array, or Object constructors.

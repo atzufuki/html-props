@@ -59,13 +59,9 @@ const Button = HTMLProps(HTMLButtonElement).define(
   },
 );
 
-class MyElement extends HTMLProps(HTMLElement) {
-  static props = {
-    text: { type: String, default: '-' },
-  };
-
-  declare text: string;
-
+class MyElement extends HTMLProps(HTMLElement, {
+  text: { type: String, default: '-' },
+}) {
   render() {
     return <Button>{this.text}</Button>;
   }

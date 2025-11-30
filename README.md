@@ -50,11 +50,9 @@ Create a new component by extending `HTMLPropsMixin(HTMLElement)`.
 import { HTMLPropsMixin } from '@html-props/core';
 import { Button, Div } from '@html-props/built-ins';
 
-class Counter extends HTMLPropsMixin(HTMLElement) {
-  static props = {
-    count: { type: Number, default: 0 },
-  };
-
+class Counter extends HTMLPropsMixin(HTMLElement, {
+  count: { type: Number, default: 0 },
+}) {
   render() {
     return new Div({
       content: [

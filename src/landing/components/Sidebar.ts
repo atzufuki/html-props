@@ -8,17 +8,9 @@ interface SidebarLink {
   active?: boolean;
 }
 
-interface SidebarProps {
-  items: SidebarLink[];
-}
-
-export class Sidebar extends HTMLPropsMixin<typeof HTMLElement, SidebarProps>(HTMLElement) {
-  static props = {
-    items: { type: Array, default: [] },
-  };
-
-  declare items: SidebarLink[];
-
+export class Sidebar extends HTMLPropsMixin(HTMLElement, {
+  items: { type: Array, default: [] as SidebarLink[] },
+}) {
   render() {
     console.log('Sidebar rendering items:', this.items);
     return new Aside({

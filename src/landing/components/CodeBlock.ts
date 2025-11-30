@@ -2,17 +2,9 @@ import { HTMLPropsMixin } from '@html-props/core';
 import { Code, Div, Pre } from '@html-props/built-ins';
 import { theme } from '../theme.ts';
 
-interface CodeBlockProps {
-  code: string;
-}
-
-export class CodeBlock extends HTMLPropsMixin<typeof HTMLElement, CodeBlockProps>(HTMLElement) {
-  static props = {
-    code: { type: String, default: '' },
-  };
-
-  declare code: string;
-
+export class CodeBlock extends HTMLPropsMixin(HTMLElement, {
+  code: { type: String, default: '' },
+}) {
   private highlight(code: string): string {
     // Escape HTML first
     let result = code

@@ -2,16 +2,9 @@ import { HTMLPropsMixin } from '@html-props/core';
 import { Button, Div } from '@html-props/built-ins';
 import { theme } from '../theme.ts';
 
-interface LiveDemoProps {
-  code: string;
-}
-
-export class LiveDemo extends HTMLPropsMixin<typeof HTMLElement, LiveDemoProps>(HTMLElement) {
-  static props = {
-    code: { type: String, default: '' },
-  };
-
-  declare code: string;
+export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
+  code: { type: String, default: '' },
+}) {
   private textarea!: HTMLTextAreaElement;
   private pre!: HTMLPreElement;
   private previewContainer!: HTMLElement;

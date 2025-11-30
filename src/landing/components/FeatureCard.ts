@@ -2,23 +2,11 @@ import { HTMLPropsMixin } from '@html-props/core';
 import { Div, H3, P } from '@html-props/built-ins';
 import { theme } from '../theme.ts';
 
-interface FeatureCardProps {
-  icon: string;
-  title: string;
-  description: string;
-}
-
-export class FeatureCard extends HTMLPropsMixin<typeof HTMLElement, FeatureCardProps>(HTMLElement) {
-  static props = {
-    icon: { type: String, default: '' },
-    title: { type: String, default: '' },
-    description: { type: String, default: '' },
-  };
-
-  declare icon: string;
-  declare title: string;
-  declare description: string;
-
+export class FeatureCard extends HTMLPropsMixin(HTMLElement, {
+  icon: { type: String, default: '' },
+  title: { type: String, default: '' },
+  description: { type: String, default: '' },
+}) {
   render() {
     return new Div({
       style: {

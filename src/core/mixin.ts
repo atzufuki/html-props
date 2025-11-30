@@ -1,6 +1,6 @@
 import { effect, type Signal, signal } from '@html-props/signals';
 import type { RefObject } from './ref.ts';
-import type { PropsConfig, TypedPropConfig } from './types.ts';
+import type { InferProps, PropsConfig, TypedPropConfig } from './types.ts';
 
 // Minimal interface for DOM elements to avoid type errors if lib.dom is missing
 interface HTMLElementLike {
@@ -36,17 +36,23 @@ export interface HTMLPropsElementConstructor<T extends Constructor, P = {}> {
     defaultUpdate(newContent?: any): void;
     requestUpdate(): void;
   };
-  props: keyof P extends never ? PropsConfig : { [K in keyof P]: TypedPropConfig<P[K]> };
   define(tagName: string, options?: any): HTMLPropsElementConstructor<T, P> & Pick<T, keyof T>;
 }
 
+export function HTMLPropsMixin<T extends Constructor, C extends PropsConfig>(
+  Base: T,
+  config: C,
+): HTMLPropsElementConstructor<T, InferProps<C>> & Pick<T, keyof T>;
+
 export function HTMLPropsMixin<T extends Constructor, P = {}>(
   Base: T,
-): HTMLPropsElementConstructor<T, P> & Pick<T, keyof T> {
-  class HTMLPropsElement extends Base {
-    // @ts-ignore: static props will be defined by subclass
-    static props: any;
+): HTMLPropsElementConstructor<T, P> & Pick<T, keyof T>;
 
+export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
+  Base: T,
+  config?: POrConfig,
+): HTMLPropsElementConstructor<T, any> & Pick<T, keyof T> {
+  class HTMLPropsElement extends Base {
     static define(tagName: string, options?: any) {
       customElements.define(tagName, this as any, options);
       return this;
@@ -63,7 +69,7 @@ export function HTMLPropsMixin<T extends Constructor, P = {}>(
     }
 
     static get observedAttributes() {
-      const props = (this as any).props as PropsConfig;
+      const props = (this as any).__props as PropsConfig;
       if (!props) return [];
       return Object.entries(props)
         .filter(([_, config]) => config.reflect || config.attr)
@@ -128,7 +134,7 @@ export function HTMLPropsMixin<T extends Constructor, P = {}>(
     }
 
     private __initializeProps() {
-      const props = (this.constructor as any).props as PropsConfig;
+      const props = (this.constructor as any).__props as PropsConfig;
       if (!props) return;
 
       Object.entries(props).forEach(([key, config]) => {
@@ -167,7 +173,7 @@ export function HTMLPropsMixin<T extends Constructor, P = {}>(
     }
 
     private __reflectAttributes() {
-      const props = (this.constructor as any).props as PropsConfig;
+      const props = (this.constructor as any).__props as PropsConfig;
       if (!props) return;
 
       Object.entries(props).forEach(([key, config]) => {
@@ -242,7 +248,7 @@ export function HTMLPropsMixin<T extends Constructor, P = {}>(
 
       if (oldVal === newVal) return;
 
-      const props = (this.constructor as any).props as PropsConfig;
+      const props = (this.constructor as any).__props as PropsConfig;
       if (!props) return;
 
       // Find prop for attribute
@@ -265,5 +271,13 @@ export function HTMLPropsMixin<T extends Constructor, P = {}>(
       }
     }
   }
+
+  if (config && typeof config === 'object') {
+    (HTMLPropsElement as any).__props = {
+      ...((Base as any).__props || {}),
+      ...config,
+    };
+  }
+
   return HTMLPropsElement as any;
 }

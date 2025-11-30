@@ -1,20 +1,10 @@
-import { type HTMLPropsElementConstructor, HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin } from '@html-props/core';
 import { LandingPage } from './views/LandingPage.ts';
 import { DocsPage } from './views/DocsPage.ts';
 
-const AppBase:
-  & HTMLPropsElementConstructor<typeof HTMLElement, { route: string }>
-  & Pick<typeof HTMLElement, keyof typeof HTMLElement> = HTMLPropsMixin<typeof HTMLElement, { route: string }>(
-    HTMLElement,
-  );
-
-export class App extends AppBase {
-  static props = {
-    route: { type: String, default: '/' },
-  };
-
-  declare route: string;
-
+export class App extends HTMLPropsMixin(HTMLElement, {
+  route: { type: String, default: '/' },
+}) {
   connectedCallback() {
     // @ts-ignore: Mixin implements connectedCallback
     super.connectedCallback();

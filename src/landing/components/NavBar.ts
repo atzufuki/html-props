@@ -2,17 +2,9 @@ import { HTMLPropsMixin } from '@html-props/core';
 import { A, Div, Header, Li, Nav, Span, Ul } from '@html-props/built-ins';
 import { theme } from '../theme.ts';
 
-interface NavBarProps {
-  links: Array<{ label: string; href: string }>;
-}
-
-export class NavBar extends HTMLPropsMixin<typeof HTMLElement, NavBarProps>(HTMLElement) {
-  static props = {
-    links: { type: Array, default: [] },
-  };
-
-  declare links: Array<{ label: string; href: string }>;
-
+export class NavBar extends HTMLPropsMixin(HTMLElement, {
+  links: { type: Array, default: [] as Array<{ label: string; href: string }> },
+}) {
   render() {
     return new Header({
       style: {
