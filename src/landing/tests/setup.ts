@@ -1,4 +1,4 @@
-import { parseHTML } from 'npm:linkedom';
+import { parseHTML } from 'linkedom';
 
 if (!globalThis.document) {
   const {
