@@ -1,6 +1,6 @@
 import { HTMLPropsMixin } from '@html-props/core';
-import { A, Div, H1, P, Section } from '@html-props/built-ins';
-import { theme } from '../theme.ts';
+import { Div, H1, P, Section } from '@html-props/built-ins';
+import { AppButton } from './AppButton.ts';
 
 export class Hero extends HTMLPropsMixin(HTMLElement, {
   heading: { type: String, default: '', reflect: true },
@@ -11,18 +11,6 @@ export class Hero extends HTMLPropsMixin(HTMLElement, {
   secondaryCtaLink: { type: String, default: '#', reflect: true },
 }) {
   render() {
-    const btnStyle = {
-      display: 'inline-block',
-      padding: '0.75rem 1.5rem',
-      borderRadius: '0.5rem',
-      fontWeight: '600',
-      transition: 'all 0.2s',
-      cursor: 'pointer',
-      border: 'none',
-      fontSize: '1rem',
-      textDecoration: 'none',
-    };
-
     return new Section({
       style: {
         padding: '6rem 2rem',
@@ -60,44 +48,15 @@ export class Hero extends HTMLPropsMixin(HTMLElement, {
             justifyContent: 'center',
           },
           content: [
-            new A({
+            new AppButton({
               href: this.primaryCtaLink,
-              textContent: this.primaryCta,
-              style: {
-                ...btnStyle,
-                backgroundColor: theme.colors.accent,
-                color: theme.colors.bg,
-              },
-              onmouseover: (e: MouseEvent) => {
-                const el = e.target as HTMLElement;
-                el.style.backgroundColor = theme.colors.accentHover;
-                el.style.transform = 'translateY(-1px)';
-              },
-              onmouseout: (e: MouseEvent) => {
-                const el = e.target as HTMLElement;
-                el.style.backgroundColor = theme.colors.accent;
-                el.style.transform = 'none';
-              },
+              label: this.primaryCta,
+              variant: 'primary',
             }),
-            new A({
+            new AppButton({
               href: this.secondaryCtaLink,
-              textContent: this.secondaryCta,
-              style: {
-                ...btnStyle,
-                backgroundColor: theme.colors.secondaryBg,
-                color: theme.colors.text,
-                border: `1px solid ${theme.colors.border}`,
-              },
-              onmouseover: (e: MouseEvent) => {
-                const el = e.target as HTMLElement;
-                el.style.borderColor = theme.colors.accent;
-                el.style.transform = 'translateY(-1px)';
-              },
-              onmouseout: (e: MouseEvent) => {
-                const el = e.target as HTMLElement;
-                el.style.borderColor = theme.colors.border;
-                el.style.transform = 'none';
-              },
+              label: this.secondaryCta,
+              variant: 'secondary',
             }),
           ],
         }),

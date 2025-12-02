@@ -15,7 +15,7 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
           links: [
             { label: 'Documentation', href: '#/docs' },
             { label: 'Examples', href: '#/examples' },
-            { label: 'GitHub', href: 'https://github.com/html-props/core' },
+            { label: 'GitHub', href: 'https://github.com/atzufuki/html-props' },
           ],
         }),
         new Hero({
@@ -25,7 +25,7 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
           primaryCta: 'Get Started',
           secondaryCta: 'View on GitHub',
           primaryCtaLink: '#/docs',
-          secondaryCtaLink: 'https://github.com/html-props/core',
+          secondaryCtaLink: 'https://github.com/atzufuki/html-props',
         }),
         new Section({
           style: {

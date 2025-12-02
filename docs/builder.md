@@ -78,7 +78,7 @@ render method code.
 
 // TypeScript Component (html-props)
 new Div({
-  class: 'container',
+  className: 'container',
   content: [
     new MyButton({})
   ]

@@ -68,7 +68,7 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
           links: [
             { label: 'Home', href: '#/' },
             { label: 'Documentation', href: '#/docs' },
-            { label: 'GitHub', href: 'https://github.com/html-props/core' },
+            { label: 'GitHub', href: 'https://github.com/atzufuki/html-props' },
           ],
         }),
         new Div({

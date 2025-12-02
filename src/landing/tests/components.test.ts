@@ -8,6 +8,8 @@ let NavBar: any;
 let Sidebar: any;
 let FeatureCard: any;
 let CodeBlock: any;
+let AppButton: any;
+let Hero: any;
 
 // @ts-ignore: Deno.test.beforeAll is available in Deno 2+
 Deno.test.beforeAll(async () => {
@@ -17,6 +19,8 @@ Deno.test.beforeAll(async () => {
   Sidebar = (await import('../components/Sidebar.ts')).Sidebar;
   FeatureCard = (await import('../components/FeatureCard.ts')).FeatureCard;
   CodeBlock = (await import('../components/CodeBlock.ts')).CodeBlock;
+  AppButton = (await import('../components/AppButton.ts')).AppButton;
+  Hero = (await import('../components/Hero.ts')).Hero;
 });
 
 // @ts-ignore: Deno.test.afterAll is available in Deno 2+
@@ -184,4 +188,38 @@ Deno.test('MarkdownViewer handles error state', async () => {
   } finally {
     fetchMock.restore();
   }
+});
+
+Deno.test('AppButton renders correctly', async () => {
+  // Test button variant
+  const btn = new AppButton({ label: 'Click Me' });
+  document.body.appendChild(btn);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  const buttonEl = btn.querySelector('button');
+  assertEquals(!!buttonEl, true);
+  assertEquals(buttonEl.textContent, 'Click Me');
+
+  // Test link variant
+  const linkBtn = new AppButton({ label: 'Go Home', href: '/' });
+  document.body.appendChild(linkBtn);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  const linkEl = linkBtn.querySelector('a');
+  assertEquals(!!linkEl, true);
+  assertEquals(linkEl.getAttribute('href'), '/');
+});
+
+Deno.test('Hero renders buttons', async () => {
+  const hero = new Hero({
+    primaryCta: 'Start',
+    secondaryCta: 'Learn More',
+  });
+  document.body.appendChild(hero);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  const buttons = hero.querySelectorAll('app-button');
+  assertEquals(buttons.length, 2);
+  assertEquals(buttons[0].label, 'Start');
+  assertEquals(buttons[1].label, 'Learn More');
 });

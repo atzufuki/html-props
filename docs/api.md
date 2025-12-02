@@ -55,7 +55,7 @@ import { Button, Div, Input } from '@html-props/built-ins';
 // Usage
 new Div({
   style: { padding: '1rem' },
-  class: 'container',
+  className: 'container',
   content: [
     new Button({
       textContent: 'Click me',
