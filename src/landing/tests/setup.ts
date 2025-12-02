@@ -1,31 +1,95 @@
 import { parseHTML } from 'linkedom';
 
-if (!globalThis.document) {
+let originalGlobals: Record<string, any> = {};
+let cachedDom: any = null;
+
+const keysToPolyfill = [
+  'window',
+  'document',
+  'customElements',
+  'HTMLElement',
+  'Node',
+  'MutationObserver',
+  'Text',
+  'Event',
+  'CustomEvent',
+  'HTMLTableSectionElement',
+  'requestAnimationFrame',
+  'cancelAnimationFrame',
+  'fetch',
+  'location',
+  'scrollTo',
+];
+
+function getDom() {
+  if (cachedDom) return cachedDom;
+
+  const dom = parseHTML('<!DOCTYPE html><html><body></body></html>');
+  const { window } = dom;
+
+  // Manually mock missing elements in linkedom
+  if (!(window as any).HTMLTableSectionElement) {
+    (window as any).HTMLTableSectionElement = class HTMLTableSectionElement extends (dom.HTMLElement as any) {};
+  }
+
+  // Mock window.location
+  if (!(window as any).location) {
+    (window as any).location = {
+      hash: '',
+      href: 'http://localhost/',
+      pathname: '/',
+      search: '',
+      origin: 'http://localhost',
+      reload: () => {},
+      replace: () => {},
+      assign: () => {},
+    };
+  }
+
+  // Mock window.scrollTo
+  (window as any).scrollTo = () => {};
+
+  cachedDom = dom;
+  return dom;
+}
+
+export function setup() {
+  // Save originals
+  if (Object.keys(originalGlobals).length === 0) {
+    for (const key of keysToPolyfill) {
+      if (key in globalThis) {
+        originalGlobals[key] = (globalThis as any)[key];
+      }
+    }
+  }
+
+  const dom = getDom();
   const {
     window,
     document,
     customElements,
     HTMLElement,
     Node,
-    CustomEvent,
-    Event,
     MutationObserver,
     Text,
-  } = parseHTML('<!DOCTYPE html><html><body></body></html>');
+    Event,
+    CustomEvent,
+  } = dom;
 
+  // Assign basic globals
   Object.assign(globalThis, {
     window,
     document,
     customElements,
     HTMLElement,
     Node,
-    CustomEvent,
-    Event,
     MutationObserver,
     Text,
+    Event,
+    CustomEvent,
   });
 
-  // Mock common HTML elements
+  // Assign other elements from window
   const elements = [
     'HTMLDivElement',
     'HTMLSpanElement',
@@ -48,31 +112,14 @@ if (!globalThis.document) {
     'HTMLTextAreaElement',
     'HTMLSelectElement',
     'HTMLOptionElement',
+    'HTMLTableSectionElement',
   ];
 
   for (const key of elements) {
     if ((window as any)[key]) {
       (globalThis as any)[key] = (window as any)[key];
+      if (!keysToPolyfill.includes(key)) keysToPolyfill.push(key);
     }
-  }
-
-  // Manually mock missing elements in linkedom
-  if (!(globalThis as any).HTMLTableSectionElement) {
-    (globalThis as any).HTMLTableSectionElement = class HTMLTableSectionElement extends HTMLElement {};
-  }
-
-  // Mock window.location
-  if (!(window as any).location) {
-    (window as any).location = {
-      hash: '',
-      href: 'http://localhost/',
-      pathname: '/',
-      search: '',
-      origin: 'http://localhost',
-      reload: () => {},
-      replace: () => {},
-      assign: () => {},
-    };
   }
 
   // Ensure globalThis.location is also set
@@ -82,21 +129,43 @@ if (!globalThis.document) {
       set: (v) => {
         (window as any).location = v;
       },
+      configurable: true,
     });
   }
 
-  // Mock window.scrollTo
-  (window as any).scrollTo = () => {};
   (globalThis as any).scrollTo = (window as any).scrollTo;
 
-  // Patch global fetch to handle relative URLs in tests
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async (input: string | URL | Request, init?: RequestInit) => {
+  // Mock requestAnimationFrame
+  (globalThis as any).requestAnimationFrame = (callback: FrameRequestCallback) => {
+    return setTimeout(callback, 0);
+  };
+
+  // Mock cancelAnimationFrame
+  (globalThis as any).cancelAnimationFrame = (id: number) => {
+    clearTimeout(id);
+  };
+
+  // Patch global fetch
+  const originalFetch = originalGlobals.fetch || globalThis.fetch;
+  (globalThis as any).fetch = async (input: string | URL | Request, init?: RequestInit) => {
     const url = input.toString();
     if (url.startsWith('/') || url.startsWith('./') || url.startsWith('../')) {
-      // console.warn('Fetch called with relative URL in test (returning 404):', url);
       return new Response('Not Found', { status: 404 });
     }
-    return originalFetch(input, init);
+    if (originalFetch) {
+      return originalFetch(input, init);
+    }
+    throw new Error('No fetch implementation found');
   };
+}
+
+export function teardown() {
+  // Restore
+  for (const key of keysToPolyfill) {
+    if (key in originalGlobals) {
+      (globalThis as any)[key] = originalGlobals[key];
+    } else {
+      delete (globalThis as any)[key];
+    }
+  }
 }

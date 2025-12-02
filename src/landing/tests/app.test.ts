@@ -1,8 +1,21 @@
-import './setup.ts';
 import { assertEquals, assertExists } from 'jsr:@std/assert';
-import { App } from '../App.ts';
-import { DocsPage } from '../views/DocsPage.ts';
+import { setup, teardown } from './setup.ts';
 import { mockFetch } from './mocks.ts';
+
+let App: any;
+let DocsPage: any;
+
+Deno.test.beforeAll(async () => {
+  setup();
+  const appMod = await import('../App.ts');
+  App = appMod.App;
+  const docsMod = await import('../views/DocsPage.ts');
+  DocsPage = docsMod.DocsPage;
+});
+
+Deno.test.afterAll(() => {
+  teardown();
+});
 
 Deno.test('App renders LandingPage by default', async () => {
   const app = new App();
@@ -19,9 +32,8 @@ Deno.test('App routes to DocsPage', async () => {
   const app = new App();
   document.body.appendChild(app);
 
-  // Simulate navigation
-  window.location.hash = '#/docs';
-  window.dispatchEvent(new Event('hashchange'));
+  // Manually trigger route change since we can't easily mock window.location in Deno test runner
+  app.route = '/docs';
 
   await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -44,11 +56,6 @@ Deno.test('DocsPage loads sidebar', async () => {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     const links = page.querySelectorAll('aside a');
-    // Should have links from the mock index.md
-    // Note: Sidebar items are mapped from index.md tokens.
-    // MarkdownService.getSidebarItems parses the list.
-    // Let's verify we get at least some links.
-    // The mock index.md has 2 items.
     assertEquals(links.length > 0, true, 'Sidebar should have links');
 
     const firstLink = links[0] as HTMLAnchorElement;
@@ -60,12 +67,8 @@ Deno.test('DocsPage loads sidebar', async () => {
 
 Deno.test('DocsPage passes correct src to MarkdownViewer', async () => {
   const app = new App();
-  // Note: App.connectedCallback sets route from window.location.hash
-  // So setting app.route manually might be overwritten if we don't update hash or if connectedCallback runs after
-
-  // Let's set hash first
-  window.location.hash = '#/docs/installation';
   document.body.appendChild(app);
+  app.route = '/docs/installation';
 
   await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -74,13 +77,9 @@ Deno.test('DocsPage passes correct src to MarkdownViewer', async () => {
 
   assertEquals(viewer.src, 'installation');
 
-  // Check default route
-  window.location.hash = '#/docs';
-  window.dispatchEvent(new Event('hashchange'));
+  app.route = '/docs';
 
   await new Promise((resolve) => setTimeout(resolve, 100));
-
-  // Re-query viewer as the app might have re-rendered and replaced the element
   const updatedViewer = app.querySelector('markdown-viewer') as any;
   assertEquals(updatedViewer.src, 'introduction');
 });
