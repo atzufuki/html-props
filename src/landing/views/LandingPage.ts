@@ -19,7 +19,7 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
           ],
         }),
         new Hero({
-          title: 'Reactive Custom Elements,<br>Simplified.',
+          heading: 'Reactive Custom Elements,<br>Simplified.',
           subtitle:
             'A lightweight mixin for building native Web Components with reactive props, signals, and zero dependencies. No build step required.',
           primaryCta: 'Get Started',
@@ -45,25 +45,25 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
             content: [
               new FeatureCard({
                 icon: '⚡',
-                title: 'Zero Dependencies',
+                heading: 'Zero Dependencies',
                 description:
                   'Extremely lightweight. No framework lock-in. Just a simple mixin for your native HTMLElement classes.',
               }),
               new FeatureCard({
                 icon: '🔄',
-                title: 'Reactive Signals',
+                heading: 'Reactive Signals',
                 description:
                   'Built-in signal-based reactivity. Props automatically map to signals and trigger efficient updates.',
               }),
               new FeatureCard({
                 icon: '📘',
-                title: 'TypeScript First',
+                heading: 'TypeScript First',
                 description:
                   'Designed with strong type inference in mind. Define props via static config and get full type safety.',
               }),
               new FeatureCard({
                 icon: '🎨',
-                title: 'Native DOM',
+                heading: 'Native DOM',
                 description:
                   'Works seamlessly with standard DOM APIs. Use it with vanilla JS, or integrate into any framework.',
               }),

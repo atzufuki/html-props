@@ -186,7 +186,16 @@ Deno.test('HTMLPropsMixin: inheritance', () => {
   }) {}
 
   class MyElementFromInheritance extends HTMLPropsMixin(MyElement, {
-    text: { type: String, default: 'Default text from inheritance' },
+    // text is already defined in MyElement.
+    // If we want to override the default, we should use direct value now?
+    // Or if we want to redefine the prop config?
+    // MyElement has 'text' property (string).
+    // So 'text' in config must be string (direct value).
+    // But here we are passing PropConfig.
+    // This is what the user wanted to ban!
+    // So this test is now invalid according to new rules.
+    // We should change it to use direct default override.
+    text: 'Default text from inheritance',
   }) {}
 
   customElements.define('my-element-legacy', MyElement);

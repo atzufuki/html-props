@@ -3,7 +3,7 @@ import { A, Div, H1, P, Section } from '@html-props/built-ins';
 import { theme } from '../theme.ts';
 
 export class Hero extends HTMLPropsMixin(HTMLElement, {
-  title: { type: String, default: '', reflect: true },
+  heading: { type: String, default: '', reflect: true },
   subtitle: { type: String, default: '', reflect: true },
   primaryCta: { type: String, default: 'Get Started', reflect: true },
   secondaryCta: { type: String, default: 'View on GitHub', reflect: true },
@@ -32,7 +32,7 @@ export class Hero extends HTMLPropsMixin(HTMLElement, {
       },
       content: [
         new H1({
-          innerHTML: this.title,
+          innerHTML: this.heading,
           style: {
             fontSize: '3.5rem',
             lineHeight: '1.2',

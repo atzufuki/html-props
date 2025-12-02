@@ -1,6 +1,6 @@
 import { effect, type Signal, signal } from '@html-props/signals';
 import type { RefObject } from './ref.ts';
-import type { InferConstructorProps, InferProps, PropsConfig } from './types.ts';
+import type { InferConstructorProps, InferProps, PropsConfig, PropsConfigValidator } from './types.ts';
 
 // Minimal interface for DOM elements to avoid type errors if lib.dom is missing
 interface HTMLElementLike {
@@ -39,9 +39,9 @@ export interface HTMLPropsElementConstructor<T extends Constructor, P = {}, IP =
   define(tagName: string, options?: any): HTMLPropsElementConstructor<T, P, IP> & Pick<T, keyof T>;
 }
 
-export function HTMLPropsMixin<T extends Constructor, C extends PropsConfig>(
+export function HTMLPropsMixin<T extends Constructor, C extends PropsConfig<InstanceType<T>>>(
   Base: T,
-  config: C,
+  config: C & PropsConfigValidator<InstanceType<T>, C>,
 ): HTMLPropsElementConstructor<T, InferConstructorProps<C>, InferProps<C>> & Pick<T, keyof T>;
 
 export function HTMLPropsMixin<T extends Constructor, P = {}>(
@@ -140,6 +140,39 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       if (!props) return;
 
       Object.entries(props).forEach(([key, config]) => {
+        // Check if it's a PropConfig (has type constructor)
+        const isPropConfig = config && typeof config === 'object' && typeof config.type === 'function';
+
+        if (!isPropConfig) {
+          // Direct value (default for native prop)
+          // Special handling for style
+          if (key === 'style' && typeof config === 'object') {
+            Object.assign(this.style, config);
+          } else {
+            // Apply directly to instance
+            // If it's a native prop, this will trigger native setter
+            // For tabIndex, we need to be careful about timing or type coercion?
+            // No, direct assignment should work.
+            (this as any)[key] = config;
+
+            // If it's a native prop that reflects, we might need to ensure attribute is set if setter doesn't?
+            // Native setters usually set attributes.
+          }
+          return;
+        }
+
+        // Special handling for style in PropConfig format
+        if (key === 'style') {
+          if (config.default) {
+            if (typeof config.default === 'object') {
+              Object.assign(this.style, config.default);
+            } else {
+              this.setAttribute('style', String(config.default));
+            }
+          }
+          return;
+        }
+
         // Initialize signal with default value
         const initialValue = config.default;
         const s = signal(initialValue);
@@ -161,6 +194,9 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
           configurable: true,
         });
       });
+
+      // Initial reflection of defaults
+      this.__reflectAttributes();
     }
 
     defaultUpdate(newContent?: any) {
@@ -179,6 +215,10 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       if (!props) return;
 
       Object.entries(props).forEach(([key, config]) => {
+        // Only reflect PropConfigs with reflect: true
+        const isPropConfig = config && typeof config === 'object' && typeof config.type === 'function';
+        if (!isPropConfig) return;
+
         if (config.reflect) {
           const val = this.__signals[key]();
           const attrName = config.attr || key.toLowerCase();

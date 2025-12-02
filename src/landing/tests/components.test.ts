@@ -106,7 +106,7 @@ Deno.test('Sidebar renders items and highlights active', async () => {
 Deno.test('FeatureCard renders content', async () => {
   const card = new FeatureCard({
     icon: '🚀',
-    title: 'Fast',
+    heading: 'Fast',
     description: 'Very fast indeed.',
   });
   document.body.appendChild(card);

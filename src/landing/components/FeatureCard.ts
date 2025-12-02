@@ -4,7 +4,7 @@ import { theme } from '../theme.ts';
 
 export class FeatureCard extends HTMLPropsMixin(HTMLElement, {
   icon: { type: String, default: '' },
-  title: { type: String, default: '' },
+  heading: { type: String, default: '' },
   description: { type: String, default: '' },
 }) {
   render() {
@@ -30,7 +30,7 @@ export class FeatureCard extends HTMLPropsMixin(HTMLElement, {
           },
         }),
         new H3({
-          textContent: this.title,
+          textContent: this.heading,
           style: {
             marginBottom: '0.5rem',
             fontSize: '1.1rem',
