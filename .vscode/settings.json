@@ -8,6 +8,7 @@
     "src/create",
     "src/jsx",
     "src/landing",
+    "src/layout",
     "src/signals"
   ]
 }

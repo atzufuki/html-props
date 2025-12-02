@@ -57,7 +57,7 @@ export type InferProps<C extends PropsConfig> = {
     : C[K];
 };
 
-export type InferConstructorProps<C extends PropsConfig> =
+type RawInferConstructorProps<C extends PropsConfig> =
   & {
     // Required: PropConfig without default
     [K in keyof C as IsPropConfig<C[K]> extends true ? (HasDefault<C[K]> extends true ? never : K) : never]:
@@ -68,6 +68,8 @@ export type InferConstructorProps<C extends PropsConfig> =
     [K in keyof C as IsPropConfig<C[K]> extends true ? (HasDefault<C[K]> extends true ? K : never) : K]?:
       IsPropConfig<C[K]> extends true ? GetPropType<C[K]> : C[K];
   };
+
+export type InferConstructorProps<C extends PropsConfig> = Omit<RawInferConstructorProps<C>, 'style'>;
 
 export interface TypedPropConfig<T> extends Omit<PropConfig, 'type' | 'default'> {
   type: InferPropType<T>;

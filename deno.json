@@ -6,6 +6,7 @@
     "./src/create",
     "./src/create/template",
     "./src/jsx",
+    "./src/layout",
     "./src/signals",
     "./src/landing"
   ],

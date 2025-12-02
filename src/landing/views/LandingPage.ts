@@ -1,5 +1,6 @@
 import { HTMLPropsMixin } from '@html-props/core';
-import { Div, Footer, P, Section } from '@html-props/built-ins';
+import { Div, Footer, H2, P } from '@html-props/built-ins';
+import { Column, Container, Grid, SizedBox } from '@html-props/layout';
 import { NavBar } from '../components/NavBar.ts';
 import { Hero } from '../components/Hero.ts';
 import { FeatureCard } from '../components/FeatureCard.ts';
@@ -27,71 +28,61 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
           primaryCtaLink: '#/docs',
           secondaryCtaLink: 'https://github.com/atzufuki/html-props',
         }),
-        new Section({
-          style: {
-            padding: '4rem 2rem',
-            backgroundColor: theme.colors.secondaryBg,
-            borderTop: `1px solid ${theme.colors.border}`,
-            borderBottom: `1px solid ${theme.colors.border}`,
-          },
-          content: new Div({
-            style: {
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+        new Container({
+          padding: '4rem 2rem',
+          color: theme.colors.secondaryBg,
+          border: `1px solid ${theme.colors.border}`,
+          style: { borderLeft: 'none', borderRight: 'none' }, // Only top/bottom
+          content: new Container({
+            style: { maxWidth: '1200px', margin: '0 auto' },
+            content: new Grid({
+              columns: 'repeat(auto-fit, minmax(250px, 1fr))',
               gap: '2rem',
-              maxWidth: '1200px',
-              margin: '0 auto',
-            },
-            content: [
-              new FeatureCard({
-                icon: '⚡',
-                heading: 'Zero Dependencies',
-                description:
-                  'Extremely lightweight. No framework lock-in. Just a simple mixin for your native HTMLElement classes.',
-              }),
-              new FeatureCard({
-                icon: '🔄',
-                heading: 'Reactive Signals',
-                description:
-                  'Built-in signal-based reactivity. Props automatically map to signals and trigger efficient updates.',
-              }),
-              new FeatureCard({
-                icon: '📘',
-                heading: 'TypeScript First',
-                description:
-                  'Designed with strong type inference in mind. Define props via static config and get full type safety.',
-              }),
-              new FeatureCard({
-                icon: '🎨',
-                heading: 'Native DOM',
-                description:
-                  'Works seamlessly with standard DOM APIs. Use it with vanilla JS, or integrate into any framework.',
-              }),
-            ],
+              content: [
+                new FeatureCard({
+                  icon: '⚡',
+                  heading: 'Zero Dependencies',
+                  description:
+                    'Extremely lightweight. No framework lock-in. Just a simple mixin for your native HTMLElement classes.',
+                }),
+                new FeatureCard({
+                  icon: '🔄',
+                  heading: 'Reactive Signals',
+                  description:
+                    'Built-in signal-based reactivity. Props automatically map to signals and trigger efficient updates.',
+                }),
+                new FeatureCard({
+                  icon: '📘',
+                  heading: 'TypeScript First',
+                  description:
+                    'Designed with strong type inference in mind. Define props via static config and get full type safety.',
+                }),
+                new FeatureCard({
+                  icon: '🎨',
+                  heading: 'Native DOM',
+                  description:
+                    'Works seamlessly with standard DOM APIs. Use it with vanilla JS, or integrate into any framework.',
+                }),
+              ],
+            }),
           }),
         }),
-        new Section({
-          style: {
-            padding: '6rem 2rem',
-            maxWidth: '1200px',
-            margin: '0 auto',
-          },
+        new Container({
+          padding: '6rem 2rem',
+          style: { maxWidth: '1200px', margin: '0 auto' },
           content: [
-            new Div({
-              style: {
-                textAlign: 'center',
-                marginBottom: '3rem',
-              },
+            new Column({
+              crossAxisAlignment: 'center',
               content: [
-                new Div({
-                  tagName: 'h2',
+                new H2({
                   textContent: 'Write Less, Do More',
                   style: { fontSize: '2.5rem', marginBottom: '1rem', fontWeight: '700' },
                 }),
                 new P({
                   textContent: 'Define props, handle events, and render content with a clean, declarative API.',
-                  style: { color: '#94a3b8' },
+                  style: { color: '#94a3b8', textAlign: 'center' },
                 }),
+                new SizedBox({ height: '3rem' }),
               ],
             }),
             new LiveDemo({
@@ -131,21 +122,20 @@ CounterApp.define('counter-app');`,
             }),
           ],
         }),
-        new Section({
-          style: {
-            padding: '4rem 2rem',
-            textAlign: 'center',
-            backgroundColor: theme.colors.secondaryBg,
-            borderTop: `1px solid ${theme.colors.border}`,
-          },
-          content: [
-            new Div({
-              tagName: 'h2',
-              textContent: 'Ready to build?',
-              style: { fontSize: '2.5rem', fontWeight: '700', marginBottom: '1rem' },
-            }),
-            new InstallBox({ command: 'deno add @html-props/core' }),
-          ],
+        new Container({
+          padding: '4rem 2rem',
+          color: theme.colors.secondaryBg,
+          style: { borderTop: `1px solid ${theme.colors.border}` },
+          content: new Column({
+            crossAxisAlignment: 'center',
+            content: [
+              new H2({
+                textContent: 'Ready to build?',
+                style: { fontSize: '2.5rem', fontWeight: '700', marginBottom: '1rem' },
+              }),
+              new InstallBox({ command: 'deno add @html-props/core' }),
+            ],
+          }),
         }),
         new Footer({
           style: {

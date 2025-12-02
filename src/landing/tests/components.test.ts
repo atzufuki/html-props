@@ -129,10 +129,11 @@ Deno.test('FeatureCard renders content', async () => {
   const p = card.querySelector('p');
   assertEquals(p?.textContent, 'Very fast indeed.');
 
-  const divs = card.querySelectorAll('div');
+  // Icon is now in a Container (layout-container), not a div
+  const containers = card.querySelectorAll('layout-container');
   let iconFound = false;
-  divs.forEach((div: any) => {
-    if (div.textContent === '🚀') iconFound = true;
+  containers.forEach((el: any) => {
+    if (el.textContent === '🚀') iconFound = true;
   });
   assertEquals(iconFound, true);
 });

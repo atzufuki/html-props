@@ -1,5 +1,6 @@
 import { HTMLPropsMixin } from '@html-props/core';
-import { Div, H1, P, Section } from '@html-props/built-ins';
+import { H1, P } from '@html-props/built-ins';
+import { Column, Container, Row } from '@html-props/layout';
 import { AppButton } from './AppButton.ts';
 
 export class Hero extends HTMLPropsMixin(HTMLElement, {
@@ -11,56 +12,56 @@ export class Hero extends HTMLPropsMixin(HTMLElement, {
   secondaryCtaLink: { type: String, default: '#', reflect: true },
 }) {
   render() {
-    return new Section({
+    return new Container({
+      padding: '6rem 2rem',
       style: {
-        padding: '6rem 2rem',
         textAlign: 'center',
         maxWidth: '1200px',
         margin: '0 auto',
       },
-      content: [
-        new H1({
-          innerHTML: this.heading,
-          style: {
-            fontSize: '3.5rem',
-            lineHeight: '1.2',
-            marginBottom: '1.5rem',
-            background: 'linear-gradient(to right, #fff, #94a3b8)',
-            backgroundClip: 'text',
-            webkitBackgroundClip: 'text',
-            webkitTextFillColor: 'transparent',
-            color: 'transparent', // Fallback
-          },
-        }),
-        new P({
-          textContent: this.subtitle,
-          style: {
-            fontSize: '1.25rem',
-            color: '#94a3b8',
-            maxWidth: '600px',
-            margin: '0 auto 2.5rem',
-          },
-        }),
-        new Div({
-          style: {
-            display: 'flex',
+      content: new Column({
+        crossAxisAlignment: 'center',
+        content: [
+          new H1({
+            innerHTML: this.heading,
+            style: {
+              fontSize: '3.5rem',
+              lineHeight: '1.2',
+              marginBottom: '1.5rem',
+              background: 'linear-gradient(to right, #fff, #94a3b8)',
+              backgroundClip: 'text',
+              webkitBackgroundClip: 'text',
+              webkitTextFillColor: 'transparent',
+              color: 'transparent', // Fallback
+            },
+          }),
+          new P({
+            textContent: this.subtitle,
+            style: {
+              fontSize: '1.25rem',
+              color: '#94a3b8',
+              maxWidth: '600px',
+              margin: '0 auto 2.5rem',
+            },
+          }),
+          new Row({
+            mainAxisAlignment: 'center',
             gap: '1rem',
-            justifyContent: 'center',
-          },
-          content: [
-            new AppButton({
-              href: this.primaryCtaLink,
-              label: this.primaryCta,
-              variant: 'primary',
-            }),
-            new AppButton({
-              href: this.secondaryCtaLink,
-              label: this.secondaryCta,
-              variant: 'secondary',
-            }),
-          ],
-        }),
-      ],
+            content: [
+              new AppButton({
+                href: this.primaryCtaLink,
+                label: this.primaryCta,
+                variant: 'primary',
+              }),
+              new AppButton({
+                href: this.secondaryCtaLink,
+                label: this.secondaryCta,
+                variant: 'secondary',
+              }),
+            ],
+          }),
+        ],
+      }),
     });
   }
 }
