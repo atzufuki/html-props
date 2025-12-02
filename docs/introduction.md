@@ -12,7 +12,7 @@ aims to be the sweet spot: simple enough to understand in minutes, but powerful 
 import { HTMLPropsMixin } from '@html-props/core';
 
 class MyElement extends HTMLPropsMixin(HTMLElement, {
-  name: { type: String, default: 'World' },
+  name: { default: 'World' }, // Type inferred as String
 }) {
   render() {
     return new Div({ textContent: `Hello, ${this.name}!` });

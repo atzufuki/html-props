@@ -6,7 +6,7 @@ export type PropType =
   | ObjectConstructor;
 
 export interface PropConfig {
-  type: PropType;
+  type?: PropType;
   default?: unknown;
   reflect?: boolean;
   attr?: string;
@@ -35,12 +35,25 @@ export type ConstructorType<T> = T extends StringConstructor ? string
   : T extends ObjectConstructor ? object
   : any;
 
-type IsPropConfig<T> = T extends { type: PropType } ? true : false;
+// It is a config if it has 'type' OR 'default' OR 'reflect'
+type IsPropConfig<T> = T extends { type: any } ? true
+  : T extends { default: any } ? true
+  : T extends { reflect: any } ? true
+  : false;
+
 type HasDefault<T> = T extends { default: any } ? true : false;
 
-// If T is PropConfig, use ConstructorType<T['type']>. Else use T (direct value type).
+// Helper to infer type from PropConfig, respecting specific type of default value if present
+type GetPropType<P> = P extends { type: infer T }
+  ? (P extends { default: infer D }
+    ? (unknown extends D ? ConstructorType<T> : (D extends null ? ConstructorType<T> | null : D))
+    : ConstructorType<T>)
+  : P extends { default: infer D } ? D
+  : any;
+
+// If T is PropConfig, use GetPropType<T>. Else use T (direct value type).
 export type InferProps<C extends PropsConfig> = {
-  [K in keyof C]: IsPropConfig<C[K]> extends true ? ConstructorType<C[K]['type']>
+  [K in keyof C]: IsPropConfig<C[K]> extends true ? GetPropType<C[K]>
     : C[K];
 };
 
@@ -48,12 +61,12 @@ export type InferConstructorProps<C extends PropsConfig> =
   & {
     // Required: PropConfig without default
     [K in keyof C as IsPropConfig<C[K]> extends true ? (HasDefault<C[K]> extends true ? never : K) : never]:
-      ConstructorType<C[K]['type']>;
+      GetPropType<C[K]>;
   }
   & {
     // Optional: PropConfig with default OR Direct Value
     [K in keyof C as IsPropConfig<C[K]> extends true ? (HasDefault<C[K]> extends true ? K : never) : K]?:
-      IsPropConfig<C[K]> extends true ? ConstructorType<C[K]['type']> : C[K];
+      IsPropConfig<C[K]> extends true ? GetPropType<C[K]> : C[K];
   };
 
 export interface TypedPropConfig<T> extends Omit<PropConfig, 'type' | 'default'> {

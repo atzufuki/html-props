@@ -1,4 +1,4 @@
-import { assert, assertEquals } from 'jsr:@std/assert';
+import { assertEquals } from 'jsr:@std/assert';
 import { HTMLPropsMixin } from '../mixin.ts';
 import { parseHTML } from 'linkedom';
 

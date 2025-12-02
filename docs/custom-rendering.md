@@ -9,7 +9,7 @@ Define an `update()` method to take control of subsequent renders. The initial r
 
 ```typescript
 class MyElement extends HTMLPropsMixin(HTMLElement, {
-  count: { type: Number, default: 0 },
+  count: { default: 0 },
 }) {
   render() {
     // Called for initial render

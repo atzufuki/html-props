@@ -140,8 +140,12 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       if (!props) return;
 
       Object.entries(props).forEach(([key, config]) => {
-        // Check if it's a PropConfig (has type constructor)
-        const isPropConfig = config && typeof config === 'object' && typeof config.type === 'function';
+        // Check if it's a PropConfig (has type constructor OR default OR reflect)
+        const isPropConfig = config && typeof config === 'object' && (
+          typeof config.type === 'function' ||
+          'default' in config ||
+          'reflect' in config
+        );
 
         if (!isPropConfig) {
           // Direct value (default for native prop)
@@ -216,14 +220,20 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
 
       Object.entries(props).forEach(([key, config]) => {
         // Only reflect PropConfigs with reflect: true
-        const isPropConfig = config && typeof config === 'object' && typeof config.type === 'function';
+        const isPropConfig = config && typeof config === 'object' && (
+          typeof config.type === 'function' ||
+          'default' in config ||
+          'reflect' in config
+        );
         if (!isPropConfig) return;
 
         if (config.reflect) {
           const val = this.__signals[key]();
           const attrName = config.attr || key.toLowerCase();
 
-          if (config.type === Boolean) {
+          const isBoolean = config.type === Boolean || (typeof config.default === 'boolean');
+
+          if (isBoolean) {
             if (val) {
               if (!this.hasAttribute(attrName)) {
                 this.setAttribute(attrName, '');
@@ -304,9 +314,9 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
         const [key, config] = entry;
         let val: any = newVal;
 
-        if (config.type === Boolean) {
+        if (config.type === Boolean || (typeof config.default === 'boolean')) {
           val = newVal !== null;
-        } else if (config.type === Number) {
+        } else if (config.type === Number || (typeof config.default === 'number')) {
           val = newVal === null ? null : Number(newVal);
         }
 
