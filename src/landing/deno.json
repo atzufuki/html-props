@@ -1,13 +1,8 @@
 {
-  "name": "@html-props/landing",
-  "version": "1.0.0",
   "imports": {
     "@html-props/core/**/*": "../../core",
     "@html-props/signals/**/*": "../../signals",
     "marked": "npm:marked@^17.0.1"
-  },
-  "exports": {
-    ".": "./App.ts"
   },
   "compilerOptions": {
     "lib": [

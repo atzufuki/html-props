@@ -3,7 +3,7 @@ type Constructor<T> = new (...args: any[]) => T;
 /**
  * Fragment component that renders its children directly.
  */
-export function Fragment(props: { children?: any; content?: any }) {
+export function Fragment(props: { children?: any; content?: any }): any {
   return props.content ?? props.children;
 }
 
