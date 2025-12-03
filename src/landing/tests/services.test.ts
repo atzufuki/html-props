@@ -55,9 +55,8 @@ Deno.test('MarkdownService caches docs', async () => {
 
 Deno.test('MarkdownService parses sidebar items', async () => {
   const indexContent = `
-- [Home](home.md)
+- [Getting Started](getting-started.md)
 - [Guide](guide.md)
-  - [Setup](setup.md)
 `;
   const version = 'test-version';
   const fetchMock = mockFetch({
@@ -69,8 +68,8 @@ Deno.test('MarkdownService parses sidebar items', async () => {
     const items = await service.getSidebarItems(version);
 
     assertEquals(items.length, 2);
-    assertEquals(items[0].label, 'Home');
-    assertEquals(items[0].file, 'home.md');
+    assertEquals(items[0].label, 'Getting Started');
+    assertEquals(items[0].file, 'getting-started.md');
     assertEquals(items[1].label, 'Guide');
     assertEquals(items[1].file, 'guide.md');
   } finally {

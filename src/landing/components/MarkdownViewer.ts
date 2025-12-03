@@ -1,5 +1,26 @@
 import { HTMLPropsMixin } from '@html-props/core';
-import { A, Div, H1, H2, H3, H4, H5, H6, Img, Li, Ol, P, Span, Ul } from '@html-props/built-ins';
+import {
+  A,
+  Div,
+  H1,
+  H2,
+  H3,
+  H4,
+  H5,
+  H6,
+  Img,
+  Li,
+  Ol,
+  P,
+  Span,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  Ul,
+} from '@html-props/built-ins';
 import { CodeBlock } from './CodeBlock.ts';
 import { MarkdownService } from '../services/MarkdownService.ts';
 import { theme } from '../theme.ts';
@@ -130,6 +151,50 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
               style: { marginBottom: '0.5rem' },
             })
           ),
+        });
+      }
+
+      case 'table': {
+        return new Table({
+          style: {
+            width: '100%',
+            borderCollapse: 'collapse',
+            marginBottom: '1.5rem',
+            color: theme.colors.text,
+          },
+          content: [
+            new Thead({
+              content: new Tr({
+                content: token.header.map((cell: any) =>
+                  new Th({
+                    content: this.renderInline(cell.tokens),
+                    style: {
+                      textAlign: cell.align || 'left',
+                      padding: '0.75rem',
+                      borderBottom: `1px solid ${theme.colors.border}`,
+                      fontWeight: '600',
+                    },
+                  })
+                ),
+              }),
+            }),
+            new Tbody({
+              content: token.rows.map((row: any) =>
+                new Tr({
+                  content: row.map((cell: any, i: number) =>
+                    new Td({
+                      content: this.renderInline(cell.tokens),
+                      style: {
+                        textAlign: token.header[i].align || 'left',
+                        padding: '0.75rem',
+                        borderBottom: `1px solid ${theme.colors.border}`,
+                      },
+                    })
+                  ),
+                })
+              ),
+            }),
+          ],
         });
       }
 

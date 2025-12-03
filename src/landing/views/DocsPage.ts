@@ -24,11 +24,7 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
       this.sidebarItems = await this.service.getSidebarItems();
     } catch (e) {
       console.error('Failed to load sidebar', e);
-      // Fallback
-      this.sidebarItems = [
-        { label: 'Introduction', file: 'introduction.md' },
-        { label: 'Installation', file: 'installation.md' },
-      ];
+      this.sidebarItems = [];
     } finally {
       this.loading = false;
       this.requestUpdate();
@@ -45,10 +41,16 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
       });
     }
 
+    // Determine active page
+    let activePage = currentPath.replace('/docs', '').replace(/^\//, '');
+    if (!activePage && this.sidebarItems.length > 0) {
+      activePage = this.sidebarItems[0].file.replace('.md', '');
+    }
+
     const sidebarItems = this.sidebarItems.map((item) => {
       const name = item.file.replace('.md', '');
-      const href = name === 'introduction' ? '#/docs' : `#/docs/${name}`;
-      const isActive = currentPath === href.replace('#', '') || (name === 'introduction' && currentPath === '/docs/');
+      const href = `#/docs/${name}`;
+      const isActive = name === activePage;
 
       return {
         label: item.label,
@@ -87,16 +89,13 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
   }
 
   renderContent(path: string) {
-    // Extract page name from path: /docs/foo -> foo
     let page = path.replace('/docs', '').replace(/^\//, '');
-    if (!page) page = 'introduction';
 
-    // Ensure the page exists in our manifest (security/validity check)
-    // If not found, default to introduction or show 404 (here we just show it and let MarkdownViewer handle error)
-    // But we need to pass the filename 'foo' -> 'foo' (MarkdownViewer appends .md? No, MarkdownViewer takes 'src')
-    // Wait, MarkdownViewer takes 'src' which is the filename without extension in previous implementation?
-    // Let's check MarkdownViewer.loadDoc: `url = .../${page}.md`
-    // So we pass 'foo'.
+    if (!page && this.sidebarItems.length > 0) {
+      page = this.sidebarItems[0].file.replace('.md', '');
+    }
+
+    if (!page) return null;
 
     return new MarkdownViewer({
       src: page,

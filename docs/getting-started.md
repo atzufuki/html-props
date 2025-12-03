@@ -19,3 +19,37 @@ class MyElement extends HTMLPropsMixin(HTMLElement, {
   }
 }
 ```
+
+# Installation
+
+You can install @html-props/core via JSR or import it directly from a CDN.
+
+## Using Deno
+
+```bash
+deno add @html-props/core
+```
+
+## Using npm
+
+```bash
+npx jsr add @html-props/core
+```
+
+## CDN (ES Modules)
+
+```typescript
+import { HTMLPropsMixin } from 'https://esm.sh/jsr/@html-props/core';
+```
+
+# CLI Tool
+
+Scaffold new projects quickly with the html-props CLI.
+
+## Creating a New Project
+
+```bash
+deno run jsr:@html-props/create my-app
+```
+
+This will create a new directory called "my-app" with a basic project structure.

@@ -49,3 +49,41 @@ Deno.test('Element handles content', () => {
   assertEquals((div.childNodes[0] as Element).tagName, 'SPAN');
   assertEquals(div.childNodes[1].textContent, 'World');
 });
+
+import { HTMLPropsMixin } from '../../core/mod.ts';
+
+Deno.test('Nested Mixin: CounterButton extends HTMLPropsMixin(Button)', () => {
+  class CounterButton extends HTMLPropsMixin(Button, {
+    count: { type: Number, default: 0 },
+    label: { type: String, default: 'Count' },
+  }) {
+    render() {
+      return document.createTextNode(`${this.label}: ${this.count}`);
+    }
+  }
+
+  CounterButton.define('counter-button', { extends: 'button' });
+
+  const btn = new CounterButton({ count: 5, label: 'Clicks' });
+
+  // Check inheritance from Button (native props)
+  assertEquals(btn.tagName, 'BUTTON');
+
+  // Check new props
+  assertEquals(btn.count, 5);
+  assertEquals(btn.label, 'Clicks');
+
+  // Check rendering
+  // In the test environment (linkedom), we might need to attach to DOM or call connectedCallback
+  btn.connectedCallback();
+
+  assertEquals(btn.textContent, 'Clicks: 5');
+
+  // Update prop
+  btn.count = 6;
+  assertEquals(btn.textContent, 'Clicks: 6');
+
+  // Check that base props still work (e.g. style from Button/HTMLPropsMixin)
+  btn.style.color = 'red';
+  assertEquals(btn.style.color, 'red');
+});

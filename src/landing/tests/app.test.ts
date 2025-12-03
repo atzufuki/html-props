@@ -66,20 +66,28 @@ Deno.test('DocsPage loads sidebar', async () => {
 });
 
 Deno.test('DocsPage passes correct src to MarkdownViewer', async () => {
-  const app = new App();
-  document.body.appendChild(app);
-  app.route = '/docs/installation';
+  const fetchMock = mockFetch({
+    '/docs/index.md': '- [Intro](introduction.md)',
+  });
 
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  try {
+    const app = new App();
+    document.body.appendChild(app);
+    app.route = '/docs/installation';
 
-  const viewer = app.querySelector('markdown-viewer') as any;
-  assertExists(viewer);
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
-  assertEquals(viewer.src, 'installation');
+    const viewer = app.querySelector('markdown-viewer') as any;
+    assertExists(viewer);
 
-  app.route = '/docs';
+    assertEquals(viewer.src, 'installation');
 
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  const updatedViewer = app.querySelector('markdown-viewer') as any;
-  assertEquals(updatedViewer.src, 'introduction');
+    app.route = '/docs';
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    const updatedViewer = app.querySelector('markdown-viewer') as any;
+    assertEquals(updatedViewer.src, 'introduction');
+  } finally {
+    fetchMock.restore();
+  }
 });
