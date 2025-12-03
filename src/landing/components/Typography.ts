@@ -56,7 +56,7 @@ export class SectionHeading extends HTMLPropsMixin(HTMLElement, {
       level: '2',
       align: this.align,
       style: {
-        fontSize: '2.5rem',
+        fontSize: '1.75rem',
         marginBottom: '1rem',
       },
     });
@@ -66,6 +66,7 @@ SectionHeading.define('app-section-heading');
 
 export class Text extends HTMLPropsMixin(HTMLElement, {
   text: { type: String, default: '' },
+  html: { type: String, default: '' },
   variant: { type: String, default: 'body' }, // body, muted, small, code
   align: { type: String, default: 'left' },
   tag: { type: String, default: 'p' },
@@ -88,12 +89,18 @@ export class Text extends HTMLPropsMixin(HTMLElement, {
       style.color = theme.colors.text;
     }
 
-    const content = this.text || this.textContent;
+    const props: any = { style };
+
+    if (this.html) {
+      props.innerHTML = this.html;
+    } else {
+      props.textContent = this.text || this.textContent;
+    }
 
     if (this.tag === 'span') {
-      return new Span({ textContent: content, style });
+      return new Span(props);
     }
-    return new P({ textContent: content, style });
+    return new P(props);
   }
 }
 Text.define('app-text');

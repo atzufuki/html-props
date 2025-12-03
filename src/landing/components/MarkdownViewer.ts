@@ -121,7 +121,7 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
             marginTop: '2rem',
             marginBottom: '1rem',
             color: theme.colors.text,
-            fontSize: token.depth === 1 ? '2.5rem' : token.depth === 2 ? '1.8rem' : '1.4rem',
+            fontSize: token.depth === 1 ? '1.75rem' : token.depth === 2 ? '1.5rem' : '1.25rem',
           },
         });
       }
@@ -240,8 +240,14 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
         });
       }
       if (t.type === 'link') {
+        let href = t.href;
+        // Transform relative .md links to hash routes
+        if (href && !href.startsWith('http') && !href.startsWith('/') && href.endsWith('.md')) {
+          href = `#/docs/${href.slice(0, -3)}`;
+        }
+
         return new A({
-          href: t.href,
+          href,
           content: this.renderInline(t.tokens || []),
           style: { color: theme.colors.accent, textDecoration: 'none' },
         });

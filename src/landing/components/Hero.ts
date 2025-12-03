@@ -27,7 +27,7 @@ export class Hero extends HTMLPropsMixin(HTMLElement, {
             align: 'center',
             html: this.heading,
             style: {
-              fontSize: '3.5rem',
+              fontSize: '2rem',
               lineHeight: '1.2',
               marginBottom: '1.5rem',
               background: 'linear-gradient(to right, #fff, #94a3b8)',
@@ -38,7 +38,7 @@ export class Hero extends HTMLPropsMixin(HTMLElement, {
             },
           }),
           new Text({
-            text: this.subtitle,
+            html: this.subtitle,
             variant: 'muted',
             align: 'center',
             style: {

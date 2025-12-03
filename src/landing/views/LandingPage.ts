@@ -20,9 +20,9 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
         ],
       }),
       new Hero({
-        heading: 'Reactive Custom Elements,<br>Simplified.',
+        heading: 'HTML Props for Web Components',
         subtitle:
-          'A lightweight mixin for building native Web Components with reactive props, signals, and zero dependencies. No build step required.',
+          "Stop struggling with imperative web or complex frameworks. Build type-safe props API's and declarative layouts for your<br>Custom Elements.",
         primaryCta: 'Get Started',
         secondaryCta: 'View on GitHub',
         primaryCtaLink: '#/docs',
@@ -40,16 +40,16 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
             gap: '2rem',
             content: [
               new FeatureCard({
+                icon: '📦',
+                heading: 'Type-Safe Props',
+                description:
+                  'Pass objects, arrays, and functions directly to your components. Become a real HTML programmer. 🔥',
+              }),
+              new FeatureCard({
                 icon: '⚡',
                 heading: 'Zero Dependencies',
                 description:
                   'Extremely lightweight. No framework lock-in. Just a simple mixin for your native HTMLElement classes.',
-              }),
-              new FeatureCard({
-                icon: '🔄',
-                heading: 'Reactive Signals',
-                description:
-                  'Built-in signal-based reactivity. Props automatically map to signals and trigger efficient updates.',
               }),
               new FeatureCard({
                 icon: '📘',
@@ -59,9 +59,8 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
               }),
               new FeatureCard({
                 icon: '🎨',
-                heading: 'Native DOM',
-                description:
-                  'Works seamlessly with standard DOM APIs. Use it with vanilla JS, or integrate into any framework.',
+                heading: 'Native Standards',
+                description: 'Relies on Custom Element standards. No opinionated patterns or paradigms.',
               }),
             ],
           }),
@@ -75,10 +74,11 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
             crossAxisAlignment: 'center',
             content: [
               new SectionHeading({
-                text: 'Write Less, Do More',
+                text: 'The Missing Piece for Custom Elements',
               }),
               new Text({
-                text: 'Define props, handle events, and render content with a clean, declarative API.',
+                html:
+                  'Plain HTML is limited to simple attributes and impreative coding style.<br>HTML Props brings declarativeness with rich data types and type safety to Web Components.',
                 variant: 'muted',
                 align: 'center',
               }),
