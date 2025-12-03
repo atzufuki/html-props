@@ -1,8 +1,13 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import {
+  type HTMLPropsElementConstructor,
+  HTMLPropsMixin,
+  type InferConstructorProps,
+  type InferProps,
+} from '@html-props/core';
 import { effect } from '@html-props/signals';
 import { Alignment } from './stack.ts';
 
-export class Container extends HTMLPropsMixin(HTMLElement, {
+const config = {
   width: { type: String, default: '' },
   height: { type: String, default: '' },
   padding: { type: String, default: '' },
@@ -13,7 +18,17 @@ export class Container extends HTMLPropsMixin(HTMLElement, {
   alignment: { type: String, default: '' },
   shadow: { type: String, default: '' },
   style: { display: 'block', boxSizing: 'border-box' },
-}) {
+};
+
+const ContainerBase:
+  & HTMLPropsElementConstructor<
+    typeof HTMLElement,
+    InferConstructorProps<typeof config>,
+    InferProps<typeof config>
+  >
+  & Pick<typeof HTMLElement, keyof typeof HTMLElement> = HTMLPropsMixin(HTMLElement, config);
+
+export class Container extends ContainerBase {
   private _dispose: (() => void) | null = null;
 
   onMount() {

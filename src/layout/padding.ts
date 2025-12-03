@@ -1,10 +1,25 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import {
+  type HTMLPropsElementConstructor,
+  HTMLPropsMixin,
+  type InferConstructorProps,
+  type InferProps,
+} from '@html-props/core';
 import { effect } from '@html-props/signals';
 
-export class Padding extends HTMLPropsMixin(HTMLElement, {
+const config = {
   padding: { type: String, default: '0' },
   style: { display: 'block' },
-}) {
+};
+
+const PaddingBase:
+  & HTMLPropsElementConstructor<
+    typeof HTMLElement,
+    InferConstructorProps<typeof config>,
+    InferProps<typeof config>
+  >
+  & Pick<typeof HTMLElement, keyof typeof HTMLElement> = HTMLPropsMixin(HTMLElement, config);
+
+export class Padding extends PaddingBase {
   private _dispose: (() => void) | null = null;
 
   onMount() {

@@ -1,4 +1,9 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import {
+  type HTMLPropsElementConstructor,
+  HTMLPropsMixin,
+  type InferConstructorProps,
+  type InferProps,
+} from '@html-props/core';
 import { effect } from '@html-props/signals';
 
 export const Alignment = {
@@ -13,10 +18,20 @@ export const Alignment = {
   bottomRight: 'end end',
 } as const;
 
-export class Stack extends HTMLPropsMixin(HTMLElement, {
+const config = {
   alignment: { type: String, default: 'topLeft' as keyof typeof Alignment },
   style: { display: 'grid', gridTemplateAreas: '"stack"' },
-}) {
+};
+
+const StackBase:
+  & HTMLPropsElementConstructor<
+    typeof HTMLElement,
+    InferConstructorProps<typeof config>,
+    InferProps<typeof config>
+  >
+  & Pick<typeof HTMLElement, keyof typeof HTMLElement> = HTMLPropsMixin(HTMLElement, config);
+
+export class Stack extends StackBase {
   private _dispose: (() => void) | null = null;
 
   onMount() {

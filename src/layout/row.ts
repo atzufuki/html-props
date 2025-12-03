@@ -1,14 +1,29 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import {
+  type HTMLPropsElementConstructor,
+  HTMLPropsMixin,
+  type InferConstructorProps,
+  type InferProps,
+} from '@html-props/core';
 import { effect } from '@html-props/signals';
 import { CrossAxisAlignment, MainAxisAlignment } from './flex_types.ts';
 
-export class Row extends HTMLPropsMixin(HTMLElement, {
+const config = {
   mainAxisAlignment: { type: String, default: 'start' as keyof typeof MainAxisAlignment },
   crossAxisAlignment: { type: String, default: 'stretch' as keyof typeof CrossAxisAlignment },
   gap: { type: String, default: '0' },
   wrap: { type: String, default: 'nowrap' as 'nowrap' | 'wrap' | 'wrap-reverse' },
   style: { display: 'flex', flexDirection: 'row' },
-}) {
+};
+
+const RowBase:
+  & HTMLPropsElementConstructor<
+    typeof HTMLElement,
+    InferConstructorProps<typeof config>,
+    InferProps<typeof config>
+  >
+  & Pick<typeof HTMLElement, keyof typeof HTMLElement> = HTMLPropsMixin(HTMLElement, config);
+
+export class Row extends RowBase {
   private _dispose: (() => void) | null = null;
 
   onMount() {
