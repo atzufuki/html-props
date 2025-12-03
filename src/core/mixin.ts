@@ -16,6 +16,7 @@ interface HTMLElementLike {
   replaceChildren(...nodes: any[]): void;
   style: any;
   textContent: string | null;
+  shadowRoot: any;
 }
 
 type Constructor<T = HTMLElementLike> = new (...args: any[]) => T;
@@ -209,7 +210,8 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       }
       const content = newContent === undefined && (this as any).render ? (this as any).render() : newContent;
 
-      this.replaceChildren(
+      const target = this.shadowRoot || this;
+      target.replaceChildren(
         ...(Array.isArray(content) ? content : [content]).filter((n: any) => n != null && n !== false && n !== true),
       );
     }
