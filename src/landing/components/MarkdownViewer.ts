@@ -255,10 +255,11 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
       if (t.type === 'image') {
         let src = t.href;
         if (src && !src.startsWith('http') && !src.startsWith('/')) {
-          if (this.version === 'local') {
+          const resolvedVersion = this.service.resolveVersion(this.version);
+          if (resolvedVersion === 'local') {
             src = `/docs/${src}`;
           } else {
-            src = `https://raw.githubusercontent.com/atzufuki/html-props/${this.version}/docs/${src}`;
+            src = `https://raw.githubusercontent.com/atzufuki/html-props/${resolvedVersion}/docs/${src}`;
           }
         }
         return new Img({

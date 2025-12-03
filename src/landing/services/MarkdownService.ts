@@ -27,7 +27,7 @@ export class MarkdownService {
     return marked.lexer(text);
   }
 
-  private resolveVersion(version: string): string {
+  resolveVersion(version: string): string {
     if (version !== 'local') return version;
 
     const hostname = window.location.hostname;
