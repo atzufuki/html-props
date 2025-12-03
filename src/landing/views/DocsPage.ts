@@ -1,8 +1,9 @@
 import { HTMLPropsMixin } from '@html-props/core';
-import { Div } from '@html-props/built-ins';
+import { Container, Row } from '@html-props/layout';
 import { NavBar } from '../components/NavBar.ts';
 import { Sidebar } from '../components/Sidebar.ts';
 import { MarkdownViewer } from '../components/MarkdownViewer.ts';
+import { Text } from '../components/Typography.ts';
 import { MarkdownService, type SidebarItem } from '../services/MarkdownService.ts';
 import { theme } from '../theme.ts';
 
@@ -38,9 +39,9 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
     const currentPath = this.route;
 
     if (this.loading) {
-      return new Div({
-        style: { padding: '2rem', color: theme.colors.text },
-        textContent: 'Loading documentation...',
+      return new Container({
+        padding: '2rem',
+        content: new Text({ text: 'Loading documentation...' }),
       });
     }
 
@@ -56,11 +57,10 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
       };
     });
 
-    return new Div({
+    return new Container({
+      color: theme.colors.bg,
       style: {
         minHeight: '100vh',
-        backgroundColor: theme.colors.bg,
-        color: theme.colors.text,
         fontFamily: theme.fonts.sans,
       },
       content: [
@@ -71,9 +71,9 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
             { label: 'GitHub', href: 'https://github.com/atzufuki/html-props' },
           ],
         }),
-        new Div({
+        new Row({
+          crossAxisAlignment: 'start',
           style: {
-            display: 'flex',
             maxWidth: '1400px',
             margin: '0 auto',
           },

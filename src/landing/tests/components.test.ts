@@ -224,3 +224,16 @@ Deno.test('Hero renders buttons', async () => {
   assertEquals(buttons[0].label, 'Start');
   assertEquals(buttons[1].label, 'Learn More');
 });
+
+Deno.test('Hero renders heading with HTML correctly', async () => {
+  const hero = new Hero({
+    heading: 'Line 1<br>Line 2',
+  });
+  document.body.appendChild(hero);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  const heading = hero.querySelector('app-heading');
+  const h1 = heading?.querySelector('h1');
+
+  assertEquals(h1?.innerHTML.includes('<br>'), true, 'Heading should contain <br> tag');
+});

@@ -131,7 +131,7 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
     editorCol.style.display = 'flex';
     editorCol.style.flexDirection = 'column';
     editorCol.style.borderRight = `1px solid ${theme.colors.border}`;
-    editorCol.style.minHeight = '835px';
+    editorCol.style.minHeight = '745px';
 
     // Editor Wrapper
     const editorWrapper = document.createElement('div');

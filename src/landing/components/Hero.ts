@@ -1,7 +1,7 @@
 import { HTMLPropsMixin } from '@html-props/core';
-import { H1, P } from '@html-props/built-ins';
 import { Column, Container, Row } from '@html-props/layout';
 import { AppButton } from './AppButton.ts';
+import { Heading, Text } from './Typography.ts';
 
 export class Hero extends HTMLPropsMixin(HTMLElement, {
   heading: { type: String, default: '', reflect: true },
@@ -22,8 +22,10 @@ export class Hero extends HTMLPropsMixin(HTMLElement, {
       content: new Column({
         crossAxisAlignment: 'center',
         content: [
-          new H1({
-            innerHTML: this.heading,
+          new Heading({
+            level: '1',
+            align: 'center',
+            html: this.heading,
             style: {
               fontSize: '3.5rem',
               lineHeight: '1.2',
@@ -35,11 +37,12 @@ export class Hero extends HTMLPropsMixin(HTMLElement, {
               color: 'transparent', // Fallback
             },
           }),
-          new P({
-            textContent: this.subtitle,
+          new Text({
+            text: this.subtitle,
+            variant: 'muted',
+            align: 'center',
             style: {
               fontSize: '1.25rem',
-              color: '#94a3b8',
               maxWidth: '600px',
               margin: '0 auto 2.5rem',
             },

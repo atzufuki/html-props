@@ -1,6 +1,6 @@
 import { HTMLPropsMixin } from '@html-props/core';
-import { H3, P } from '@html-props/built-ins';
 import { Column, Container } from '@html-props/layout';
+import { Heading, Text } from './Typography.ts';
 import { theme } from '../theme.ts';
 
 export class FeatureCard extends HTMLPropsMixin(HTMLElement, {
@@ -28,21 +28,20 @@ export class FeatureCard extends HTMLPropsMixin(HTMLElement, {
               display: 'inline-block',
               color: theme.colors.accent,
             },
-            content: document.createTextNode(this.icon),
+            content: new Text({ text: this.icon, tag: 'span' }),
           }),
-          new H3({
-            textContent: this.heading,
+          new Heading({
+            text: this.heading,
+            level: '3',
             style: {
               marginBottom: '0.5rem',
               fontSize: '1.1rem',
             },
           }),
-          new P({
-            textContent: this.description,
-            style: {
-              color: '#94a3b8',
-              fontSize: '0.95rem',
-            },
+          new Text({
+            text: this.description,
+            variant: 'muted',
+            style: { fontSize: '0.95rem' },
           }),
         ],
       }),

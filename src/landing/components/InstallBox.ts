@@ -1,6 +1,7 @@
 import { HTMLPropsMixin } from '@html-props/core';
-import { Button, Span } from '@html-props/built-ins';
 import { Container, Row } from '@html-props/layout';
+import { Text } from './Typography.ts';
+import { AppButton } from './AppButton.ts';
 import { theme } from '../theme.ts';
 
 export class InstallBox extends HTMLPropsMixin(HTMLElement, {
@@ -16,23 +17,28 @@ export class InstallBox extends HTMLPropsMixin(HTMLElement, {
         fontFamily: theme.fonts.mono,
         marginTop: '2rem',
         color: '#a5b4fc',
-        display: 'inline-block', // Container is block by default, but we want inline behavior for the box itself?
-        // Actually, Container sets display based on alignment or default block.
-        // Let's keep it simple and wrap the Row.
+        display: 'inline-block',
       },
       content: new Row({
         crossAxisAlignment: 'center',
         gap: '1rem',
         content: [
-          new Span({ textContent: this.command }),
-          new Button({
-            title: 'Copy to clipboard',
-            textContent: '📋',
+          new Text({
+            text: '$ ' + this.command,
+            variant: 'code',
+            style: { color: 'inherit', fontSize: '1rem' },
+          }),
+          new AppButton({
+            label: '📋',
+            variant: 'secondary',
             style: {
               background: 'none',
               border: 'none',
               color: '#64748b',
               cursor: 'pointer',
+              padding: '0.5rem',
+              fontSize: '1.2rem',
+              minWidth: 'auto',
               marginLeft: '1rem',
               transition: 'color 0.2s',
             },
@@ -40,7 +46,6 @@ export class InstallBox extends HTMLPropsMixin(HTMLElement, {
             onmouseout: (e: MouseEvent) => (e.target as HTMLElement).style.color = '#64748b',
             onclick: () => {
               navigator.clipboard.writeText(this.command);
-              // Could add a toast or tooltip here
             },
           }),
         ],

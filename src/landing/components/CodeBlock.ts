@@ -1,5 +1,6 @@
 import { HTMLPropsMixin } from '@html-props/core';
-import { Code, Div, Pre } from '@html-props/built-ins';
+import { Code, Pre } from '@html-props/built-ins';
+import { Container } from '@html-props/layout';
 import { theme } from '../theme.ts';
 
 export class CodeBlock extends HTMLPropsMixin(HTMLElement, {
@@ -79,10 +80,10 @@ export class CodeBlock extends HTMLPropsMixin(HTMLElement, {
   }
 
   render() {
-    return new Div({
+    return new Container({
+      color: theme.colors.codeBg,
+      padding: '1.5rem',
       style: {
-        backgroundColor: theme.colors.codeBg,
-        padding: '1.5rem',
         fontFamily: theme.fonts.mono,
         fontSize: '0.9rem',
         overflowX: 'auto',

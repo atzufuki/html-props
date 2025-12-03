@@ -37,8 +37,8 @@ Deno.test('App routes to DocsPage', async () => {
 
   await new Promise((resolve) => setTimeout(resolve, 100));
 
-  // DocsPage renders a Sidebar (Aside)
-  const sidebar = app.querySelector('aside');
+  // DocsPage renders a Sidebar (docs-sidebar)
+  const sidebar = app.querySelector('docs-sidebar');
   assertExists(sidebar, 'Docs page should render sidebar');
 });
 
@@ -55,7 +55,7 @@ Deno.test('DocsPage loads sidebar', async () => {
     // Wait for async load
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    const links = page.querySelectorAll('aside a');
+    const links = page.querySelectorAll('docs-sidebar a');
     assertEquals(links.length > 0, true, 'Sidebar should have links');
 
     const firstLink = links[0] as HTMLAnchorElement;

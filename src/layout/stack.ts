@@ -14,7 +14,7 @@ export const Alignment = {
 } as const;
 
 export class Stack extends HTMLPropsMixin(HTMLElement, {
-  alignment: { type: String, default: 'topLeft' },
+  alignment: { type: String, default: 'topLeft' as keyof typeof Alignment },
   style: { display: 'grid', gridTemplateAreas: '"stack"' },
 }) {
   private _dispose: (() => void) | null = null;
