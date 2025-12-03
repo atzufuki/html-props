@@ -27,19 +27,34 @@ export class MarkdownService {
     return marked.lexer(text);
   }
 
+  private resolveVersion(version: string): string {
+    if (version !== 'local') return version;
+
+    const hostname = window.location.hostname;
+    const isLocal = ['localhost', '127.0.0.1', '0.0.0.0'].includes(hostname);
+
+    if (isLocal) return 'local';
+
+    // Attempt to extract branch/version from Deno Deploy hostname
+    // e.g. html-props--v1.atzufuki.deno.net -> v1
+    const match = hostname.match(/--([a-zA-Z0-9-_]+)\./);
+    return match ? match[1] : 'main';
+  }
+
   async fetchDoc(page: string, version: string = 'local'): Promise<DocContent> {
-    const cacheKey = `${version}:${page}`;
+    const resolvedVersion = this.resolveVersion(version);
+    const cacheKey = `${resolvedVersion}:${page}`;
     if (this.cache.has(cacheKey)) {
       return this.cache.get(cacheKey)!;
     }
 
     let url: string;
-    if (version === 'local') {
+    if (resolvedVersion === 'local') {
       // In dev mode, we expect the dev server to serve docs at /docs/
       url = `/docs/${page}.md`;
     } else {
       // Production/Versioned fetch
-      url = `https://raw.githubusercontent.com/atzufuki/html-props/${version}/docs/${page}.md`;
+      url = `https://raw.githubusercontent.com/atzufuki/html-props/${resolvedVersion}/docs/${page}.md`;
     }
 
     try {
@@ -68,7 +83,8 @@ export class MarkdownService {
   }
 
   async getManifest(version: string = 'local'): Promise<string[]> {
-    if (version === 'local') {
+    const resolvedVersion = this.resolveVersion(version);
+    if (resolvedVersion === 'local') {
       console.log('Fetching manifest from /api/docs');
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -84,7 +100,7 @@ export class MarkdownService {
       }
     } else {
       // GitHub API
-      const url = `https://api.github.com/repos/atzufuki/html-props/contents/docs?ref=${version}`;
+      const url = `https://api.github.com/repos/atzufuki/html-props/contents/docs?ref=${resolvedVersion}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch docs manifest from GitHub');
       const data = await res.json();

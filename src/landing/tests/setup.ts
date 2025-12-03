@@ -40,6 +40,7 @@ function getDom() {
       pathname: '/',
       search: '',
       origin: 'http://localhost',
+      hostname: 'localhost',
       reload: () => {},
       replace: () => {},
       assign: () => {},

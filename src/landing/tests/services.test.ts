@@ -77,3 +77,44 @@ Deno.test('MarkdownService parses sidebar items', async () => {
     fetchMock.restore();
   }
 });
+
+Deno.test('MarkdownService resolves version from hostname', async () => {
+  const originalHostname = window.location.hostname;
+
+  try {
+    const service = MarkdownService.getInstance();
+
+    // Test production main fallback
+    (window.location as any).hostname = 'html-props.deno.dev';
+    let fetchMock = mockFetch({
+      'https://raw.githubusercontent.com/atzufuki/html-props/main/docs/test-main.md': '# Main',
+    });
+
+    (service as any).cache.clear();
+    await service.fetchDoc('test-main');
+
+    // Check the URL called
+    const callArgs = fetchMock.stub.calls[0].args;
+    const url = callArgs[0].toString();
+    assertEquals(url, 'https://raw.githubusercontent.com/atzufuki/html-props/main/docs/test-main.md');
+
+    fetchMock.restore();
+
+    // Test branch version
+    (window.location as any).hostname = 'html-props--v2.deno.dev';
+    fetchMock = mockFetch({
+      'https://raw.githubusercontent.com/atzufuki/html-props/v2/docs/test-v2.md': '# V2',
+    });
+
+    (service as any).cache.clear();
+    await service.fetchDoc('test-v2');
+
+    const callArgs2 = fetchMock.stub.calls[0].args;
+    const url2 = callArgs2[0].toString();
+    assertEquals(url2, 'https://raw.githubusercontent.com/atzufuki/html-props/v2/docs/test-v2.md');
+
+    fetchMock.restore();
+  } finally {
+    (window.location as any).hostname = originalHostname;
+  }
+});
