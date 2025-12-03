@@ -407,6 +407,41 @@ Deno.test('HTMLPropsMixin: refs', () => {
   assertEquals(button?.textContent, 'Click me!');
   button?.click();
   assertEquals(button?.textContent, 'Clicked!');
+
+  // Verify ref cleanup on unmount
+  document.body.removeChild(element);
+  assertEquals(element.buttonRef.current, null);
+});
+
+Deno.test('HTMLPropsMixin: function refs', () => {
+  class MyButton extends HTMLPropsMixin(HTMLButtonElement) {}
+  customElements.define('my-button-ref-fn', MyButton, { extends: 'button' });
+
+  let capturedEl: any = null;
+
+  class MyElement extends HTMLPropsMixin(HTMLElement) {
+    render() {
+      return new MyButton({
+        ref: (el) => {
+          capturedEl = el;
+        },
+        textContent: 'Click me!',
+      });
+    }
+  }
+
+  customElements.define('my-element-ref-fn', MyElement);
+
+  const element = new MyElement();
+  document.body.appendChild(element);
+
+  // So capturedEl should be set.
+
+  assert(capturedEl);
+  if (capturedEl) {
+    assert(capturedEl instanceof HTMLButtonElement);
+    assertEquals(capturedEl.textContent, 'Click me!');
+  }
 });
 
 // --- Lifecycle Safety ---

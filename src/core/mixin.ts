@@ -25,7 +25,7 @@ export interface HTMLPropsElementConstructor<T extends Constructor, P = {}, IP =
   new (
     props?: Omit<Partial<InstanceType<T>>, 'style'> & {
       style?: Partial<CSSStyleDeclaration> | string;
-      ref?: RefObject<any>;
+      ref?: RefObject<any> | ((el: InstanceType<T>) => void);
       children?: any;
       content?: any;
     } & P,
@@ -64,6 +64,7 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
     private __cleanup: (() => void) | null = null;
     private __isFirstRender = true;
     private __updateSignal = signal(0);
+    private __ref: any = null;
 
     requestUpdate() {
       this.__updateSignal.update((n: number) => n + 1);
@@ -108,8 +109,8 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
           }
         } else if (key === 'className' || key === 'class') {
           this.setAttribute('class', value as string);
-        } else if (key === 'ref' && typeof value === 'object' && 'current' in (value as any)) {
-          (value as any).current = this;
+        } else if (key === 'ref') {
+          this.__ref = value;
         } else if (key.startsWith('on') && typeof value === 'function') {
           const eventName = key.substring(2).toLowerCase();
           this.addEventListener(eventName, value as any);
@@ -264,6 +265,15 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       // @ts-ignore
       if (super.connectedCallback) super.connectedCallback();
 
+      // Apply ref
+      if (this.__ref) {
+        if (typeof this.__ref === 'function') {
+          this.__ref(this);
+        } else if (typeof this.__ref === 'object' && 'current' in this.__ref) {
+          this.__ref.current = this;
+        }
+      }
+
       if ((this as any).onMount) (this as any).onMount();
       // Setup effects
       const renderDispose = effect(() => {
@@ -288,6 +298,15 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
     override disconnectedCallback() {
       // @ts-ignore
       if (super.disconnectedCallback) super.disconnectedCallback();
+
+      // Unset ref
+      if (this.__ref) {
+        if (typeof this.__ref === 'function') {
+          this.__ref(null);
+        } else if (typeof this.__ref === 'object' && 'current' in this.__ref) {
+          this.__ref.current = null;
+        }
+      }
 
       if ((this as any).onUnmount) (this as any).onUnmount();
 

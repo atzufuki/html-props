@@ -34,6 +34,9 @@ Deno.test('Element handles ref', () => {
   const ref = createRef<any>();
   const div = new Div({ ref });
 
+  // Simulate mount
+  div.connectedCallback();
+
   assertEquals(ref.current, div);
 });
 

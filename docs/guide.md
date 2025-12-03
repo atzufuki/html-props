@@ -169,3 +169,66 @@ update() {
   }
 }
 ```
+
+## Refs
+
+Refs provide a way to access the underlying DOM elements created by your components. While `html-props` is declarative,
+there are times when you need to imperatively modify a child, such as managing focus, triggering media playback, or
+integrating with third-party DOM libraries.
+
+### Creating Refs
+
+The standard way to create a ref is using the `createRef` helper.
+
+```typescript
+import { createRef, HTMLPropsMixin } from '@html-props/core';
+import { Input } from '@html-props/built-ins';
+
+class MyForm extends HTMLPropsMixin(HTMLElement) {
+  // Initialize the ref
+  inputRef = createRef<HTMLInputElement>();
+
+  onMount() {
+    // Access the DOM node after mount
+    this.inputRef.current?.focus();
+  }
+
+  render() {
+    // Pass the ref object to the element
+    return new Input({ ref: this.inputRef });
+  }
+}
+```
+
+### Accessing Refs
+
+The ref object has a single property, `current`.
+
+- **Before Mount**: `current` is `null`.
+- **After Mount**: `current` holds the DOM element.
+- **After Unmount**: `current` is reset to `null`.
+
+Because refs are tied to the lifecycle of the element, you should access them in `onMount` or event handlers, not during
+`render`.
+
+### Callback Refs
+
+Instead of a ref object, you can pass a function to the `ref` attribute. This gives you more control over when refs are
+set and unset.
+
+The callback receives the DOM element when the component mounts, and `null` when it unmounts.
+
+```typescript
+render() {
+  return new Input({
+    ref: (el) => {
+      if (el) {
+        console.log('Element mounted:', el);
+        el.focus();
+      } else {
+        console.log('Element unmounted');
+      }
+    }
+  });
+}
+```
