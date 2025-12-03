@@ -4,9 +4,17 @@ import { dirname, fromFileUrl, join } from 'jsr:@std/path';
 const BASE_DIR = dirname(fromFileUrl(import.meta.url));
 const DIST_DIR = join(BASE_DIR, 'dist');
 
+function shouldCompress(contentType: string | null) {
+  if (!contentType) return false;
+  return /^(text\/|application\/(javascript|json|xml|wasm)|image\/svg\+xml)/.test(contentType);
+}
+
 Deno.serve(async (req) => {
   const url = new URL(req.url);
   const pathname = url.pathname;
+  const acceptEncoding = req.headers.get('accept-encoding') || '';
+
+  let response: Response;
 
   // Serve index.html
   if (pathname === '/' || pathname === '/index.html') {
@@ -15,28 +23,53 @@ Deno.serve(async (req) => {
       let content = await Deno.readTextFile(indexPath);
       // Remove HMR client script
       content = content.replace('<script type="module" src="./hmr-client.js"></script>', '');
-      return new Response(content, {
-        headers: { 'content-type': 'text/html; charset=utf-8' },
+      response = new Response(content, {
+        headers: {
+          'content-type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600', // 1 hour
+        },
       });
     } catch (e) {
       console.error('Error serving index.html:', e);
       return new Response('Internal Server Error', { status: 500 });
     }
+  } // Serve bundled js
+  else if (pathname === '/main.bundle.js') {
+    response = await serveFile(req, join(DIST_DIR, 'main.bundle.js'));
+    response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+  } // Serve static assets (styles.css, etc.)
+  else {
+    const filePath = join(BASE_DIR, pathname);
+
+    // Ensure we don't escape the directory
+    if (!filePath.startsWith(BASE_DIR)) {
+      return new Response('Forbidden', { status: 403 });
+    }
+
+    response = await serveFile(req, filePath);
+
+    // Cache images and css
+    if (pathname.match(/\.(png|jpg|jpeg|gif|svg|css)$/)) {
+      response.headers.set('Cache-Control', 'public, max-age=86400');
+    }
   }
 
-  // Serve bundled js
-  if (pathname === '/main.bundle.js') {
-    return serveFile(req, join(DIST_DIR, 'main.bundle.js'));
+  // Handle Compression
+  if (response.ok && response.body && shouldCompress(response.headers.get('content-type'))) {
+    if (acceptEncoding.includes('gzip')) {
+      const compressedBody = response.body.pipeThrough(new CompressionStream('gzip'));
+      const newHeaders = new Headers(response.headers);
+      newHeaders.set('Content-Encoding', 'gzip');
+      newHeaders.set('Vary', 'Accept-Encoding');
+      newHeaders.delete('Content-Length');
+
+      return new Response(compressedBody, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: newHeaders,
+      });
+    }
   }
 
-  // Serve static assets (styles.css, etc.)
-  // We try to serve from the landing directory.
-  const filePath = join(BASE_DIR, pathname);
-
-  // Ensure we don't escape the directory
-  if (!filePath.startsWith(BASE_DIR)) {
-    return new Response('Forbidden', { status: 403 });
-  }
-
-  return serveFile(req, filePath);
+  return response;
 });
