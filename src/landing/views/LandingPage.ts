@@ -78,7 +78,7 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
               }),
               new Text({
                 html:
-                  'Plain HTML is limited to simple attributes and impreative coding style.<br>HTML Props brings declarativeness with rich data types and type safety to Web Components.',
+                  'Plain HTML is limited to simple attributes and imperative coding style.<br>HTML Props brings declarativeness with rich data types and type safety to Web Components.',
                 variant: 'muted',
                 align: 'center',
               }),
