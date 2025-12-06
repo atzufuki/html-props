@@ -85,7 +85,6 @@ export class MarkdownService {
   async getManifest(version: string = 'local'): Promise<string[]> {
     const resolvedVersion = this.resolveVersion(version);
     if (resolvedVersion === 'local') {
-      console.log('Fetching manifest from /api/docs');
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 

@@ -1,11 +1,11 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 import { Container, Row } from '@html-props/layout';
 import { Text } from './Typography.ts';
 import { AppButton } from './AppButton.ts';
 import { theme } from '../theme.ts';
 
 export class InstallBox extends HTMLPropsMixin(HTMLElement, {
-  command: { type: String, default: '' },
+  command: prop(''),
 }) {
   render() {
     return new Container({

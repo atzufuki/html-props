@@ -11,13 +11,11 @@ export class App extends HTMLPropsMixin(HTMLElement, {
 
     const handleHashChange = () => {
       const hash = window.location.hash || '#/';
-      console.log('Hash changed:', hash);
       let path = hash.substring(1); // remove #
       if (path.endsWith('/') && path.length > 1) {
         path = path.slice(0, -1);
       }
       this.route = path;
-      console.log('Route updated:', this.route);
       window.scrollTo(0, 0);
     };
 

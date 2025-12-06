@@ -8,12 +8,14 @@
 
 ### Module Structure
 
-The workspace contains **6 independent packages** in `src/`:
+The workspace contains **8 independent packages** in `src/`:
 
 - **`core`** - Foundation: reactive props mixin (`HTMLPropsMixin`), signal-based state, lifecycle hooks. Everything depends on this.
 - **`signals`** - Reactive primitives: `signal()` and `effect()` for fine-grained reactivity. Used by core and apps.
 - **`jsx`** - JSX runtime for template syntax. Optional, for projects using JSX.
 - **`built-ins`** - Type-safe wrappers for standard HTML elements (Div, Button, etc.).
+- **`layout`** - Flutter-inspired layout components (Row, Column, Stack, etc.).
+- **`builder`** - Visual HTML page building tool for VS Code.
 - **`create`** - CLI scaffolding tool for new projects.
 - **`landing`** - Demo/documentation website (dev server, HMR client included).
 
@@ -22,8 +24,8 @@ Each package has its own `deno.json` and tests.
 ### Design Patterns
 
 **Mixin-Based Architecture**: Components extend `HTMLPropsMixin(BaseClass)` to get props + rendering.
-- Supports inheritance: `class Box extends HTMLProps(Widget)` - mixins auto-compose.
-- Props defined via config object: `HTMLPropsMixin(HTMLElement, { count: { type: Number, default: 0 } })`.
+- Supports inheritance: `class Box extends HTMLPropsMixin(Widget)` - mixins auto-compose.
+- Props defined via config object: `HTMLPropsMixin(HTMLElement, { count: prop(0) })`.
 
 **Signal-Based Reactivity**: Props backed by signals from `@html-props/signals`.
 - Signals are callable: `this.count()` gets value, `.count(5)` sets value.
@@ -66,10 +68,10 @@ Deno's bundler with sloppy imports for JSX compatibility.
 
 ### Defining Custom Elements
 ```typescript
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 
 class MyElement extends HTMLPropsMixin(HTMLElement, {
-  text: { type: String, default: 'default' }
+  text: prop('default')
 }) {
   // Props auto-initialized from config
   render() {
@@ -87,10 +89,10 @@ MyElement.define('my-element');
 ### Props Configuration
 ```typescript
 class MyElement extends HTMLPropsMixin(HTMLElement, {
-  count: { type: Number, default: 0, reflect: true },
-  label: { type: String, attr: 'data-label', event: 'labelChange', default: '' },
-  active: { type: Boolean, default: false },
-  items: { type: Array, default: [] },
+  count: prop(0, { reflect: true }),
+  label: prop('', { attr: 'data-label', event: 'labelChange' }),
+  active: prop(false),
+  items: prop<string[]>([], { type: Array }),
 }) {}
 ```
 

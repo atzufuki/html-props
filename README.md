@@ -47,11 +47,11 @@ This will create a new directory called "my-app" with a basic project structure.
 Create a new component by extending `HTMLPropsMixin(HTMLElement)`.
 
 ```typescript
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 import { Button, Div } from '@html-props/built-ins';
 
 class Counter extends HTMLPropsMixin(HTMLElement, {
-  count: { type: Number, default: 0 },
+  count: prop(0),
 }) {
   render() {
     return new Div({
@@ -266,11 +266,9 @@ Define an `update(newContent)` method to take control of subsequent renders. The
 automatically.
 
 ```typescript
-class MyElement extends HTMLPropsMixin(HTMLElement) {
-  static props = {
-    count: { type: Number, default: 0 },
-  };
-
+class MyElement extends HTMLPropsMixin(HTMLElement, {
+  count: prop(0),
+}) {
   render() {
     // Called for initial render
     // Also called before update() to generate new content
@@ -320,19 +318,17 @@ this.requestUpdate();
 
 The core mixin that adds reactivity to your Custom Elements.
 
-### static props
+### Props Configuration
 
-Define reactive properties. Each key becomes a property on the instance and an observed attribute.
+Define reactive properties by passing a configuration object to the mixin.
 
 ```typescript
-static props = {
-  myProp: { 
-    type: String, // Number, Boolean, Array, Object
-    default: 'value',
+class MyElement extends HTMLPropsMixin(HTMLElement, {
+  myProp: prop('value', {
     reflect: true, // Reflect to attribute
-    attr: 'my-prop' // Custom attribute name
-  }
-}
+    attr: 'my-prop', // Custom attribute name
+  }),
+}) {}
 ```
 
 ### Built-in Elements

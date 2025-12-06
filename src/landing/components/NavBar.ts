@@ -1,11 +1,11 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 import { A, Button, Span } from '@html-props/built-ins';
 import { Column, Container, Responsive, Row } from '@html-props/layout';
 import { signal } from '@html-props/signals';
 import { theme } from '../theme.ts';
 
 export class NavBar extends HTMLPropsMixin(HTMLElement, {
-  links: { type: Array, default: [] as Array<{ label: string; href: string }> },
+  links: prop<Array<{ label: string; href: string }>>([], { type: Array }),
 }) {
   private isOpen = signal(false);
 

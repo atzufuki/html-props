@@ -1,11 +1,11 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 import { A, Button } from '@html-props/built-ins';
 import { theme } from '../theme.ts';
 
 export class AppButton extends HTMLPropsMixin(HTMLElement, {
-  label: { type: String, default: '' },
-  variant: { type: String, default: 'primary' }, // primary, secondary
-  href: { type: String, default: '' },
+  label: prop(''),
+  variant: prop<'primary' | 'secondary'>('primary'), // primary, secondary
+  href: prop(''),
 }) {
   render() {
     const isLink = !!this.href;

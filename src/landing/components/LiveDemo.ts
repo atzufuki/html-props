@@ -1,11 +1,15 @@
-import { HTMLPropsMixin } from '@html-props/core';
-import { Button, Div } from '@html-props/built-ins';
-import { effect } from '@html-props/signals';
-import { MediaQuery } from '@html-props/layout';
+import * as Core from '@html-props/core';
+import * as BuiltIns from '@html-props/built-ins';
+import * as Signals from '@html-props/signals';
+import * as Layout from '@html-props/layout';
 import { theme } from '../theme.ts';
 
+const { HTMLPropsMixin, prop } = Core;
+const { effect } = Signals;
+const { MediaQuery } = Layout;
+
 export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
-  code: { type: String, default: '' },
+  code: prop(''),
 }) {
   private textarea!: HTMLTextAreaElement;
   private pre!: HTMLPreElement;
@@ -306,18 +310,26 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
       );
 
       // 4. Execute
+      const context = {
+        ...Core,
+        ...BuiltIns,
+        ...Signals,
+        ...Layout,
+        HTMLElement,
+      };
+
+      const keys = Object.keys(context);
+      const values = Object.values(context);
+
       const func = new Function(
-        'HTMLPropsMixin',
-        'HTMLElement',
-        'Button',
-        'Div',
+        ...keys,
         `return (function() { 
           ${codeWithUniqueTag};
           return ${className};
         })()`,
       );
 
-      const ComponentClass = func(HTMLPropsMixin, HTMLElement, Button, Div);
+      const ComponentClass = func(...values);
 
       if (ComponentClass) {
         const instance = new ComponentClass();

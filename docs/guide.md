@@ -6,12 +6,12 @@ Create a new component by extending `HTMLPropsMixin(HTMLElement)`. This is the c
 declarative rendering to your Custom Elements.
 
 ```typescript
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 import { Button, Div } from '@html-props/built-ins';
 
 class Counter extends HTMLPropsMixin(HTMLElement, {
   // Type inferred from default value (Number)
-  count: { default: 0 },
+  count: prop(0),
 }) {
   render() {
     return new Div({
@@ -31,47 +31,28 @@ Counter.define('my-counter');
 
 ## Properties
 
-Define reactive properties by passing a configuration object as the second argument to the mixin.
-
-### 1. Simplified (Type Inference)
-
-The type is inferred from the `default` value.
+Define reactive properties by passing a configuration object as the second argument to the mixin. Use the `prop` helper
+for type safety and cleaner syntax.
 
 ```typescript
+import { HTMLPropsMixin, prop } from '@html-props/core';
+
 class MyElement extends HTMLPropsMixin(HTMLElement, {
-  count: { default: 0 }, // Inferred as Number
-  isActive: { default: false }, // Inferred as Boolean
-  label: { default: 'Start' }, // Inferred as String
-}) {}
-```
+  // 1. Simple props (Type inferred from default)
+  count: prop(0),
+  isActive: prop(false),
+  label: prop('Start'),
 
-### 2. Explicit Type
+  // 2. Explicit Types (Unions, Nullables)
+  mode: prop<'light' | 'dark'>('light'),
+  user: prop<User | null>(null, { type: Object }),
 
-Useful when the default value is `null` or doesn't match the full type (e.g. nullable props).
-
-```typescript
-class MyElement extends HTMLPropsMixin(HTMLElement, {
-  user: { type: Object, default: null },
-}) {}
-```
-
-### 3. Full Configuration
-
-Custom properties create reactive signals and can be reflected to attributes.
-
-```typescript
-class MyElement extends HTMLPropsMixin(HTMLElement, {
-  // Full configuration
-  myProp: {
-    type: String, // Optional if default is provided
-    default: 'val', // Initial value
+  // 3. Full Configuration
+  myProp: prop('val', {
     reflect: true, // Reflect to attribute (kebab-case)
     attr: 'my-attr', // Custom attribute name
     event: 'change', // Dispatch event on change
-  },
-
-  // Enum / Union
-  mode: { default: 'light' as 'light' | 'dark' },
+  }),
 }) {}
 ```
 
@@ -134,7 +115,7 @@ Define an `update()` method to take control of subsequent renders. The initial r
 
 ```typescript
 class MyElement extends HTMLPropsMixin(HTMLElement, {
-  count: { default: 0 },
+  count: prop(0),
 }) {
   render() {
     // Called for initial render
@@ -181,7 +162,7 @@ integrating with third-party DOM libraries.
 The standard way to create a ref is using the `createRef` helper.
 
 ```typescript
-import { createRef, HTMLPropsMixin } from '@html-props/core';
+import { createRef, HTMLPropsMixin, prop } from '@html-props/core';
 import { Input } from '@html-props/built-ins';
 
 class MyForm extends HTMLPropsMixin(HTMLElement) {

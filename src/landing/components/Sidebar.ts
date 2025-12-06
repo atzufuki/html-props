@@ -1,4 +1,4 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 import { A } from '@html-props/built-ins';
 import { Column, Container, Responsive } from '@html-props/layout';
 import { theme } from '../theme.ts';
@@ -10,7 +10,7 @@ interface SidebarLink {
 }
 
 export class Sidebar extends HTMLPropsMixin(HTMLElement, {
-  items: { type: Array, default: [] as SidebarLink[] },
+  items: prop<SidebarLink[]>([], { type: Array }),
 }) {
   render() {
     return new Responsive({

@@ -17,10 +17,10 @@ It aims to be the missing piece for Web Components: simple enough to understand 
 applications.
 
 ```typescript
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 
 class MyElement extends HTMLPropsMixin(HTMLElement, {
-  name: { default: 'World' }, // Type inferred as String
+  name: prop('World'), // Type inferred as String
 }) {
   render() {
     return new Div({ textContent: `Hello, ${this.name}!` });

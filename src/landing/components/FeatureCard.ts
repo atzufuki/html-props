@@ -1,12 +1,12 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 import { Column, Container } from '@html-props/layout';
 import { Heading, Text } from './Typography.ts';
 import { theme } from '../theme.ts';
 
 export class FeatureCard extends HTMLPropsMixin(HTMLElement, {
-  icon: { type: String, default: '' },
-  heading: { type: String, default: '' },
-  description: { type: String, default: '' },
+  icon: prop(''),
+  heading: prop(''),
+  description: prop(''),
 }) {
   render() {
     return new Container({

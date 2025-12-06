@@ -1,10 +1,10 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 import { MediaQuery } from './media_query.ts';
 
 export class Responsive extends HTMLPropsMixin(HTMLElement, {
-  mobile: { type: Object, default: null },
-  tablet: { type: Object, default: null },
-  desktop: { type: Object, default: null },
+  mobile: prop<any>(null),
+  tablet: prop<any>(null),
+  desktop: prop<any>(null),
 }) {
   render() {
     if (MediaQuery.isMobile()) {

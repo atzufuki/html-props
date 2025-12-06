@@ -1,10 +1,10 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 import { Code, Pre } from '@html-props/built-ins';
 import { Container } from '@html-props/layout';
 import { theme } from '../theme.ts';
 
 export class CodeBlock extends HTMLPropsMixin(HTMLElement, {
-  code: { type: String, default: '' },
+  code: prop(''),
 }) {
   private highlight(code: string): string {
     // Escape HTML first

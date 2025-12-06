@@ -1,4 +1,4 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 import { Button } from '@html-props/built-ins';
 import { Column, Container, MediaQuery, Responsive, Row } from '@html-props/layout';
 import { signal } from '@html-props/signals';
@@ -10,7 +10,7 @@ import { MarkdownService, type SidebarItem } from '../services/MarkdownService.t
 import { theme } from '../theme.ts';
 
 export class DocsPage extends HTMLPropsMixin(HTMLElement, {
-  route: { type: String, default: '/docs' },
+  route: prop('/docs'),
 }) {
   private service = MarkdownService.getInstance();
   private sidebarItems: SidebarItem[] = [];
@@ -62,9 +62,6 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
       };
     });
 
-    const sidebar = new Sidebar({ items: sidebarItems });
-    const content = this.renderContent(currentPath);
-
     return new Container({
       color: theme.colors.bg,
       style: {
@@ -80,6 +77,7 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
           ],
         }),
         new Responsive({
+          // desktop: row,
           desktop: new Row({
             crossAxisAlignment: 'start',
             style: {
@@ -87,8 +85,8 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
               margin: '0 auto',
             },
             content: [
-              sidebar,
-              content,
+              new Sidebar({ items: sidebarItems }),
+              this.renderContent(currentPath),
             ],
           }),
           mobile: new Column({
@@ -109,8 +107,8 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
                   onclick: () => this.showMobileSidebar.update((v) => !v),
                 }),
               }),
-              this.showMobileSidebar() ? sidebar : null,
-              content,
+              this.showMobileSidebar() ? new Sidebar({ items: sidebarItems }) : null,
+              this.renderContent(currentPath),
             ],
           }),
         }),

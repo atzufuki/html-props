@@ -1,10 +1,10 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 import { Footer } from '@html-props/built-ins';
 import { Text } from './Typography.ts';
 import { theme } from '../theme.ts';
 
 export class AppFooter extends HTMLPropsMixin(HTMLElement, {
-  copyright: { type: String, default: '© 2025 HTML Props. MIT License.' },
+  copyright: prop('© 2025 HTML Props. MIT License.'),
 }) {
   render() {
     return new Footer({

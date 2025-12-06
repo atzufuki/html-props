@@ -1,4 +1,4 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 import {
   A,
   Div,
@@ -27,9 +27,9 @@ import { theme } from '../theme.ts';
 import { effect } from '@html-props/signals';
 
 export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
-  src: { type: String, default: '' },
-  version: { type: String, default: 'local' },
-  markdown: { type: String, default: '' }, // Add markdown prop
+  src: prop(''),
+  version: prop('local'),
+  markdown: prop(''), // Add markdown prop
 }) {
   private service = MarkdownService.getInstance();
   private loading = false;

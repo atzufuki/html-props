@@ -45,7 +45,9 @@ Technical Effect: Generates a new TypeScript file with the component class defin
 
 ```typescript
 // Generated file: src/components/MyButton.ts
+import { HTMLPropsMixin, prop } from '@html-props/core';
+
 class MyButton extends HTMLPropsMixin(HTMLElement, {
-  label: { type: String, default: '' },
+  label: prop(''),
 }) {
 ```

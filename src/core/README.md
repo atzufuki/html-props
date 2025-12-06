@@ -13,10 +13,10 @@ A reactive props & state layer for native Custom Elements powered by signals.
 ## Usage
 
 ```typescript
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 
 class MyElement extends HTMLPropsMixin(HTMLElement, {
-  count: { type: Number, default: 0, reflect: true },
+  count: prop(0, { reflect: true }),
 }) {
   render() {
     return document.createTextNode(`Count: ${this.count}`);
@@ -33,7 +33,7 @@ fine-grained updates using the `update()` method.
 
 ```typescript
 class MyElement extends HTMLPropsMixin(HTMLElement, {
-  count: { type: Number, default: 0 },
+  count: prop(0, { type: Number }),
 }) {
   render() {
     // Called for initial render

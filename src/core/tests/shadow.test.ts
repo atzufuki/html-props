@@ -1,5 +1,6 @@
 import { assert, assertEquals } from 'jsr:@std/assert';
 import { HTMLPropsMixin } from '../mixin.ts';
+import { prop } from '../prop.ts';
 import type { PropsConfig } from '../types.ts';
 
 import { parseHTML } from 'linkedom';
@@ -52,9 +53,9 @@ class ShadowHTMLElement extends HTMLElement {
 
 Deno.test('HTMLPropsMixin w/ shadow: initializes props', () => {
   class TestElement extends HTMLPropsMixin(ShadowHTMLElement, {
-    count: { type: Number, default: 10 },
-    label: { type: String, default: 'hello' },
-    active: { type: Boolean, default: true },
+    count: prop(10),
+    label: prop('hello'),
+    active: prop(true),
   }) {
     render() {
       return [];
@@ -71,7 +72,7 @@ Deno.test('HTMLPropsMixin w/ shadow: initializes props', () => {
 Deno.test('HTMLPropsMixin w/ shadow: updates props and renders', () => {
   let renderCount = 0;
   class TestElement extends HTMLPropsMixin(ShadowHTMLElement, {
-    count: { type: Number, default: 0 },
+    count: prop(0),
   }) {
     render() {
       renderCount++;
@@ -95,8 +96,8 @@ Deno.test('HTMLPropsMixin w/ shadow: updates props and renders', () => {
 
 Deno.test('HTMLPropsMixin w/ shadow: reflects props to attributes', () => {
   class TestElement extends HTMLPropsMixin(ShadowHTMLElement, {
-    count: { type: Number, default: 0, reflect: true },
-    active: { type: Boolean, default: false, reflect: true },
+    count: prop(0, { reflect: true }),
+    active: prop(false, { reflect: true }),
   }) {
     render() {
       return [];
@@ -120,8 +121,8 @@ Deno.test('HTMLPropsMixin w/ shadow: reflects props to attributes', () => {
 
 Deno.test('HTMLPropsMixin w/ shadow: updates props from attributes', () => {
   class TestElement extends HTMLPropsMixin(ShadowHTMLElement, {
-    count: { type: Number, default: 0, reflect: true },
-    label: { type: String, default: '', reflect: true },
+    count: prop(0, { reflect: true }),
+    label: prop('', { reflect: true }),
   }) {
     render() {
       return [];
@@ -141,7 +142,7 @@ Deno.test('HTMLPropsMixin w/ shadow: updates props from attributes', () => {
 
 Deno.test('HTMLPropsMixin w/ shadow: dispatches events', () => {
   class TestElement extends HTMLPropsMixin(ShadowHTMLElement, {
-    count: { type: Number, default: 0, event: 'change' },
+    count: prop(0, { event: 'change' }),
   }) {
     render() {
       return [];
@@ -172,8 +173,8 @@ Deno.test('HTMLPropsMixin w/ shadow: define static method', () => {
 
 Deno.test('HTMLPropsMixin w/ shadow: typed props', () => {
   const Base = HTMLPropsMixin(ShadowHTMLElement, {
-    count: { type: Number, default: 0 },
-    label: { type: String, default: 'test' },
+    count: prop(0),
+    label: prop('test'),
   });
 
   class TestEl extends Base {}
@@ -191,7 +192,7 @@ Deno.test('HTMLPropsMixin w/ shadow: typed props', () => {
 
 Deno.test('HTMLPropsMixin w/ shadow: inheritance', () => {
   class MyElement extends HTMLPropsMixin(ShadowHTMLElement, {
-    text: { type: String, default: 'Default text' },
+    text: prop('Default text'),
   }) {}
 
   class MyElementFromInheritance extends HTMLPropsMixin(MyElement, {

@@ -90,34 +90,39 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
             ],
           }),
           new LiveDemo({
-            code: `import { HTMLPropsMixin } from '@html-props/core';
+            code: `import { HTMLPropsMixin, prop } from '@html-props/core';
 import { Button, Div } from '@html-props/built-ins';
+import { Column, Container } from '@html-props/layout';
 
 class CounterApp extends HTMLPropsMixin(HTMLElement, {
-  count: { type: Number, default: 0 }
+  count: prop(0)
 }) {
   render() {
-    return new Div({
-      style: { padding: '1rem', textAlign: 'center' },
-      content: [
-        new Div({ 
+    return new Container({
+      padding: '2rem',
+      content: new Column({
+        crossAxisAlignment: 'center',
+        gap: '1rem',
+        content: [
+          new Div({ 
             textContent: \`Count is: \${this.count}\`,
-            style: { marginBottom: '1rem' }
-        }),
-        new Button({
-          textContent: 'Increment',
-          style: {
-            backgroundColor: '#38bdf8',
-            color: '#0f172a',
-            border: 'none',
-            padding: '0.5rem 1rem',
-            borderRadius: '0.25rem',
-            cursor: 'pointer',
-            fontWeight: '600'
-          },
-          onclick: () => this.count++
-        })
-      ]
+            style: { fontSize: '1.2rem' }
+          }),
+          new Button({
+            textContent: 'Increment',
+            style: {
+              backgroundColor: '#38bdf8',
+              color: '#0f172a',
+              border: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '0.25rem',
+              cursor: 'pointer',
+              fontWeight: '600'
+            },
+            onclick: () => this.count++
+          })
+        ]
+      })
     });
   }
 }

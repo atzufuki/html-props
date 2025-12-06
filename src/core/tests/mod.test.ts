@@ -1,5 +1,6 @@
 import { assert, assertEquals } from 'jsr:@std/assert';
 import { HTMLPropsMixin } from '../mixin.ts';
+import { prop } from '../prop.ts';
 import type { PropsConfig } from '../types.ts';
 
 import { parseHTML } from 'linkedom';
@@ -43,9 +44,9 @@ const Event = (globalThis as any).window.Event;
 
 Deno.test('HTMLPropsMixin: initializes props', () => {
   class TestElement extends HTMLPropsMixin(HTMLElement, {
-    count: { type: Number, default: 10 },
-    label: { type: String, default: 'hello' },
-    active: { type: Boolean, default: true },
+    count: prop(10),
+    label: prop('hello'),
+    active: prop(true),
   }) {
     render() {
       return [];
@@ -62,7 +63,7 @@ Deno.test('HTMLPropsMixin: initializes props', () => {
 Deno.test('HTMLPropsMixin: updates props and renders', () => {
   let renderCount = 0;
   class TestElement extends HTMLPropsMixin(HTMLElement, {
-    count: { type: Number, default: 0 },
+    count: prop(0),
   }) {
     render() {
       renderCount++;
@@ -86,8 +87,8 @@ Deno.test('HTMLPropsMixin: updates props and renders', () => {
 
 Deno.test('HTMLPropsMixin: reflects props to attributes', () => {
   class TestElement extends HTMLPropsMixin(HTMLElement, {
-    count: { type: Number, default: 0, reflect: true },
-    active: { type: Boolean, default: false, reflect: true },
+    count: prop(0, { reflect: true }),
+    active: prop(false, { reflect: true }),
   }) {
     render() {
       return [];
@@ -111,8 +112,8 @@ Deno.test('HTMLPropsMixin: reflects props to attributes', () => {
 
 Deno.test('HTMLPropsMixin: updates props from attributes', () => {
   class TestElement extends HTMLPropsMixin(HTMLElement, {
-    count: { type: Number, default: 0, reflect: true },
-    label: { type: String, default: '', reflect: true },
+    count: prop(0, { reflect: true }),
+    label: prop('', { reflect: true }),
   }) {
     render() {
       return [];
@@ -132,7 +133,7 @@ Deno.test('HTMLPropsMixin: updates props from attributes', () => {
 
 Deno.test('HTMLPropsMixin: dispatches events', () => {
   class TestElement extends HTMLPropsMixin(HTMLElement, {
-    count: { type: Number, default: 0, event: 'change' },
+    count: prop(0, { event: 'change' }),
   }) {
     render() {
       return [];
@@ -163,8 +164,8 @@ Deno.test('HTMLPropsMixin: define static method', () => {
 
 Deno.test('HTMLPropsMixin: typed props', () => {
   const Base = HTMLPropsMixin(HTMLElement, {
-    count: { type: Number, default: 0 },
-    label: { type: String, default: 'test' },
+    count: prop(0),
+    label: prop('test'),
   });
 
   class TestEl extends Base {}
@@ -182,7 +183,7 @@ Deno.test('HTMLPropsMixin: typed props', () => {
 
 Deno.test('HTMLPropsMixin: inheritance', () => {
   class MyElement extends HTMLPropsMixin(HTMLElement, {
-    text: { type: String, default: 'Default text' },
+    text: prop('Default text'),
   }) {}
 
   class MyElementFromInheritance extends HTMLPropsMixin(MyElement, {

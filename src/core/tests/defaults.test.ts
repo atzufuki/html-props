@@ -1,5 +1,6 @@
 import { assertEquals } from 'jsr:@std/assert';
 import { HTMLPropsMixin } from '../mixin.ts';
+import { prop } from '../prop.ts';
 import { parseHTML } from 'linkedom';
 
 // Setup environment
@@ -30,7 +31,7 @@ Deno.test('HTMLPropsMixin: direct default values', () => {
     style: { color: 'blue', fontSize: '16px' },
 
     // Custom prop (still needs config)
-    count: { type: Number, default: 10 },
+    count: prop(10),
   }) {}
 
   DirectDefaultsElement.define('direct-defaults');

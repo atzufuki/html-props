@@ -249,19 +249,9 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
     const propsConfig = properties
       .filter((p) => p.type !== 'function')
       .map((p) => {
-        const typeConstructor = p.type === 'string'
-          ? 'String'
-          : p.type === 'number'
-          ? 'Number'
-          : p.type === 'boolean'
-          ? 'Boolean'
-          : p.type === 'array'
-          ? 'Array'
-          : 'Object';
-
         const defaultVal = p.defaultValue !== undefined ? p.defaultValue : 'undefined';
 
-        return `    ${p.name}: { type: ${typeConstructor}, default: ${defaultVal} },`;
+        return `    ${p.name}: prop(${defaultVal}),`;
       })
       .join('\n');
 
@@ -278,7 +268,7 @@ export class HtmlPropsAdapter implements ICodeStyleAdapter {
       ? `${className}.define('${tagName}', { extends: '${baseTag}' });`
       : `${className}.define('${tagName}');`;
 
-    return `import { HTMLPropsMixin } from '@html-props/core';
+    return `import { HTMLPropsMixin, prop } from '@html-props/core';
 import { Div } from '@html-props/built-ins';
 
 /**

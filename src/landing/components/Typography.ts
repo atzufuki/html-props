@@ -1,13 +1,13 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 import { H1, H2, H3, H4, H5, H6, P, Span } from '@html-props/built-ins';
 import { theme } from '../theme.ts';
 
 export class Heading extends HTMLPropsMixin(HTMLElement, {
-  text: { type: String, default: '' },
-  html: { type: String, default: '' },
-  level: { type: String, default: '2' }, // 1-6
-  align: { type: String, default: 'left' },
-  color: { type: String, default: '' },
+  text: prop(''),
+  html: prop(''),
+  level: prop('2'), // 1-6
+  align: prop('left'),
+  color: prop(''),
 }) {
   render() {
     const style = {
@@ -47,8 +47,8 @@ export class Heading extends HTMLPropsMixin(HTMLElement, {
 Heading.define('app-heading');
 
 export class SectionHeading extends HTMLPropsMixin(HTMLElement, {
-  text: { type: String, default: '' },
-  align: { type: String, default: 'center' },
+  text: prop(''),
+  align: prop('center'),
 }) {
   render() {
     return new Heading({
@@ -65,11 +65,11 @@ export class SectionHeading extends HTMLPropsMixin(HTMLElement, {
 SectionHeading.define('app-section-heading');
 
 export class Text extends HTMLPropsMixin(HTMLElement, {
-  text: { type: String, default: '' },
-  html: { type: String, default: '' },
-  variant: { type: String, default: 'body' }, // body, muted, small, code
-  align: { type: String, default: 'left' },
-  tag: { type: String, default: 'p' },
+  text: prop(''),
+  html: prop(''),
+  variant: prop('body'), // body, muted, small, code
+  align: prop('left'),
+  tag: prop('p'),
 }) {
   render() {
     const style: any = {

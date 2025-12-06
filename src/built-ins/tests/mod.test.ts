@@ -53,12 +53,12 @@ Deno.test('Element handles content', () => {
   assertEquals(div.childNodes[1].textContent, 'World');
 });
 
-import { HTMLPropsMixin } from '../../core/mod.ts';
+import { HTMLPropsMixin, prop } from '../../core/mod.ts';
 
 Deno.test('Nested Mixin: CounterButton extends HTMLPropsMixin(Button)', () => {
   class CounterButton extends HTMLPropsMixin(Button, {
-    count: { type: Number, default: 0 },
-    label: { type: String, default: 'Count' },
+    count: prop(0),
+    label: prop('Count'),
   }) {
     render() {
       return document.createTextNode(`${this.label}: ${this.count}`);

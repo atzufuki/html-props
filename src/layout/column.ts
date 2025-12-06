@@ -3,15 +3,16 @@ import {
   HTMLPropsMixin,
   type InferConstructorProps,
   type InferProps,
+  prop,
 } from '@html-props/core';
 import { effect } from '@html-props/signals';
 import { CrossAxisAlignment, MainAxisAlignment } from './flex_types.ts';
 
 const config = {
-  mainAxisAlignment: { type: String, default: 'start' as keyof typeof MainAxisAlignment },
-  crossAxisAlignment: { type: String, default: 'stretch' as keyof typeof CrossAxisAlignment },
-  gap: { type: String, default: '0' },
-  wrap: { type: String, default: 'nowrap' as 'nowrap' | 'wrap' | 'wrap-reverse' }, // nowrap, wrap, wrap-reverse
+  mainAxisAlignment: prop<keyof typeof MainAxisAlignment>('start'),
+  crossAxisAlignment: prop<keyof typeof CrossAxisAlignment>('stretch'),
+  gap: prop('0'),
+  wrap: prop<'nowrap' | 'wrap' | 'wrap-reverse'>('nowrap'),
   style: { display: 'flex', flexDirection: 'column' },
 };
 

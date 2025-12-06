@@ -1,15 +1,15 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 import { Column, Container, MediaQuery, Responsive, Row } from '@html-props/layout';
 import { AppButton } from './AppButton.ts';
 import { Heading, Text } from './Typography.ts';
 
 export class Hero extends HTMLPropsMixin(HTMLElement, {
-  heading: { type: String, default: '', reflect: true },
-  subtitle: { type: String, default: '', reflect: true },
-  primaryCta: { type: String, default: 'Get Started', reflect: true },
-  secondaryCta: { type: String, default: 'View on GitHub', reflect: true },
-  primaryCtaLink: { type: String, default: '#', reflect: true },
-  secondaryCtaLink: { type: String, default: '#', reflect: true },
+  heading: prop('', { reflect: true }),
+  subtitle: prop('', { reflect: true }),
+  primaryCta: prop('Get Started', { reflect: true }),
+  secondaryCta: prop('View on GitHub', { reflect: true }),
+  primaryCtaLink: prop('#', { reflect: true }),
+  secondaryCtaLink: prop('#', { reflect: true }),
 }) {
   render() {
     const isMobile = MediaQuery.isMobile();

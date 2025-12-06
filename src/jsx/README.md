@@ -50,17 +50,17 @@ esbuild.build({
 You can now start writing render methods with JSX syntax.
 
 ```tsx
-import HTMLProps from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 
-const Button = HTMLProps(HTMLButtonElement).define(
+const Button = HTMLPropsMixin(HTMLButtonElement).define(
   'html-button',
   {
     extends: 'button',
   },
 );
 
-class MyElement extends HTMLProps(HTMLElement, {
-  text: { type: String, default: '-' },
+class MyElement extends HTMLPropsMixin(HTMLElement, {
+  text: prop('-'),
 }) {
   render() {
     return <Button>{this.text}</Button>;
