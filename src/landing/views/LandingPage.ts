@@ -40,7 +40,7 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
         content: new Container({
           style: { maxWidth: '1200px', margin: '0 auto' },
           content: new Grid({
-            columns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            columns: 'repeat(auto-fit, minmax(240px, 1fr))',
             gap: '2rem',
             content: [
               new FeatureCard({
