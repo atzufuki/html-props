@@ -27,9 +27,9 @@ if (!globalThis.document) {
 Deno.test('HTMLPropsMixin: Type Inference & Optional Types', async (t) => {
   await t.step('infers types from default values when type is omitted', () => {
     class InferredElement extends HTMLPropsMixin(HTMLElement, {
-      count: prop(0, { reflect: true }), // Inferred Number
-      active: prop(false, { reflect: true }), // Inferred Boolean
-      label: prop('start', { reflect: true }), // Inferred String
+      count: prop(0, { attribute: true }), // Inferred Number
+      active: prop(false, { attribute: true }), // Inferred Boolean
+      label: prop('start', { attribute: true }), // Inferred String
     }) {}
 
     InferredElement.define('inferred-el');
@@ -67,8 +67,8 @@ Deno.test('HTMLPropsMixin: Type Inference & Optional Types', async (t) => {
 
   await t.step('handles null defaults with explicit types', () => {
     class NullExplicitElement extends HTMLPropsMixin(HTMLElement, {
-      count: prop<number | null>(null, { type: Number, reflect: true }),
-      active: prop<boolean | null>(null, { type: Boolean, reflect: true }),
+      count: prop<number | null>(null, { type: Number, attribute: true }),
+      active: prop<boolean | null>(null, { type: Boolean, attribute: true }),
     }) {}
 
     NullExplicitElement.define('null-explicit-el');
@@ -92,7 +92,7 @@ Deno.test('HTMLPropsMixin: Type Inference & Optional Types', async (t) => {
   await t.step('handles null defaults without explicit types (fallback to String)', () => {
     class NullImplicitElement extends HTMLPropsMixin(HTMLElement, {
       // No type, default null -> treated as String/Any
-      data: prop(null, { reflect: true }),
+      data: prop(null, { attribute: true }),
     }) {}
 
     NullImplicitElement.define('null-implicit-el');
@@ -110,7 +110,7 @@ Deno.test('HTMLPropsMixin: Type Inference & Optional Types', async (t) => {
 
   await t.step('handles Enum-like defaults', () => {
     class EnumElement extends HTMLPropsMixin(HTMLElement, {
-      variant: { default: 'primary', reflect: true },
+      variant: { default: 'primary', attribute: true },
     }) {}
 
     EnumElement.define('enum-el');

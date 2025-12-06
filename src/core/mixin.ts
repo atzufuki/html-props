@@ -74,8 +74,11 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       const props = (this as any).__props as PropsConfig;
       if (!props) return [];
       return Object.entries(props)
-        .filter(([_, config]) => config.reflect || config.attr)
-        .map(([key, config]) => config.attr || key.toLowerCase());
+        .filter(([_, config]) => config.attribute)
+        .map(([key, config]) => {
+          if (typeof config.attribute === 'string') return config.attribute;
+          return key.toLowerCase();
+        });
     }
 
     constructor(...args: any[]) {
@@ -142,11 +145,11 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       if (!props) return;
 
       Object.entries(props).forEach(([key, config]) => {
-        // Check if it's a PropConfig (has type constructor OR default OR reflect)
+        // Check if it's a PropConfig (has type constructor OR default OR attribute)
         const isPropConfig = config && typeof config === 'object' && (
           typeof config.type === 'function' ||
           'default' in config ||
-          'reflect' in config
+          'attribute' in config
         );
 
         if (!isPropConfig) {
@@ -222,17 +225,17 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       if (!props) return;
 
       Object.entries(props).forEach(([key, config]) => {
-        // Only reflect PropConfigs with reflect: true
+        // Only reflect PropConfigs with attribute: true or string
         const isPropConfig = config && typeof config === 'object' && (
           typeof config.type === 'function' ||
           'default' in config ||
-          'reflect' in config
+          'attribute' in config
         );
         if (!isPropConfig) return;
 
-        if (config.reflect) {
+        if (config.attribute) {
           const val = this.__signals[key]();
-          const attrName = config.attr || key.toLowerCase();
+          const attrName = typeof config.attribute === 'string' ? config.attribute : key.toLowerCase();
 
           const isBoolean = config.type === Boolean || (typeof config.default === 'boolean');
 
@@ -327,7 +330,7 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
 
       // Find prop for attribute
       const entry = Object.entries(props).find(([key, config]) => {
-        const attr = config.attr || key.toLowerCase();
+        const attr = typeof config.attribute === 'string' ? config.attribute : key.toLowerCase();
         return attr === name;
       });
 

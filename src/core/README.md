@@ -16,7 +16,7 @@ A reactive props & state layer for native Custom Elements powered by signals.
 import { HTMLPropsMixin, prop } from '@html-props/core';
 
 class MyElement extends HTMLPropsMixin(HTMLElement, {
-  count: prop(0, { reflect: true }),
+  count: prop(0, { attribute: true }),
 }) {
   render() {
     return document.createTextNode(`Count: ${this.count}`);

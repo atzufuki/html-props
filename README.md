@@ -325,8 +325,8 @@ Define reactive properties by passing a configuration object to the mixin.
 ```typescript
 class MyElement extends HTMLPropsMixin(HTMLElement, {
   myProp: prop('value', {
-    reflect: true, // Reflect to attribute
-    attr: 'my-prop', // Custom attribute name
+    attribute: true, // Reflect to attribute
+    // or attribute: 'my-prop' for custom name
   }),
 }) {}
 ```

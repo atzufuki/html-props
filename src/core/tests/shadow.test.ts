@@ -96,8 +96,8 @@ Deno.test('HTMLPropsMixin w/ shadow: updates props and renders', () => {
 
 Deno.test('HTMLPropsMixin w/ shadow: reflects props to attributes', () => {
   class TestElement extends HTMLPropsMixin(ShadowHTMLElement, {
-    count: prop(0, { reflect: true }),
-    active: prop(false, { reflect: true }),
+    count: prop(0, { attribute: true }),
+    active: prop(false, { attribute: true }),
   }) {
     render() {
       return [];
@@ -121,8 +121,8 @@ Deno.test('HTMLPropsMixin w/ shadow: reflects props to attributes', () => {
 
 Deno.test('HTMLPropsMixin w/ shadow: updates props from attributes', () => {
   class TestElement extends HTMLPropsMixin(ShadowHTMLElement, {
-    count: prop(0, { reflect: true }),
-    label: prop('', { reflect: true }),
+    count: prop(0, { attribute: true }),
+    label: prop('', { attribute: true }),
   }) {
     render() {
       return [];
@@ -660,8 +660,8 @@ Deno.test('HTMLPropsMixin w/ shadow: allows defining update for custom rendering
 
 Deno.test('HTMLPropsMixin w/ shadow: reflection works with overridden update', () => {
   class ReflectedRender extends HTMLPropsMixin(ShadowHTMLElement, {
-    active: { type: Boolean, reflect: true },
-    label: { type: String, reflect: true },
+    active: { type: Boolean, attribute: true },
+    label: { type: String, attribute: true },
   }) {
     update() {
       // Do nothing, completely override render

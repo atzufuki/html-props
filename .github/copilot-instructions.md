@@ -89,8 +89,8 @@ MyElement.define('my-element');
 ### Props Configuration
 ```typescript
 class MyElement extends HTMLPropsMixin(HTMLElement, {
-  count: prop(0, { reflect: true }),
-  label: prop('', { attr: 'data-label', event: 'labelChange' }),
+  count: prop(0, { attribute: true }),
+  label: prop('', { attribute: 'data-label', event: 'labelChange' }),
   active: prop(false),
   items: prop<string[]>([], { type: Array }),
 }) {}
@@ -98,8 +98,7 @@ class MyElement extends HTMLPropsMixin(HTMLElement, {
 
 - `type`: String, Number, Boolean, Array, or Object constructors.
 - `default`: Initial value (required for type inference).
-- `reflect`: Sync prop to HTML attribute (kebab-case).
-- `attr`: Custom attribute name instead of prop name.
+- `attribute`: Boolean (reflect as kebab-case) or String (custom attribute name).
 - `event`: Emit custom event on prop change.
 
 ### Using Signals

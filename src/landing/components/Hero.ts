@@ -4,12 +4,12 @@ import { AppButton } from './AppButton.ts';
 import { Heading, Text } from './Typography.ts';
 
 export class Hero extends HTMLPropsMixin(HTMLElement, {
-  heading: prop('', { reflect: true }),
-  subtitle: prop('', { reflect: true }),
-  primaryCta: prop('Get Started', { reflect: true }),
-  secondaryCta: prop('View on GitHub', { reflect: true }),
-  primaryCtaLink: prop('#', { reflect: true }),
-  secondaryCtaLink: prop('#', { reflect: true }),
+  heading: prop('', { attribute: true }),
+  subtitle: prop('', { attribute: true }),
+  primaryCta: prop('Get Started', { attribute: true }),
+  secondaryCta: prop('View on GitHub', { attribute: true }),
+  primaryCtaLink: prop('#', { attribute: true }),
+  secondaryCtaLink: prop('#', { attribute: true }),
 }) {
   render() {
     const isMobile = MediaQuery.isMobile();

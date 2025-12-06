@@ -9,8 +9,7 @@ export type PropType =
 export interface PropConfig {
   type?: PropType;
   default?: unknown;
-  reflect?: boolean;
-  attr?: string;
+  attribute?: boolean | string;
   event?: string;
 }
 
@@ -38,10 +37,10 @@ export type ConstructorType<T> = T extends StringConstructor ? string
   : T extends FunctionConstructor ? Function
   : any;
 
-// It is a config if it has 'type' OR 'default' OR 'reflect'
+// It is a config if it has 'type' OR 'default' OR 'attribute'
 type IsPropConfig<T> = T extends { type: any } ? true
   : T extends { default: any } ? true
-  : T extends { reflect: any } ? true
+  : T extends { attribute: any } ? true
   : false;
 
 type HasDefault<T> = T extends { default: any } ? true : false;

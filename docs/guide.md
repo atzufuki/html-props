@@ -49,8 +49,8 @@ class MyElement extends HTMLPropsMixin(HTMLElement, {
 
   // 3. Full Configuration
   myProp: prop('val', {
-    reflect: true, // Reflect to attribute (kebab-case)
-    attr: 'my-attr', // Custom attribute name
+    attribute: true, // Reflect to attribute (kebab-case)
+    // or attribute: 'my-attr' for custom name
     event: 'change', // Dispatch event on change
   }),
 }) {}
