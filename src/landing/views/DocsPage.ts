@@ -1,5 +1,7 @@
 import { HTMLPropsMixin } from '@html-props/core';
-import { Container, Row } from '@html-props/layout';
+import { Button } from '@html-props/built-ins';
+import { Column, Container, MediaQuery, Responsive, Row } from '@html-props/layout';
+import { signal } from '@html-props/signals';
 import { NavBar } from '../components/NavBar.ts';
 import { Sidebar } from '../components/Sidebar.ts';
 import { MarkdownViewer } from '../components/MarkdownViewer.ts';
@@ -13,6 +15,7 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
   private service = MarkdownService.getInstance();
   private sidebarItems: SidebarItem[] = [];
   private loading = true;
+  private showMobileSidebar = signal(false);
 
   connectedCallback() {
     super.connectedCallback();
@@ -59,6 +62,9 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
       };
     });
 
+    const sidebar = new Sidebar({ items: sidebarItems });
+    const content = this.renderContent(currentPath);
+
     return new Container({
       color: theme.colors.bg,
       style: {
@@ -73,16 +79,40 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
             { label: 'GitHub', href: 'https://github.com/atzufuki/html-props' },
           ],
         }),
-        new Row({
-          crossAxisAlignment: 'start',
-          style: {
-            maxWidth: '1400px',
-            margin: '0 auto',
-          },
-          content: [
-            new Sidebar({ items: sidebarItems }),
-            this.renderContent(currentPath),
-          ],
+        new Responsive({
+          desktop: new Row({
+            crossAxisAlignment: 'start',
+            style: {
+              maxWidth: '1400px',
+              margin: '0 auto',
+            },
+            content: [
+              sidebar,
+              content,
+            ],
+          }),
+          mobile: new Column({
+            content: [
+              new Container({
+                padding: '1rem',
+                style: { borderBottom: `1px solid ${theme.colors.border}` },
+                content: new Button({
+                  textContent: this.showMobileSidebar() ? 'Hide Menu' : 'Show Menu',
+                  style: {
+                    background: theme.colors.secondaryBg,
+                    color: theme.colors.text,
+                    border: `1px solid ${theme.colors.border}`,
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.25rem',
+                    cursor: 'pointer',
+                  },
+                  onclick: () => this.showMobileSidebar.update((v) => !v),
+                }),
+              }),
+              this.showMobileSidebar() ? sidebar : null,
+              content,
+            ],
+          }),
         }),
       ],
     });
@@ -97,9 +127,16 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
 
     if (!page) return null;
 
+    const isMobile = MediaQuery.isMobile();
+
     return new MarkdownViewer({
       src: page,
-      style: { flex: '1', padding: '3rem 4rem', maxWidth: '800px' },
+      style: {
+        flex: '1',
+        padding: isMobile ? '1rem' : '3rem 4rem',
+        maxWidth: '800px',
+        width: '100%',
+      },
     });
   }
 }

@@ -1,5 +1,7 @@
 import { HTMLPropsMixin } from '@html-props/core';
 import { Button, Div } from '@html-props/built-ins';
+import { effect } from '@html-props/signals';
+import { MediaQuery } from '@html-props/layout';
 import { theme } from '../theme.ts';
 
 export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
@@ -9,6 +11,7 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
   private pre!: HTMLPreElement;
   private previewContainer!: HTMLElement;
   private errorContainer!: HTMLElement;
+  private _disposeEffect: (() => void) | null = null;
 
   private highlight(code: string): string {
     // Escape HTML first
@@ -118,7 +121,6 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
 
     // Layout
     this.style.display = 'grid';
-    this.style.gridTemplateColumns = '1fr 1fr';
     this.style.gap = '0'; // Gap handled by border
     this.style.backgroundColor = theme.colors.secondaryBg;
     this.style.border = `1px solid ${theme.colors.border}`;
@@ -130,8 +132,7 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
     const editorCol = document.createElement('div');
     editorCol.style.display = 'flex';
     editorCol.style.flexDirection = 'column';
-    editorCol.style.borderRight = `1px solid ${theme.colors.border}`;
-    editorCol.style.minHeight = '745px';
+    editorCol.style.minHeight = '400px'; // Reduced minHeight for mobile friendliness
 
     // Editor Wrapper
     const editorWrapper = document.createElement('div');
@@ -246,9 +247,35 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
     this.appendChild(editorCol);
     this.appendChild(previewCol);
 
+    // Responsive Layout Effect
+    this._disposeEffect = effect(() => {
+      const isMobile = MediaQuery.isMobile();
+      if (isMobile) {
+        this.style.gridTemplateColumns = '1fr';
+        this.style.gridTemplateRows = 'auto auto';
+        editorCol.style.borderRight = 'none';
+        editorCol.style.borderBottom = `1px solid ${theme.colors.border}`;
+        editorCol.style.height = '400px';
+      } else {
+        this.style.gridTemplateColumns = '1fr 1fr';
+        this.style.gridTemplateRows = 'auto';
+        editorCol.style.borderRight = `1px solid ${theme.colors.border}`;
+        editorCol.style.borderBottom = 'none';
+        editorCol.style.height = 'auto';
+        editorCol.style.minHeight = '600px';
+      }
+    });
+
     // Initial run
     this.updateHighlight();
     this.runCode();
+  }
+
+  onUnmount() {
+    if (this._disposeEffect) {
+      this._disposeEffect();
+      this._disposeEffect = null;
+    }
   }
 
   updateHighlight() {

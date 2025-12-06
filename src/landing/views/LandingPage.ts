@@ -1,5 +1,5 @@
 import { HTMLPropsMixin } from '@html-props/core';
-import { Column, Container, Grid, SizedBox } from '@html-props/layout';
+import { Column, Container, Grid, MediaQuery, SizedBox } from '@html-props/layout';
 import { NavBar } from '../components/NavBar.ts';
 import { Hero } from '../components/Hero.ts';
 import { FeatureCard } from '../components/FeatureCard.ts';
@@ -11,6 +11,10 @@ import { theme } from '../theme.ts';
 
 export class LandingPage extends HTMLPropsMixin(HTMLElement) {
   render() {
+    const isMobile = MediaQuery.isMobile();
+    const padding = isMobile ? '2rem 1rem' : '4rem 2rem';
+    const sectionPadding = isMobile ? '3rem 1rem' : '6rem 2rem';
+
     return [
       new NavBar({
         links: [
@@ -29,14 +33,14 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
         secondaryCtaLink: 'https://github.com/atzufuki/html-props',
       }),
       new Container({
-        padding: '4rem 2rem',
+        padding: padding,
         color: theme.colors.secondaryBg,
         border: `1px solid ${theme.colors.border}`,
         style: { borderLeft: 'none', borderRight: 'none' }, // Only top/bottom
         content: new Container({
           style: { maxWidth: '1200px', margin: '0 auto' },
           content: new Grid({
-            columns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            columns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '2rem',
             content: [
               new FeatureCard({
@@ -67,7 +71,7 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
         }),
       }),
       new Container({
-        padding: '6rem 2rem',
+        padding: sectionPadding,
         style: { maxWidth: '1200px', margin: '0 auto' },
         content: [
           new Column({
@@ -123,7 +127,7 @@ CounterApp.define('counter-app');`,
         ],
       }),
       new Container({
-        padding: '4rem 2rem',
+        padding: padding,
         color: theme.colors.secondaryBg,
         style: { borderTop: `1px solid ${theme.colors.border}` },
         content: new Column({

@@ -1,5 +1,5 @@
 import { HTMLPropsMixin } from '@html-props/core';
-import { Column, Container, Row } from '@html-props/layout';
+import { Column, Container, MediaQuery, Responsive, Row } from '@html-props/layout';
 import { AppButton } from './AppButton.ts';
 import { Heading, Text } from './Typography.ts';
 
@@ -12,8 +12,10 @@ export class Hero extends HTMLPropsMixin(HTMLElement, {
   secondaryCtaLink: { type: String, default: '#', reflect: true },
 }) {
   render() {
+    const isMobile = MediaQuery.isMobile();
+
     return new Container({
-      padding: '6rem 2rem',
+      padding: isMobile ? '3rem 1rem' : '6rem 2rem',
       style: {
         textAlign: 'center',
         maxWidth: '1200px',
@@ -27,7 +29,7 @@ export class Hero extends HTMLPropsMixin(HTMLElement, {
             align: 'center',
             html: this.heading,
             style: {
-              fontSize: '2rem',
+              fontSize: isMobile ? '1.75rem' : '2.5rem',
               lineHeight: '1.2',
               marginBottom: '1.5rem',
               background: 'linear-gradient(to right, #fff, #94a3b8)',
@@ -42,26 +44,46 @@ export class Hero extends HTMLPropsMixin(HTMLElement, {
             variant: 'muted',
             align: 'center',
             style: {
-              fontSize: '1.25rem',
+              fontSize: isMobile ? '1rem' : '1.25rem',
               maxWidth: '600px',
               margin: '0 auto 2.5rem',
             },
           }),
-          new Row({
-            mainAxisAlignment: 'center',
-            gap: '1rem',
-            content: [
-              new AppButton({
-                href: this.primaryCtaLink,
-                label: this.primaryCta,
-                variant: 'primary',
-              }),
-              new AppButton({
-                href: this.secondaryCtaLink,
-                label: this.secondaryCta,
-                variant: 'secondary',
-              }),
-            ],
+          new Responsive({
+            desktop: new Row({
+              mainAxisAlignment: 'center',
+              gap: '1rem',
+              content: [
+                new AppButton({
+                  href: this.primaryCtaLink,
+                  label: this.primaryCta,
+                  variant: 'primary',
+                }),
+                new AppButton({
+                  href: this.secondaryCtaLink,
+                  label: this.secondaryCta,
+                  variant: 'secondary',
+                }),
+              ],
+            }),
+            mobile: new Column({
+              crossAxisAlignment: 'center',
+              gap: '1rem',
+              content: [
+                new AppButton({
+                  href: this.primaryCtaLink,
+                  label: this.primaryCta,
+                  variant: 'primary',
+                  style: { width: '100%', textAlign: 'center' },
+                }),
+                new AppButton({
+                  href: this.secondaryCtaLink,
+                  label: this.secondaryCta,
+                  variant: 'secondary',
+                  style: { width: '100%', textAlign: 'center' },
+                }),
+              ],
+            }),
           }),
         ],
       }),

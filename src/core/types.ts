@@ -3,7 +3,8 @@ export type PropType =
   | NumberConstructor
   | BooleanConstructor
   | ArrayConstructor
-  | ObjectConstructor;
+  | ObjectConstructor
+  | FunctionConstructor;
 
 export interface PropConfig {
   type?: PropType;
@@ -26,6 +27,7 @@ export type InferPropType<T> = T extends string ? StringConstructor
   : T extends number ? NumberConstructor
   : T extends boolean ? BooleanConstructor
   : T extends any[] ? ArrayConstructor
+  : T extends Function ? FunctionConstructor
   : ObjectConstructor;
 
 export type ConstructorType<T> = T extends StringConstructor ? string
@@ -33,6 +35,7 @@ export type ConstructorType<T> = T extends StringConstructor ? string
   : T extends BooleanConstructor ? boolean
   : T extends ArrayConstructor ? any[]
   : T extends ObjectConstructor ? object
+  : T extends FunctionConstructor ? Function
   : any;
 
 // It is a config if it has 'type' OR 'default' OR 'reflect'

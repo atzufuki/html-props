@@ -1,12 +1,22 @@
 import { HTMLPropsMixin } from '@html-props/core';
-import { A, Span } from '@html-props/built-ins';
-import { Container, Row } from '@html-props/layout';
+import { A, Button, Span } from '@html-props/built-ins';
+import { Column, Container, Responsive, Row } from '@html-props/layout';
+import { signal } from '@html-props/signals';
 import { theme } from '../theme.ts';
 
 export class NavBar extends HTMLPropsMixin(HTMLElement, {
   links: { type: Array, default: [] as Array<{ label: string; href: string }> },
 }) {
+  private isOpen = signal(false);
+
   render() {
+    return new Responsive({
+      desktop: this.renderDesktop(),
+      mobile: this.renderMobile(),
+    });
+  }
+
+  renderDesktop() {
     return new Container({
       padding: '1.5rem 2rem',
       color: 'rgba(15, 23, 42, 0.8)',
@@ -21,41 +31,94 @@ export class NavBar extends HTMLPropsMixin(HTMLElement, {
         mainAxisAlignment: 'spaceBetween',
         crossAxisAlignment: 'center',
         content: [
-          new Row({
-            crossAxisAlignment: 'center',
-            gap: '0.5rem',
-            style: {
-              fontWeight: '700',
-              fontSize: '1.25rem',
-            },
-            content: [
-              new Span({
-                textContent: '</>',
-                style: { color: theme.colors.accent },
-              }),
-              document.createTextNode(' HTML Props'),
-            ],
-          }),
+          this.renderLogo(),
           new Row({
             gap: '2rem',
-            content: this.links.map((link) =>
-              new A({
-                href: link.href,
-                textContent: link.label,
-                style: {
-                  color: theme.colors.text,
-                  fontWeight: '500',
-                  textDecoration: 'none',
-                  transition: 'color 0.2s',
-                },
-                // Simple hover effect via mouse events since we can't use CSS :hover
-                onmouseover: (e: MouseEvent) => (e.target as HTMLElement).style.color = theme.colors.accent,
-                onmouseout: (e: MouseEvent) => (e.target as HTMLElement).style.color = theme.colors.text,
-              })
-            ),
+            content: this.links.map((link) => this.renderLink(link)),
           }),
         ],
       }),
+    });
+  }
+
+  renderMobile() {
+    return new Container({
+      padding: '1rem',
+      color: 'rgba(15, 23, 42, 0.95)',
+      style: {
+        borderBottom: `1px solid ${theme.colors.border}`,
+        position: 'sticky',
+        top: '0',
+        backdropFilter: 'blur(8px)',
+        zIndex: '100',
+      },
+      content: new Column({
+        content: [
+          new Row({
+            mainAxisAlignment: 'spaceBetween',
+            crossAxisAlignment: 'center',
+            content: [
+              this.renderLogo(),
+              new Button({
+                textContent: this.isOpen() ? '✕' : '☰',
+                style: {
+                  background: 'transparent',
+                  border: 'none',
+                  color: theme.colors.text,
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                },
+                onclick: () => this.isOpen.update((v) => !v),
+              }),
+            ],
+          }),
+          this.isOpen()
+            ? new Column({
+              gap: '1rem',
+              style: { padding: '1rem 0' },
+              content: this.links.map((link) => this.renderLink(link, true)),
+            })
+            : null,
+        ],
+      }),
+    });
+  }
+
+  renderLogo() {
+    return new Row({
+      crossAxisAlignment: 'center',
+      gap: '0.5rem',
+      style: {
+        fontWeight: '700',
+        fontSize: '1.25rem',
+      },
+      content: [
+        new Span({
+          textContent: '</>',
+          style: { color: theme.colors.accent },
+        }),
+        document.createTextNode(' HTML Props'),
+      ],
+    });
+  }
+
+  renderLink(link: { label: string; href: string }, mobile = false) {
+    return new A({
+      href: link.href,
+      textContent: link.label,
+      style: {
+        color: theme.colors.text,
+        fontWeight: '500',
+        textDecoration: 'none',
+        transition: 'color 0.2s',
+        display: mobile ? 'block' : 'inline',
+        padding: mobile ? '0.5rem 0' : '0',
+      },
+      onmouseover: (e: MouseEvent) => (e.target as HTMLElement).style.color = theme.colors.accent,
+      onmouseout: (e: MouseEvent) => (e.target as HTMLElement).style.color = theme.colors.text,
+      onclick: () => {
+        if (mobile) this.isOpen.set(false);
+      },
     });
   }
 }

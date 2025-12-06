@@ -1,6 +1,6 @@
 import { HTMLPropsMixin } from '@html-props/core';
 import { A } from '@html-props/built-ins';
-import { Column, Container } from '@html-props/layout';
+import { Column, Container, Responsive } from '@html-props/layout';
 import { theme } from '../theme.ts';
 
 interface SidebarLink {
@@ -13,15 +13,23 @@ export class Sidebar extends HTMLPropsMixin(HTMLElement, {
   items: { type: Array, default: [] as SidebarLink[] },
 }) {
   render() {
+    return new Responsive({
+      desktop: this.renderContent('250px', 'sticky'),
+      mobile: this.renderContent('100%', 'static'),
+    });
+  }
+
+  renderContent(width: string, position: string) {
     return new Container({
-      width: '250px',
+      width: width,
       padding: '2rem 1rem',
       color: theme.colors.bg,
       style: {
-        borderRight: `1px solid ${theme.colors.border}`,
-        height: 'calc(100vh - 80px)', // Adjust based on navbar height
-        position: 'sticky',
-        top: '80px',
+        borderRight: position === 'sticky' ? `1px solid ${theme.colors.border}` : 'none',
+        borderBottom: position === 'static' ? `1px solid ${theme.colors.border}` : 'none',
+        height: position === 'sticky' ? 'calc(100vh - 80px)' : 'auto',
+        position: position,
+        top: position === 'sticky' ? '80px' : 'auto',
         overflowY: 'auto',
       },
       content: new Column({
