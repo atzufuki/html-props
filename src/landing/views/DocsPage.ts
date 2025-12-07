@@ -51,9 +51,18 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
       this.versions = await this.service.getVersions();
 
       const { version } = this.parseRoute(this.route);
+      const detectedVersion = this.service.resolveVersion('local');
 
       if (version) {
         this.selectedVersion.set(version);
+      } else if (detectedVersion !== 'local' && detectedVersion !== 'main') {
+        // We are on a branch deploy (e.g. v1)
+        this.selectedVersion.set(detectedVersion);
+
+        // Add to versions list if missing so it shows in dropdown
+        if (!this.versions.some((v) => v.ref === detectedVersion)) {
+          this.versions.unshift({ label: detectedVersion, ref: detectedVersion });
+        }
       } else if (this.versions.length > 0 && !this.versions.some((v) => v.ref === 'local')) {
         // If no version in URL, default to first (usually latest)
         this.selectedVersion.set(this.versions[0].ref);
