@@ -225,6 +225,10 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
             value: v.ref,
             textContent: v.label,
             selected: v.ref === this.selectedVersion(),
+            style: {
+              backgroundColor: theme.colors.secondaryBg,
+              color: theme.colors.text,
+            },
           })
         ),
       }),
