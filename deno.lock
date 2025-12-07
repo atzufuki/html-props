@@ -2921,16 +2921,33 @@
           ]
         }
       },
+      "src/built-ins": {
+        "dependencies": [
+          "jsr:@html-props/core@^1.0.0-beta.1"
+        ]
+      },
+      "src/core": {
+        "dependencies": [
+          "jsr:@html-props/signals@^1.0.0-beta.1"
+        ]
+      },
       "src/create/template": {
         "dependencies": [
-          "jsr:@html-props/core@1",
-          "jsr:@html-props/signals@1",
+          "jsr:@html-props/core@^1.0.0-beta.1",
+          "jsr:@html-props/signals@^1.0.0-beta.1",
           "jsr:@std/http@^1.0.20"
         ]
       },
       "src/landing": {
         "dependencies": [
           "npm:marked@^17.0.1"
+        ]
+      },
+      "src/layout": {
+        "dependencies": [
+          "jsr:@html-props/built-ins@^1.0.0-beta.1",
+          "jsr:@html-props/core@^1.0.0-beta.1",
+          "jsr:@html-props/signals@^1.0.0-beta.1"
         ]
       }
     }

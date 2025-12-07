@@ -4,7 +4,8 @@
     "./src/create",
     "./src/jsx",
     "./src/layout",
-    "./src/signals"
+    "./src/signals",
+    "./src/built-ins"
   ],
   "lint": {
     "rules": {
