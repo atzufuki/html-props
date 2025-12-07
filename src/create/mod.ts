@@ -18,7 +18,7 @@ if (import.meta.main) {
   const templateFiles = [
     'deno.json',
     'dev_server.ts',
-    'hmr-client.ts',
+    'hmr_client.ts',
     'public/html-props.svg',
     'public/index.html',
     'public/typescript.svg',

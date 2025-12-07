@@ -47,7 +47,7 @@ async function bundle() {
 
     // @ts-ignore: Deno.bundle is unstable
     const hmrResult = await Deno.bundle({
-      entrypoints: ['hmr-client.ts'],
+      entrypoints: ['hmr_client.ts'],
       platform: 'browser',
       minify: false,
       write: false,

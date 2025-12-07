@@ -29,7 +29,7 @@ The CLI creates a directory with the following structure:
 my-awesome-app/
 ├── deno.json           # Deno configuration and tasks
 ├── dev_server.ts       # Development server with HMR
-├── hmr-client.ts       # HMR client logic
+├── hmr_client.ts       # HMR client logic
 ├── public/             # Static assets
 │   ├── index.html
 │   └── ...
