@@ -61,25 +61,25 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
             gap: '2rem',
             content: [
               new FeatureCard({
-                icon: '📦',
+                icon: 'package',
                 heading: 'Type-Safe Props',
                 description:
                   'Pass objects, arrays, and functions directly to your components. Become a real HTML programmer. 🔥',
               }),
               new FeatureCard({
-                icon: '⚡',
+                icon: 'zap',
                 heading: 'Zero Dependencies',
                 description:
                   'Extremely lightweight. No framework lock-in. Just a simple mixin for your native HTMLElement classes.',
               }),
               new FeatureCard({
-                icon: '📘',
+                icon: 'code',
                 heading: 'TypeScript First',
                 description:
                   'Designed with strong type inference in mind. Define props via static config and get full type safety.',
               }),
               new FeatureCard({
-                icon: '🎨',
+                icon: 'globe',
                 heading: 'Native Standards',
                 description: 'Relies on Custom Element standards. No opinionated patterns or paradigms.',
               }),

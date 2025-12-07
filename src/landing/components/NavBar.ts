@@ -1,10 +1,10 @@
 import { HTMLPropsMixin, prop } from '@html-props/core';
-import { A, Button, Span } from '@html-props/built-ins';
+import { A, Button, Div, Span } from '@html-props/built-ins';
 import { Column, Container, Responsive, Row } from '@html-props/layout';
 import { effect, signal } from '@html-props/signals';
 import { theme } from '../theme.ts';
 import { ThemeService } from '../services/ThemeService.ts';
-import { IconButton, IconName } from './IconButton.ts';
+import { IconButton, type IconName } from './IconButton.ts';
 
 export class NavBar extends HTMLPropsMixin(HTMLElement, {
   links: prop<Array<{ label: string; href: string }>>([], { type: Array }),
@@ -127,19 +127,28 @@ export class NavBar extends HTMLPropsMixin(HTMLElement, {
   }
 
   renderLogo() {
+    const logoSvg = `
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="28" height="28" rx="6" fill="${theme.colors.accent}" />
+        <path d="M10 9L6 14L10 19" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M18 9L22 14L18 19" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="14" cy="14" r="2.5" fill="white" />
+      </svg>
+    `;
+
     return new Row({
       crossAxisAlignment: 'center',
-      gap: '0.5rem',
+      gap: '0.75rem',
       style: {
         fontWeight: '700',
         fontSize: '1.25rem',
       },
       content: [
-        new Span({
-          textContent: '</>',
-          style: { color: theme.colors.accent },
+        new Div({
+          innerHTML: logoSvg,
+          style: { display: 'flex' },
         }),
-        document.createTextNode(' HTML Props'),
+        new Span({ textContent: 'HTML Props' }),
       ],
     });
   }
