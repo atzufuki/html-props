@@ -135,9 +135,23 @@ export class MarkdownService {
   async getVersions(): Promise<DocVersion[]> {
     try {
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const currentVersion = this.resolveVersion('local');
 
-      // Fetch versions from main
-      const response = await fetch(`${this.baseUrl}/main/docs/versions.json`);
+      let url: string;
+      if (isLocal) {
+        url = '/api/docs/content/versions.json';
+      } else {
+        url = `${this.baseUrl}/${currentVersion}/docs/versions.json`;
+      }
+
+      // Fetch versions
+      let response = await fetch(url);
+
+      // If failed and we are not on main (and not local), try main as fallback
+      if (!response.ok && !isLocal && currentVersion !== 'main') {
+        response = await fetch(`${this.baseUrl}/main/docs/versions.json`);
+      }
+
       let versions: DocVersion[] = [];
 
       if (response.ok) {

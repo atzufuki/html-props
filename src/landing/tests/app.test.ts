@@ -103,7 +103,7 @@ Deno.test('DocsPage passes correct src to MarkdownViewer', async () => {
 Deno.test('DocsPage renders version selector (local)', async () => {
   const fetchMock = mockFetch({
     '/docs/index.md': '- [Intro](introduction.md)',
-    'https://raw.githubusercontent.com/atzufuki/html-props/main/docs/versions.json': [
+    '/api/docs/content/versions.json': [
       { label: 'Latest', ref: 'main' },
       { label: 'v1.0 Beta', ref: 'v1.0.0-beta.1' },
     ],
