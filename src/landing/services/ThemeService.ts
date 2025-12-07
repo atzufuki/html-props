@@ -21,19 +21,19 @@ const DARK_THEME = {
 };
 
 const LIGHT_THEME = {
-  '--color-bg': '#ffffff',
-  '--color-text': '#09090b',
+  '--color-bg': '#fcfaff',
+  '--color-text': '#1e1b4b',
   '--color-accent': '#7c3aed',
   '--color-accent-hover': '#6d28d9',
-  '--color-secondary-bg': '#f4f4f5',
-  '--color-border': '#e4e4e7',
-  '--color-code-bg': '#fafafa',
+  '--color-secondary-bg': '#f3f0ff',
+  '--color-border': '#ddd6fe',
+  '--color-code-bg': '#ffffff',
   '--color-keyword': '#a626a4',
   '--color-class-name': '#c18401',
   '--color-function': '#4078f2',
   '--color-string': '#50a14f',
   '--color-number': '#986801',
-  '--color-comment': '#a0a1a7',
+  '--color-comment': '#6b7280',
   '--color-operator': '#0184bc',
   '--color-property': '#e45649',
 };

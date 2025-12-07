@@ -92,8 +92,9 @@ export class CodeBlock extends HTMLPropsMixin(HTMLElement, {
         position: 'relative',
         fontFamily: theme.fonts.mono,
         fontSize: '0.9rem',
-        borderRight: `1px solid ${theme.colors.border}`,
+        border: `1px solid ${theme.colors.border}`,
         borderRadius: '0.5rem',
+        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
       },
       content: [
         new Container({
