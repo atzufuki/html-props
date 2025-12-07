@@ -13,20 +13,33 @@ export class App extends HTMLPropsMixin(HTMLElement, {
     // @ts-ignore: Mixin implements connectedCallback
     super.connectedCallback();
 
-    const handleHashChange = () => {
-      const hash = window.location.hash || '#/';
-      let path = hash.substring(1); // remove #
-      if (path.endsWith('/') && path.length > 1) {
-        path = path.slice(0, -1);
-      }
-      this.route = path;
+    const handlePopState = () => {
+      this.route = window.location.pathname;
       window.scrollTo(0, 0);
     };
 
-    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handlePopState);
+
+    // Intercept link clicks
+    this.addEventListener('click', (e: MouseEvent) => {
+      const target = e.composedPath().find((el: any) => el.tagName === 'A') as HTMLAnchorElement;
+      if (target && target.href && target.origin === window.location.origin) {
+        // Allow hash links on the same page to work natively
+        if (target.pathname === window.location.pathname && target.hash) {
+          return;
+        }
+
+        e.preventDefault();
+        const path = target.pathname;
+        if (path !== window.location.pathname) {
+          window.history.pushState({}, '', path);
+          handlePopState();
+        }
+      }
+    });
 
     // Initial route
-    handleHashChange();
+    handlePopState();
   }
 
   render(): Node | Node[] | null {

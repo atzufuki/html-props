@@ -72,8 +72,8 @@ export class MarkdownService {
 
     let url: string;
     if (resolvedVersion === 'local') {
-      // In dev mode, we expect the dev server to serve docs at /docs/
-      url = `/docs/${page}.md`;
+      // In dev mode, we expect the dev server to serve docs at /api/docs/content/
+      url = `/api/docs/content/${page}.md`;
     } else {
       // Production/Versioned fetch
       url = `https://raw.githubusercontent.com/atzufuki/html-props/${resolvedVersion}/docs/${page}.md`;

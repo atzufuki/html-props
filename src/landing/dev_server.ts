@@ -61,7 +61,6 @@ function broadcastReload() {
 
 async function handleRequest(req: Request): Promise<Response> {
   const url = new URL(req.url);
-  console.log('[landing] request:', req.method, url.pathname);
 
   if (url.pathname === '/hmr') {
     let controller: ReadableStreamDefaultController<any>;
@@ -106,9 +105,9 @@ async function handleRequest(req: Request): Promise<Response> {
   }
 
   // Serve docs from project root
-  if (path.startsWith('/docs/')) {
+  if (path.startsWith('/api/docs/content/')) {
     try {
-      const filename = path.replace('/docs/', '');
+      const filename = path.replace('/api/docs/content/', '');
       const docsUrl = new URL(`../../docs/${filename}`, import.meta.url);
       const file = await Deno.readFile(docsUrl);
 
@@ -155,6 +154,18 @@ async function handleRequest(req: Request): Promise<Response> {
       headers: { 'Content-Type': type },
     });
   } catch (_) {
+    // SPA Fallback: Serve index.html for unknown paths (if not an API call)
+    if (!path.startsWith('/api/')) {
+      try {
+        const indexUrl = new URL('./index.html', import.meta.url);
+        const index = await Deno.readFile(indexUrl);
+        return new Response(index, {
+          headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        });
+      } catch (e) {
+        return new Response('Not found', { status: 404 });
+      }
+    }
     return new Response('Not found', { status: 404 });
   }
 }

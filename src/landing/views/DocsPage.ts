@@ -96,20 +96,14 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
     const { page } = this.parseRoute(this.route);
     // If page is empty, go to root of that version
     const targetPage = page || (this.sidebarItems.length > 0 ? this.sidebarItems[0].file.replace('.md', '') : '');
-    const newHash = `#/docs/${version}/${targetPage}`;
-    window.location.hash = newHash;
+    const newPath = `/docs/${version}/${targetPage}`;
+    window.history.pushState({}, '', newPath);
+    // Manually trigger route update since pushState doesn't fire popstate
+    window.dispatchEvent(new PopStateEvent('popstate'));
   }
 
   render() {
     const currentPath = this.route;
-    console.log(
-      'DocsPage render. Error:',
-      this.error(),
-      'Loading:',
-      this.loading,
-      'Sidebar items:',
-      this.sidebarItems.length,
-    );
 
     // Determine active page
     let { page: activePage } = this.parseRoute(currentPath);
@@ -120,7 +114,7 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
     const sidebarItems = this.sidebarItems.map((item) => {
       const name = item.file.replace('.md', '');
       const version = this.selectedVersion();
-      const href = `#/docs/${version}/${name}`;
+      const href = `/docs/${version}/${name}`;
       const isActive = name === activePage;
 
       return {
@@ -143,8 +137,8 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
       content: [
         new NavBar({
           links: [
-            { label: 'Home', href: '#/' },
-            { label: 'Documentation', href: '#/docs' },
+            { label: 'Home', href: '/' },
+            { label: 'Documentation', href: '/docs' },
             { label: 'GitHub', href: 'https://github.com/atzufuki/html-props' },
           ],
         }),

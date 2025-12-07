@@ -35,8 +35,8 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
       }),
       new NavBar({
         links: [
-          { label: 'Home', href: '#/' },
-          { label: 'Documentation', href: '#/docs' },
+          { label: 'Home', href: '/' },
+          { label: 'Documentation', href: '/docs' },
           { label: 'GitHub', href: 'https://github.com/atzufuki/html-props' },
         ],
       }),
@@ -46,7 +46,7 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
           "Stop struggling with imperative web or complex frameworks. Build type-safe props API's and declarative layouts for your<br>Custom Elements.",
         primaryCta: 'Get Started',
         secondaryCta: 'View on GitHub',
-        primaryCtaLink: '#/docs',
+        primaryCtaLink: '/docs',
         secondaryCtaLink: 'https://github.com/atzufuki/html-props',
       }),
       new Container({
