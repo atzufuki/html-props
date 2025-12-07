@@ -24,7 +24,8 @@ const GridBase:
 export class Grid extends GridBase {
   private _cleanup?: () => void;
 
-  onMount() {
+  connectedCallback() {
+    super.connectedCallback();
     this._cleanup = effect(() => {
       this.style.gridTemplateColumns = this.columns;
       this.style.gridTemplateRows = this.rows;
@@ -32,7 +33,8 @@ export class Grid extends GridBase {
     });
   }
 
-  onUnmount() {
+  disconnectedCallback() {
+    super.disconnectedCallback();
     this._cleanup?.();
   }
 }

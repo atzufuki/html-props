@@ -80,8 +80,6 @@ export interface TypedPropConfig<T> extends Omit<PropConfig, 'type' | 'default'>
 
 export interface HTMLPropsInterface {
   render(): Node | Node[] | null;
-  onMount?(): void;
-  onUnmount?(): void;
 }
 
 // Helper to get the expected type for a native property

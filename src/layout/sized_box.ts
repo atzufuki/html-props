@@ -23,7 +23,8 @@ const SizedBoxBase:
 export class SizedBox extends SizedBoxBase {
   private _dispose: (() => void) | null = null;
 
-  onMount() {
+  connectedCallback() {
+    super.connectedCallback();
     this._dispose = effect(() => {
       const w = this.width;
       const h = this.height;
@@ -36,7 +37,8 @@ export class SizedBox extends SizedBoxBase {
     });
   }
 
-  onUnmount() {
+  disconnectedCallback() {
+    super.disconnectedCallback();
     if (this._dispose) {
       this._dispose();
       this._dispose = null;

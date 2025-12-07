@@ -34,7 +34,8 @@ const StackBase:
 export class Stack extends StackBase {
   private _dispose: (() => void) | null = null;
 
-  onMount() {
+  connectedCallback() {
+    super.connectedCallback();
     this.updateChildren();
 
     this._observer = new MutationObserver(() => this.updateChildren());
@@ -46,7 +47,8 @@ export class Stack extends StackBase {
     });
   }
 
-  onUnmount() {
+  disconnectedCallback() {
+    super.disconnectedCallback();
     this._observer?.disconnect();
     if (this._dispose) {
       this._dispose();

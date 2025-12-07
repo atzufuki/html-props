@@ -28,7 +28,8 @@ const ColumnBase:
 export class Column extends ColumnBase {
   private _dispose: (() => void) | null = null;
 
-  onMount() {
+  connectedCallback() {
+    super.connectedCallback();
     this._dispose = effect(() => {
       const main = this.mainAxisAlignment;
       this.style.justifyContent = (MainAxisAlignment as any)[main] || main;
@@ -41,7 +42,8 @@ export class Column extends ColumnBase {
     });
   }
 
-  onUnmount() {
+  disconnectedCallback() {
+    super.disconnectedCallback();
     if (this._dispose) {
       this._dispose();
       this._dispose = null;

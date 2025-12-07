@@ -276,7 +276,8 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
     this.runCode();
   }
 
-  onUnmount() {
+  disconnectedCallback() {
+    super.disconnectedCallback();
     if (this._disposeEffect) {
       this._disposeEffect();
       this._disposeEffect = null;

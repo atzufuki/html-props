@@ -24,7 +24,6 @@ if (import.meta.main) {
     'public/typescript.svg',
     'src/App.css',
     'src/App.ts',
-    'src/html.ts',
     'src/index.css',
     'src/main.ts',
   ];

@@ -1,6 +1,6 @@
 import { createRef, HTMLPropsMixin } from '@html-props/core';
 import { computed, effect, signal } from '@html-props/signals';
-import * as html from './html.ts';
+import { Anchor, Button, Code, Div, Heading1, Image, Paragraph } from '@html-props/built-ins';
 import './App.css';
 
 export default class App extends HTMLPropsMixin(HTMLElement) {
@@ -28,47 +28,47 @@ export default class App extends HTMLPropsMixin(HTMLElement) {
   }
 
   render() {
-    return new html.Div({
+    return new Div({
       content: [
-        new html.Anchor({
+        new Anchor({
           href: 'https://www.typescriptlang.org/',
           target: '_blank',
-          content: new html.Image({
+          content: new Image({
             src: '/typescript.svg',
             alt: 'TypeScript logo',
             className: 'logo',
           }),
         }),
-        new html.Anchor({
+        new Anchor({
           href: 'https://github.com/atzufuki/html-props',
           target: '_blank',
-          content: new html.Image({
+          content: new Image({
             src: '/html-props.svg',
             alt: 'HTML Props logo',
             className: 'logo html-props',
           }),
         }),
-        new html.Heading1({ textContent: 'TypeScript + HTML Props' }),
-        new html.Div({
+        new Heading1({ textContent: 'TypeScript + HTML Props' }),
+        new Div({
           className: 'card',
           content: [
-            new html.Button({
+            new Button({
               ref: this.buttonRef,
               onclick: () => {
                 this.count.update((c) => c + 1);
               },
               textContent: `count is ${this.count.get()}`,
             }),
-            new html.Paragraph({
+            new Paragraph({
               content: [
                 'Edit ',
-                new html.Code({ textContent: 'src/App.ts' }),
+                new Code({ textContent: 'src/App.ts' }),
                 ' and save to test bundling',
               ],
             }),
           ],
         }),
-        new html.Paragraph({
+        new Paragraph({
           className: 'read-the-docs',
           textContent: 'Click on the TypeScript and HTML Props logos to learn more',
         }),

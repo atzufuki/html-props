@@ -2933,6 +2933,7 @@
       },
       "src/create/template": {
         "dependencies": [
+          "jsr:@html-props/built-ins@^1.0.0-beta.1",
           "jsr:@html-props/core@^1.0.0-beta.1",
           "jsr:@html-props/signals@^1.0.0-beta.1",
           "jsr:@std/http@^1.0.20"

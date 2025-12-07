@@ -8,7 +8,7 @@ development environment with Deno, HMR (Hot Module Replacement), and a basic pro
 To create a new project, run the following command in your terminal:
 
 ```bash
-deno run -A jsr:@html-props/create <project-name>
+deno run jsr:@html-props/create <project-name>
 ```
 
 Replace `<project-name>` with the desired name for your project directory.
@@ -16,7 +16,7 @@ Replace `<project-name>` with the desired name for your project directory.
 ### Example
 
 ```bash
-deno run -A jsr:@html-props/create my-awesome-app
+deno run jsr:@html-props/create my-awesome-app
 cd my-awesome-app
 deno task dev
 ```
@@ -36,7 +36,6 @@ my-awesome-app/
 └── src/                # Source code
     ├── main.ts         # Entry point
     ├── App.ts          # Root component
-    ├── html.ts         # HTML tag helpers
     └── ...
 ```
 

@@ -31,7 +31,8 @@ const ContainerBase:
 export class Container extends ContainerBase {
   private _dispose: (() => void) | null = null;
 
-  onMount() {
+  connectedCallback() {
+    super.connectedCallback();
     this._dispose = effect(() => {
       const w = this.width;
       if (w) this.style.width = w;
@@ -86,7 +87,8 @@ export class Container extends ContainerBase {
     });
   }
 
-  onUnmount() {
+  disconnectedCallback() {
+    super.disconnectedCallback();
     if (this._dispose) {
       this._dispose();
       this._dispose = null;

@@ -277,7 +277,6 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
         }
       }
 
-      if ((this as any).onMount) (this as any).onMount();
       // Setup effects
       const renderDispose = effect(() => {
         this.__updateSignal();
@@ -310,8 +309,6 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
           this.__ref.current = null;
         }
       }
-
-      if ((this as any).onUnmount) (this as any).onUnmount();
 
       if (this.__cleanup) {
         this.__cleanup();

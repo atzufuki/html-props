@@ -71,29 +71,33 @@ class MyElement extends HTMLPropsMixin(HTMLElement, {
 
 ## Lifecycle Hooks
 
-Hook into the lifecycle of your components.
+Since HTML Props components are standard Web Components, you can use the standard lifecycle callbacks.
 
-### onMount()
+### connectedCallback()
 
-Called when the component is connected to the DOM. This is a good place to fetch data or set up subscriptions.
+Called when the component is connected to the DOM. This is a good place to fetch data or set up subscriptions. Always
+call `super.connectedCallback()`.
 
-### onUnmount()
+### disconnectedCallback()
 
-Called when the component is disconnected from the DOM. Use this to clean up timers or subscriptions.
+Called when the component is disconnected from the DOM. Use this to clean up timers or subscriptions. Always call
+`super.disconnectedCallback()`.
 
 ```typescript
 class Timer extends HTMLPropsMixin(HTMLElement) {
   count = signal(0);
   intervalId = null;
 
-  onMount() {
+  connectedCallback() {
+    super.connectedCallback();
     console.log('Timer mounted');
     this.intervalId = setInterval(() => {
       this.count.update((c) => c + 1);
     }, 1000);
   }
 
-  onUnmount() {
+  disconnectedCallback() {
+    super.disconnectedCallback();
     console.log('Timer unmounted');
     clearInterval(this.intervalId);
   }
@@ -169,7 +173,8 @@ class MyForm extends HTMLPropsMixin(HTMLElement) {
   // Initialize the ref
   inputRef = createRef<HTMLInputElement>();
 
-  onMount() {
+  connectedCallback() {
+    super.connectedCallback();
     // Access the DOM node after mount
     this.inputRef.current?.focus();
   }
@@ -189,8 +194,8 @@ The ref object has a single property, `current`.
 - **After Mount**: `current` holds the DOM element.
 - **After Unmount**: `current` is reset to `null`.
 
-Because refs are tied to the lifecycle of the element, you should access them in `onMount` or event handlers, not during
-`render`.
+Because refs are tied to the lifecycle of the element, you should access them in `connectedCallback` or event handlers,
+not during `render`.
 
 ### Callback Refs
 

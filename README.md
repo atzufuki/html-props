@@ -136,29 +136,33 @@ batch(() => {
 
 ## Lifecycle Hooks
 
-Hook into the lifecycle of your components.
+Since HTML Props components are standard Web Components, you can use the standard lifecycle callbacks.
 
-### onMount()
+### connectedCallback()
 
-Called when the component is connected to the DOM. This is a good place to fetch data or set up subscriptions.
+Called when the component is connected to the DOM. This is a good place to fetch data or set up subscriptions. Always
+call `super.connectedCallback()`.
 
-### onUnmount()
+### disconnectedCallback()
 
-Called when the component is disconnected from the DOM. Use this to clean up timers or subscriptions.
+Called when the component is disconnected from the DOM. Use this to clean up timers or subscriptions. Always call
+`super.disconnectedCallback()`.
 
 ```typescript
 class Timer extends HTMLPropsMixin(HTMLElement) {
   count = signal(0);
   intervalId = null;
 
-  onMount() {
+  connectedCallback() {
+    super.connectedCallback();
     console.log('Timer mounted');
     this.intervalId = setInterval(() => {
       this.count.update((c) => c + 1);
     }, 1000);
   }
 
-  onUnmount() {
+  disconnectedCallback() {
+    super.disconnectedCallback();
     console.log('Timer unmounted');
     clearInterval(this.intervalId);
   }

@@ -22,13 +22,15 @@ const PaddingBase:
 export class Padding extends PaddingBase {
   private _dispose: (() => void) | null = null;
 
-  onMount() {
+  connectedCallback() {
+    super.connectedCallback();
     this._dispose = effect(() => {
       this.style.padding = this.padding;
     });
   }
 
-  onUnmount() {
+  disconnectedCallback() {
+    super.disconnectedCallback();
     if (this._dispose) {
       this._dispose();
       this._dispose = null;

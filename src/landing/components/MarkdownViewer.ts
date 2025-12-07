@@ -39,7 +39,7 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
   private _lastMarkdown = ''; // Track markdown changes
   private _disposeEffect: (() => void) | null = null;
 
-  onMount() {
+  connectedCallback() {
     // Pre-load content if available to prevent flash of empty state
     if (this.markdown) {
       this.tokens = this.service.parse(this.markdown);
@@ -54,6 +54,8 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
         // or just rely on loadDoc being called by effect
       }
     }
+
+    super.connectedCallback();
 
     this._disposeEffect = effect(() => {
       const markdown = this.markdown;
@@ -74,7 +76,8 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
     });
   }
 
-  onUnmount() {
+  disconnectedCallback() {
+    super.disconnectedCallback();
     if (this._disposeEffect) {
       this._disposeEffect();
       this._disposeEffect = null;
