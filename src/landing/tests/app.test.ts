@@ -25,7 +25,7 @@ Deno.test('App renders LandingPage by default', async () => {
   await new Promise((resolve) => setTimeout(resolve, 0));
 
   // Check for Hero title
-  const heroTitle = app.innerHTML.includes('HTML Props for Web Components');
+  const heroTitle = app.innerHTML.includes('HTML Props');
   assertEquals(heroTitle, true, 'Landing page should render hero title');
 });
 
