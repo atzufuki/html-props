@@ -1,12 +1,29 @@
-import { HTMLPropsMixin, prop } from '@html-props/core';
+import {
+  type HTMLPropsElementConstructor,
+  HTMLPropsMixin,
+  type InferConstructorProps,
+  type InferProps,
+  prop,
+  type PropsConfig,
+} from '@html-props/core';
 import { MediaQuery } from './media_query.ts';
 
-export class Responsive extends HTMLPropsMixin(HTMLElement, {
+const config: PropsConfig = {
   mobile: prop<any>(null),
   tablet: prop<any>(null),
   desktop: prop<any>(null),
-}) {
-  render() {
+};
+
+const ResponsiveBase:
+  & HTMLPropsElementConstructor<
+    typeof HTMLElement,
+    InferConstructorProps<typeof config>,
+    InferProps<typeof config>
+  >
+  & Pick<typeof HTMLElement, keyof typeof HTMLElement> = HTMLPropsMixin(HTMLElement, config);
+
+export class Responsive extends ResponsiveBase {
+  render(): any {
     if (MediaQuery.isMobile()) {
       return this.mobile || this.tablet || this.desktop;
     }

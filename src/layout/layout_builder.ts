@@ -1,9 +1,25 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import {
+  type HTMLPropsElementConstructor,
+  HTMLPropsMixin,
+  type InferConstructorProps,
+  type InferProps,
+  type PropsConfig,
+} from '@html-props/core';
 import { signal } from '@html-props/signals';
 
-export class LayoutBuilder extends HTMLPropsMixin(HTMLElement, {
+const config: PropsConfig = {
   builder: { type: Function },
-}) {
+};
+
+const LayoutBuilderBase:
+  & HTMLPropsElementConstructor<
+    typeof HTMLElement,
+    InferConstructorProps<typeof config>,
+    InferProps<typeof config>
+  >
+  & Pick<typeof HTMLElement, keyof typeof HTMLElement> = HTMLPropsMixin(HTMLElement, config);
+
+export class LayoutBuilder extends LayoutBuilderBase {
   private _width = signal(0);
   private _height = signal(0);
   private _observer: ResizeObserver | null = null;
@@ -33,7 +49,7 @@ export class LayoutBuilder extends HTMLPropsMixin(HTMLElement, {
     }
   }
 
-  render() {
+  render(): any {
     if (this.builder) {
       return this.builder({
         width: this._width(),
