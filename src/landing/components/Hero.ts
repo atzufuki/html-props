@@ -19,7 +19,6 @@ export class Hero extends HTMLPropsMixin(HTMLElement, {
       padding: isMobile ? '3rem 1rem' : '6rem 2rem',
       style: {
         textAlign: 'center',
-        maxWidth: '1200px',
         margin: '0 auto',
       },
       content: new Column({
