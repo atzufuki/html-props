@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     try {
       let content = await Deno.readTextFile(indexPath);
       // Remove HMR client script
-      content = content.replace('<script type="module" src="./hmr-client.js"></script>', '');
+      content = content.replace(/<script[^>]+src="\/hmr-client\.js"[^>]*><\/script>/, '');
       response = new Response(content, {
         headers: {
           'content-type': 'text/html; charset=utf-8',
