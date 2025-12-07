@@ -9,6 +9,15 @@
     />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      try {
+        var saved = localStorage.getItem("theme-preference");
+        var isDark =
+          saved === "dark" ||
+          (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        if (isDark) document.documentElement.classList.add("dark");
+      } catch (e) {}
+    </script>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>

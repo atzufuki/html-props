@@ -2,42 +2,6 @@ import { effect, signal } from '@html-props/signals';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
-const DARK_THEME = {
-  '--color-bg': '#121212',
-  '--color-text': '#e4e4e7',
-  '--color-accent': '#a78bfa',
-  '--color-accent-hover': '#8b5cf6',
-  '--color-secondary-bg': '#1e1e24',
-  '--color-border': '#2e2e32',
-  '--color-code-bg': '#050505',
-  '--color-keyword': '#c678dd',
-  '--color-class-name': '#e5c07b',
-  '--color-function': '#61afef',
-  '--color-string': '#98c379',
-  '--color-number': '#d19a66',
-  '--color-comment': '#5c6370',
-  '--color-operator': '#56b6c2',
-  '--color-property': '#e06c75',
-};
-
-const LIGHT_THEME = {
-  '--color-bg': '#fcfaff',
-  '--color-text': '#1e1b4b',
-  '--color-accent': '#7c3aed',
-  '--color-accent-hover': '#6d28d9',
-  '--color-secondary-bg': '#f3f0ff',
-  '--color-border': '#ddd6fe',
-  '--color-code-bg': '#ffffff',
-  '--color-keyword': '#a626a4',
-  '--color-class-name': '#c18401',
-  '--color-function': '#4078f2',
-  '--color-string': '#50a14f',
-  '--color-number': '#986801',
-  '--color-comment': '#6b7280',
-  '--color-operator': '#0184bc',
-  '--color-property': '#e45649',
-};
-
 export class ThemeService {
   private static instance: ThemeService;
 
@@ -69,6 +33,7 @@ export class ThemeService {
     if (!this.instance) {
       this.instance = new ThemeService();
     }
+
     return this.instance;
   }
 
@@ -93,11 +58,11 @@ export class ThemeService {
     }
 
     this.currentTheme.set(isDark ? 'dark' : 'light');
-    const theme = isDark ? DARK_THEME : LIGHT_THEME;
 
-    const root = document.documentElement;
-    Object.entries(theme).forEach(([key, value]) => {
-      root.style.setProperty(key, value);
-    });
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }
 }
