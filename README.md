@@ -1,360 +1,120 @@
-# HTML Props - Props API for Web Components
+# Introduction
 
-Reactive Custom Elements, Simplified.
+`@html-props/core` is a lightweight, zero-dependency library that brings a type-safe props API and declarative rendering
+to native Custom Elements. It bridges the gap between plain HTML attributes and the rich data requirements of modern
+applications.
 
-A lightweight mixin for building native custom elements with reactive props API.
+## Why HTML Props?
 
-## Features
+Standard HTML is limited to string-based attributes and imperative DOM manipulation. `html-props` solves this by
+providing:
 
-- **Zero Dependencies**: Extremely lightweight. No framework lock-in. Just a simple mixin for your native HTMLElement
-  classes.
-- **Reactive Signals**: Built-in signal-based reactivity. Props automatically map to signals and trigger efficient
-  updates.
-- **TypeScript First**: Designed with strong type inference in mind. Define props via static config and get full type
-  safety.
-- **Native DOM**: Works seamlessly with standard DOM APIs. Use it with vanilla JS.
+- **Type-Safe Props**: Create components which can take in objects, arrays, functions and even elements as props.
+- **Declarative Layouts**: Build your UI with a clean, nested, and fully typed API. No more imperative spaghetti.
+- **Native Standards**: Relies on Custom Element standards. No opinionated patterns or paradigms.
+- **Zero Dependencies**: No framework lock-in. Just a simple mixin for your native HTMLElement classes.
 
-## Installation
+It's the missing piece of Custom Elements. Standard HTML is limited to simple attributes and imperative coding style.
+HTML Props brings declarativeness with rich data types and type safety to native components.
 
-You can install `@html-props/core` via JSR.
+```typescript
+import { HTMLPropsMixin, prop } from '@html-props/core';
+import { Button, Div } from '@html-props/built-ins';
+import { Column, Container } from '@html-props/layout';
 
-### Using Deno
+class CounterApp extends HTMLPropsMixin(HTMLElement, {
+  count: prop(0),
+}) {
+  render() {
+    return new Container({
+      padding: '2rem',
+      content: new Column({
+        crossAxisAlignment: 'center',
+        gap: '1rem',
+        content: [
+          new Div({
+            textContent: `Count is: ${this.count}`,
+            style: { fontSize: '1.2rem' },
+          }),
+          new Button({
+            textContent: 'Increment',
+            style: {
+              backgroundColor: '#a78bfa',
+              color: '#13111c',
+              border: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '0.25rem',
+              cursor: 'pointer',
+              fontWeight: '600',
+            },
+            onclick: () => this.count++,
+          }),
+        ],
+      }),
+    });
+  }
+}
+
+CounterApp.define('counter-app');
+```
+
+# Installation
+
+You can install `@html-props/core` via JSR or import it directly from a CDN.
+
+## Using Deno
 
 ```bash
 deno add @html-props/core
 ```
 
-### Using npm
+## Using npm
 
 ```bash
 npx jsr add @html-props/core
 ```
 
-## CLI Tool
+## CDN (ES Modules)
 
-Scaffold new projects quickly with the html-props CLI.
+```typescript
+import { HTMLPropsMixin } from 'https://esm.sh/jsr/@html-props/core';
+```
 
-### Creating a New Project
+# Quick Start
+
+To scaffold a new project quickly, use the CLI tool.
+
+The `@html-props/create` package is a CLI tool to quickly scaffold new `html-props` projects. It sets up a complete
+development environment with Deno, HMR (Hot Module Replacement), and a basic project structure.
+
+## Usage
+
+To create a new project, run the following command in your terminal:
 
 ```bash
-deno run jsr:@html-props/create my-app
+deno run jsr:@html-props/create <project-name>
 ```
 
-This will create a new directory called "my-app" with a basic project structure.
+Replace `<project-name>` with the desired name for your project directory.
 
-## Basic Usage
-
-Create a new component by extending `HTMLPropsMixin(HTMLElement)`.
-
-```typescript
-import { HTMLPropsMixin, prop } from '@html-props/core';
-import { Button, Div } from '@html-props/built-ins';
-
-class Counter extends HTMLPropsMixin(HTMLElement, {
-  count: prop(0),
-}) {
-  render() {
-    return new Div({
-      content: [
-        new Div({ textContent: `Count: ${this.count}` }),
-        new Button({
-          textContent: 'Increment',
-          onclick: () => this.count++,
-        }),
-      ],
-    });
-  }
-}
-
-Counter.define('my-counter');
-```
-
-## Signals
-
-Fine-grained reactivity for your components. Signals are the backbone of reactivity in html-props. They allow you to
-create state that automatically updates your UI when changed.
-
-```typescript
-import { effect, signal } from '@html-props/signals';
-
-const count = signal(0);
-
-// Effects run whenever dependencies change
-effect(() => {
-  console.log(`The count is ${count()}`);
-});
-
-count(1); // Logs: "The count is 1"
-count(2); // Logs: "The count is 2"
-```
-
-### Using Signals in Components
-
-Component props are internally backed by signals. You can also use standalone signals for local state.
-
-```typescript
-class Counter extends HTMLPropsMixin(HTMLElement) {
-  // Local state
-  count = signal(0);
-
-  render() {
-    return new Button({
-      textContent: `Count: ${this.count()}`,
-      onclick: () => this.count.update((n) => n + 1),
-    });
-  }
-}
-```
-
-### Computed Values
-
-Computed signals derive their value from other signals and update automatically.
-
-```typescript
-import { computed } from '@html-props/signals';
-
-const count = signal(1);
-const double = computed(() => count() * 2);
-
-console.log(double()); // 2
-count(2);
-console.log(double()); // 4
-```
-
-### Batch Updates
-
-Group multiple signal updates into a single effect run.
-
-```typescript
-import { batch } from '@html-props/signals';
-
-batch(() => {
-  count(10);
-  count(20);
-}); // Effects run only once
-```
-
-## Lifecycle Hooks
-
-Since HTML Props components are standard Web Components, you can use the standard lifecycle callbacks.
-
-### connectedCallback()
-
-Called when the component is connected to the DOM. This is a good place to fetch data or set up subscriptions. Always
-call `super.connectedCallback()`.
-
-### disconnectedCallback()
-
-Called when the component is disconnected from the DOM. Use this to clean up timers or subscriptions. Always call
-`super.disconnectedCallback()`.
-
-```typescript
-class Timer extends HTMLPropsMixin(HTMLElement) {
-  count = signal(0);
-  intervalId = null;
-
-  connectedCallback() {
-    super.connectedCallback();
-    console.log('Timer mounted');
-    this.intervalId = setInterval(() => {
-      this.count.update((c) => c + 1);
-    }, 1000);
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    console.log('Timer unmounted');
-    clearInterval(this.intervalId);
-  }
-
-  render() {
-    return new Div({ textContent: `Seconds: ${this.count()}` });
-  }
-}
-```
-
-## JSX Support
-
-Use JSX syntax for templating in your components.
-
-### Installation
+### Example
 
 ```bash
-deno add jsr:@html-props/jsx
+deno run jsr:@html-props/create my-awesome-app
+cd my-awesome-app
+deno task dev
 ```
 
-### Configuration
+# Documentation
 
-Configure your compiler options in `deno.json`:
+For full documentation, visit [html-props.dev](https://html-props.dev) or check the guides below:
 
-```json
-{
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "jsxImportSource": "@html-props/jsx"
-  }
-}
-```
-
-### Usage
-
-```typescript
-import { HTMLPropsMixin } from '@html-props/core';
-
-class MyElement extends HTMLPropsMixin(HTMLElement) {
-  render() {
-    return (
-      <div class='container'>
-        <h1>Hello JSX</h1>
-        <p>This is rendered using JSX!</p>
-      </div>
-    );
-  }
-}
-```
-
-## Builder
-
-Visual HTML page building tool for VS Code.
-
-The Builder allows you to construct web pages visually while maintaining full control over the underlying code. It
-bridges the gap between design and development by directly manipulating your source files.
-
-### Getting Started
-
-To open the visual editor:
-
-- Right-click on any `.html` or `.ts` file in the explorer
-- Select "Open With..."
-- Choose "HTML Props Builder Visual Editor"
-
-### Resource Management
-
-The Resources panel lets you manage your component libraries. Actions here directly affect your project configuration.
-
-#### Adding Resource Directories
-
-Click the "+" button in the Resources panel to select a folder containing your components. **Technical Effect**: This
-updates your VS Code workspace settings (`settings.json`) to include the new path.
-
-#### Creating Components
-
-Use the category menu (three dots) in the Resources panel to "Create Resource". The wizard guides you through defining
-the tag name, properties, and base element. **Technical Effect**: Generates a new TypeScript file with the component
-class definition.
-
-### Visual Editing & Code Generation
-
-The visual editor is a WYSIWYG interface that writes standard HTML. It supports editing both static HTML files and the
-render methods of your `.ts`/`.js` web components.
-
-#### Drag & Drop Composition
-
-Dragging an element from the panel into the editor inserts the corresponding tag into your document. **Technical
-Effect**: Inserts the HTML tag at the cursor position or drop target. For `.ts`/`.js` components, it updates the render
-method code.
-
-#### Property Editing
-
-Selecting an element populates the Properties panel. Changing values here updates the element attributes in real-time.
-**Technical Effect**: Updates HTML attributes. For HTMLProps components, these attributes map to reactive props.
-
-## Custom Rendering
-
-By default, components re-render their entire content when properties change. You can optimize this by implementing a
-custom update strategy.
-
-### The update() Method
-
-Define an `update(newContent)` method to take control of subsequent renders. The initial render is always handled
-automatically.
-
-```typescript
-class MyElement extends HTMLPropsMixin(HTMLElement, {
-  count: prop(0),
-}) {
-  render() {
-    // Called for initial render
-    // Also called before update() to generate new content
-    return document.createTextNode(`Count: ${this.count}`);
-  }
-
-  update() {
-    // Called ONLY for updates (not initial render)
-    // Manually call render() if needed
-    const newContent = this.render();
-
-    // Perform fine-grained DOM updates
-    this.firstChild.textContent = newContent.textContent;
-  }
-}
-```
-
-### Fallback to Default
-
-You can call `this.defaultUpdate()` to fall back to the default behavior (replacing all children) if needed.
-
-```typescript
-update() {
-  if (this.shouldOptimize) {
-    // Custom logic
-    const newContent = this.render();
-    this.applyOptimization(newContent);
-  } else {
-    // Fallback
-    this.defaultUpdate();
-  }
-}
-```
-
-### Manual Updates
-
-If you need to trigger a re-render manually (e.g., when external state changes), you can call `requestUpdate()`.
-
-```typescript
-// Trigger a re-render
-this.requestUpdate();
-```
-
-## API Reference
-
-### HTMLPropsMixin(Base)
-
-The core mixin that adds reactivity to your Custom Elements.
-
-### Props Configuration
-
-Define reactive properties by passing a configuration object to the mixin.
-
-```typescript
-class MyElement extends HTMLPropsMixin(HTMLElement, {
-  myProp: prop('value', {
-    attribute: true, // Reflect to attribute
-    // or attribute: 'my-prop' for custom name
-  }),
-}) {}
-```
-
-### Built-in Elements
-
-A collection of type-safe wrappers for standard HTML elements. They accept all standard HTML attributes plus `style`,
-`class`, and `content`.
-
-```typescript
-import { Button, Div, Input } from '@html-props/built-ins';
-
-// Usage
-new Div({
-  style: { padding: '1rem' },
-  className: 'container',
-  content: [
-    new Button({
-      textContent: 'Click me',
-      onclick: () => console.log('Clicked'),
-    }),
-  ],
-});
-```
+- [**Guide**](docs/guide.md): Core concepts, properties, lifecycle, and rendering.
+- [**Signals**](docs/signals.md): Fine-grained reactivity system.
+- [**Layout System**](docs/layout.md): Flutter-inspired layout components.
+- [**Built-in Elements**](docs/built-ins.md): Type-safe HTML element wrappers.
+- [**JSX Support**](docs/jsx.md): Using JSX with html-props.
+- [**Create App**](docs/create.md): CLI tool documentation.
 
 ## License
 

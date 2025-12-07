@@ -41,9 +41,9 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
         ],
       }),
       new Hero({
-        heading: 'HTML Props for Web Components',
+        heading: 'HTML Props',
         subtitle:
-          "Stop struggling with imperative web or complex frameworks. Build type-safe props API's and declarative layouts for your<br>Custom Elements.",
+          "Stop struggling with imperative web or complex frameworks. Build type-safe props API's and declarative layouts for your<br>Web Components.",
         primaryCta: 'Get Started',
         secondaryCta: 'View on GitHub',
         primaryCtaLink: '/docs',
@@ -64,23 +64,22 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
                 icon: 'package',
                 heading: 'Type-Safe Props',
                 description:
-                  'Pass objects, arrays, and functions directly to your components. Become a real HTML programmer. 🔥',
-              }),
-              new FeatureCard({
-                icon: 'zap',
-                heading: 'Zero Dependencies',
-                description:
-                  'Extremely lightweight. No framework lock-in. Just a simple mixin for your native HTMLElement classes.',
+                  'Create components which can take in objects, arrays, functions and even elements as props.',
               }),
               new FeatureCard({
                 icon: 'code',
-                heading: 'TypeScript First',
-                description: 'Designed with strong type inference in mind. Define props and get full type safety.',
+                heading: 'Declarative Layouts',
+                description: 'Build your UI with a clean, nested, and fully typed API. No more imperative spaghetti.',
               }),
               new FeatureCard({
                 icon: 'globe',
                 heading: 'Native Standards',
                 description: 'Relies on Custom Element standards. No opinionated patterns or paradigms.',
+              }),
+              new FeatureCard({
+                icon: 'zap',
+                heading: 'Zero Dependencies',
+                description: 'No framework lock-in. Just a simple mixin for your native HTMLElement classes.',
               }),
             ],
           }),
@@ -94,11 +93,11 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
             crossAxisAlignment: 'center',
             content: [
               new SectionHeading({
-                text: 'The Missing Piece for Custom Elements',
+                text: 'The Missing Piece of Custom Elements',
               }),
               new Text({
                 html:
-                  'Plain HTML is limited to simple attributes and imperative coding style.<br>HTML Props brings declarativeness with rich data types and type safety to Web Components.',
+                  'Standard HTML is limited to simple attributes and imperative coding style.<br>HTML Props brings declarativeness with rich data types and type safety to native components.',
                 variant: 'muted',
                 align: 'center',
               }),
@@ -158,7 +157,7 @@ CounterApp.define('counter-app');`,
           crossAxisAlignment: 'center',
           content: [
             new SectionHeading({
-              text: 'Start building today',
+              text: 'Start "real" HTML programming today 🔥',
             }),
             new Text({
               text: 'Type-safe, reactive, and standard-compliant web components.',

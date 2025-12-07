@@ -9,23 +9,53 @@ applications.
 Standard HTML is limited to string-based attributes and imperative DOM manipulation. `html-props` solves this by
 providing:
 
-- **Type-Safe Props**: Pass objects, arrays, and functions directly to your components via the constructor.
-- **Declarative Layouts**: Build your UI with a clean, nested API instead of `document.createElement` spaghetti.
-- **Zero Dependencies**: No framework lock-in. It's just a mixin for your native `HTMLElement` classes.
+- **Type-Safe Props**: Create components which can take in objects, arrays, functions and even elements as props.
+- **Declarative Layouts**: Build your UI with a clean, nested, and fully typed API. No more imperative spaghetti.
+- **Native Standards**: Relies on Custom Element standards. No opinionated patterns or paradigms.
+- **Zero Dependencies**: No framework lock-in. Just a simple mixin for your native HTMLElement classes.
 
-It aims to be the missing piece for Web Components: simple enough to understand in minutes, but powerful enough for real
-applications.
+It's the missing piece of Custom Elements. Standard HTML is limited to simple attributes and imperative coding style.
+HTML Props brings declarativeness with rich data types and type safety to native components.
 
 ```typescript
 import { HTMLPropsMixin, prop } from '@html-props/core';
+import { Button, Div } from '@html-props/built-ins';
+import { Column, Container } from '@html-props/layout';
 
-class MyElement extends HTMLPropsMixin(HTMLElement, {
-  name: prop('World'), // Type inferred as String
+class CounterApp extends HTMLPropsMixin(HTMLElement, {
+  count: prop(0),
 }) {
   render() {
-    return new Div({ textContent: `Hello, ${this.name}!` });
+    return new Container({
+      padding: '2rem',
+      content: new Column({
+        crossAxisAlignment: 'center',
+        gap: '1rem',
+        content: [
+          new Div({
+            textContent: `Count is: ${this.count}`,
+            style: { fontSize: '1.2rem' },
+          }),
+          new Button({
+            textContent: 'Increment',
+            style: {
+              backgroundColor: '#a78bfa',
+              color: '#13111c',
+              border: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '0.25rem',
+              cursor: 'pointer',
+              fontWeight: '600',
+            },
+            onclick: () => this.count++,
+          }),
+        ],
+      }),
+    });
   }
 }
+
+CounterApp.define('counter-app');
 ```
 
 # Installation

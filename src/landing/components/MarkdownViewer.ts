@@ -263,8 +263,11 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
   }
 
   renderInline(tokens: any[]): any[] {
-    return tokens.map((t) => {
+    return tokens.flatMap((t) => {
       if (t.type === 'text') {
+        if (t.tokens) {
+          return this.renderInline(t.tokens);
+        }
         // Handle decoded HTML entities if necessary, but marked usually handles it.
         // However, we might want to parse simple text for safety or just return text node.
         return document.createTextNode(t.text);
