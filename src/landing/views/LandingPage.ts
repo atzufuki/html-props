@@ -8,6 +8,7 @@ import { InstallBox } from '../components/InstallBox.ts';
 import { LiveDemo } from '../components/LiveDemo.ts';
 import { SectionHeading, Text } from '../components/Typography.ts';
 import { AppFooter } from '../components/AppFooter.ts';
+import { AppButton } from '../components/AppButton.ts';
 import { theme } from '../theme.ts';
 
 export class LandingPage extends HTMLPropsMixin(HTMLElement) {
@@ -148,16 +149,40 @@ CounterApp.define('counter-app');`,
         ],
       }),
       new Container({
-        padding: padding,
+        padding: '6rem 2rem',
         color: theme.colors.secondaryBg,
-        style: { borderTop: `1px solid ${theme.colors.border}` },
+        style: {
+          borderTop: `1px solid ${theme.colors.border}`,
+          textAlign: 'center',
+        },
         content: new Column({
           crossAxisAlignment: 'center',
           content: [
             new SectionHeading({
-              text: 'Ready to build?',
+              text: 'Start building today',
+            }),
+            new Text({
+              text: 'Type-safe, reactive, and standard-compliant web components.',
+              variant: 'muted',
+              align: 'center',
+              style: { fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto 2rem' },
             }),
             new InstallBox({ command: 'deno add @html-props/core' }),
+            new Container({
+              style: { marginTop: '3rem', display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' },
+              content: [
+                new AppButton({
+                  label: 'Read the Docs',
+                  href: '/docs/getting-started',
+                  variant: 'primary',
+                }),
+                new AppButton({
+                  label: 'View on GitHub',
+                  href: 'https://github.com/atzufuki/html-props',
+                  variant: 'secondary',
+                }),
+              ],
+            }),
           ],
         }),
       }),

@@ -4,6 +4,7 @@ import { Column, Container, Responsive, Row } from '@html-props/layout';
 import { effect, signal } from '@html-props/signals';
 import { theme } from '../theme.ts';
 import { ThemeService } from '../services/ThemeService.ts';
+import { IconButton, IconName } from './IconButton.ts';
 
 export class NavBar extends HTMLPropsMixin(HTMLElement, {
   links: prop<Array<{ label: string; href: string }>>([], { type: Array }),
@@ -49,40 +50,23 @@ export class NavBar extends HTMLPropsMixin(HTMLElement, {
   renderThemeToggle() {
     const themeService = ThemeService.getInstance();
 
-    const btn = new Button({
+    const btn = new IconButton({
+      onclick: () => themeService.toggle(),
       style: {
-        background: 'transparent',
-        border: 'none',
-        cursor: 'pointer',
-        fontSize: '1.2rem',
-        padding: '0.5rem',
-        borderRadius: '50%',
-        transition: 'background-color 0.2s',
         color: theme.colors.text,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         width: '2.5rem',
         height: '2.5rem',
       },
-      onclick: () => themeService.toggle(),
     });
-
-    // Add hover effect manually since we can't use :hover in inline styles easily
-    btn.onmouseenter = () => {
-      btn.style.backgroundColor = 'rgba(128, 128, 128, 0.1)';
-    };
-    btn.onmouseleave = () => {
-      btn.style.backgroundColor = 'transparent';
-    };
 
     effect(() => {
       const mode = themeService.mode();
-      let icon = '💻';
-      if (mode === 'light') icon = '☀️';
-      if (mode === 'dark') icon = '🌙';
-      btn.textContent = icon;
-      btn.title = `Theme: ${mode}`;
+      let icon: IconName = 'system';
+      if (mode === 'light') icon = 'sun';
+      if (mode === 'dark') icon = 'moon';
+
+      (btn as any).icon = icon;
+      (btn as any).label = `Theme: ${mode}`;
     });
 
     return btn;

@@ -1,11 +1,15 @@
 import { HTMLPropsMixin, prop } from '@html-props/core';
 import { Code, Pre } from '@html-props/built-ins';
 import { Container } from '@html-props/layout';
+import { signal } from '@html-props/signals';
 import { theme } from '../theme.ts';
+import { IconButton } from './IconButton.ts';
 
 export class CodeBlock extends HTMLPropsMixin(HTMLElement, {
   code: prop(''),
 }) {
+  private copied = signal(false);
+
   private highlight(code: string): string {
     // Escape HTML first
     const escaped = code
@@ -80,20 +84,47 @@ export class CodeBlock extends HTMLPropsMixin(HTMLElement, {
   }
 
   render() {
+    const isCopied = this.copied();
+
     return new Container({
       color: theme.colors.codeBg,
-      padding: '1.5rem',
       style: {
+        position: 'relative',
         fontFamily: theme.fonts.mono,
         fontSize: '0.9rem',
-        overflowX: 'auto',
         borderRight: `1px solid ${theme.colors.border}`,
+        borderRadius: '0.5rem',
       },
-      content: new Pre({
-        content: new Code({
-          innerHTML: this.highlight(this.code),
+      content: [
+        new Container({
+          padding: '1.5rem',
+          style: {
+            overflowX: 'auto',
+          },
+          content: new Pre({
+            style: { margin: '0' },
+            content: new Code({
+              innerHTML: this.highlight(this.code),
+            }),
+          }),
         }),
-      }),
+        new IconButton({
+          icon: isCopied ? 'check' : 'copy',
+          style: {
+            position: 'absolute',
+            top: '0.5rem',
+            right: '0.5rem',
+            color: isCopied ? theme.colors.string : theme.colors.comment,
+            opacity: '0.8',
+            backgroundColor: theme.colors.codeBg,
+          },
+          onclick: () => {
+            navigator.clipboard.writeText(this.code);
+            this.copied.set(true);
+            setTimeout(() => this.copied.set(false), 2000);
+          },
+        }),
+      ],
     });
   }
 }

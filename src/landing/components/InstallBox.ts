@@ -1,13 +1,18 @@
 import { HTMLPropsMixin, prop } from '@html-props/core';
+import { signal } from '@html-props/signals';
 import { Container, Row } from '@html-props/layout';
 import { Text } from './Typography.ts';
-import { AppButton } from './AppButton.ts';
 import { theme } from '../theme.ts';
+import { IconButton } from './IconButton.ts';
 
 export class InstallBox extends HTMLPropsMixin(HTMLElement, {
   command: prop(''),
 }) {
+  private copied = signal(false);
+
   render() {
+    const isCopied = this.copied();
+
     return new Container({
       color: theme.colors.codeBg,
       padding: '1rem 2rem',
@@ -28,24 +33,18 @@ export class InstallBox extends HTMLPropsMixin(HTMLElement, {
             variant: 'code',
             style: { color: 'inherit', fontSize: '1rem' },
           }),
-          new AppButton({
-            label: '📋',
-            variant: 'secondary',
+          new IconButton({
+            icon: isCopied ? 'check' : 'copy',
+            label: 'Copy to clipboard',
             style: {
-              background: 'none',
-              border: 'none',
-              color: theme.colors.comment,
-              cursor: 'pointer',
-              padding: '0.5rem',
-              fontSize: '1.2rem',
-              minWidth: 'auto',
+              color: isCopied ? theme.colors.string : theme.colors.comment,
               marginLeft: '1rem',
-              transition: 'color 0.2s',
+              opacity: '0.8',
             },
-            onmouseover: (e: MouseEvent) => (e.target as HTMLElement).style.color = theme.colors.text,
-            onmouseout: (e: MouseEvent) => (e.target as HTMLElement).style.color = theme.colors.comment,
             onclick: () => {
               navigator.clipboard.writeText(this.command);
+              this.copied.set(true);
+              setTimeout(() => this.copied.set(false), 2000);
             },
           }),
         ],
