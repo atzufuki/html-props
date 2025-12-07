@@ -10,7 +10,9 @@
   },
   "compilerOptions": {
     "lib": [
-      "dom"
+      "dom",
+      "dom.iterable",
+      "esnext"
     ],
     "noImplicitOverride": false
   }
