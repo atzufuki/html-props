@@ -21,3 +21,5 @@ a {
 a:hover {
   color: var(--color-accent-hover);
 }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

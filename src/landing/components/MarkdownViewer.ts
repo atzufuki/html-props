@@ -40,6 +40,21 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
   private _disposeEffect: (() => void) | null = null;
 
   onMount() {
+    // Pre-load content if available to prevent flash of empty state
+    if (this.markdown) {
+      this.tokens = this.service.parse(this.markdown);
+      this._lastMarkdown = this.markdown;
+    } else if (this.src) {
+      const cached = this.service.getDocSync(this.src, this.version);
+      if (cached) {
+        this.tokens = cached.tokens;
+        this._lastSrc = this.src;
+      } else {
+        // Do not set loading=true here, let loadDoc handle it to avoid race conditions
+        // or just rely on loadDoc being called by effect
+      }
+    }
+
     this._disposeEffect = effect(() => {
       const markdown = this.markdown;
       const src = this.src;
@@ -69,10 +84,16 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
   async loadDoc() {
     if (this.loading) return;
     this._lastSrc = this.src;
-    this.loading = true;
+
+    const isCached = this.service.hasDoc(this.src, this.version);
+
+    if (!isCached) {
+      this.loading = true;
+      this.tokens = [];
+      this.requestUpdate();
+    }
+
     this.error = null;
-    this.tokens = [];
-    this.requestUpdate();
 
     try {
       const content = await this.service.fetchDoc(this.src, this.version);
@@ -94,7 +115,7 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
 
   render() {
     if (this.loading) {
-      return new Div({ textContent: 'Loading...', style: { color: '#94a3b8', padding: '2rem' } });
+      return this.renderSkeleton();
     }
 
     if (this.error) {
@@ -108,6 +129,37 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
     return new Div({
       className: 'markdown-content',
       content: this.tokens.map((t) => this.renderToken(t)),
+    });
+  }
+
+  renderSkeleton() {
+    const lineStyle = {
+      backgroundColor: theme.colors.border,
+      borderRadius: '0.25rem',
+      marginBottom: '1rem',
+    };
+
+    return new Div({
+      style: {
+        padding: '2rem 0',
+        // Pulse animation + FadeIn with delay to prevent flash on fast loads
+        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite, fadeIn 0.3s 0.2s both',
+      },
+      content: [
+        // Title
+        new Div({ style: { ...lineStyle, height: '2.5rem', width: '60%', marginBottom: '2rem' } }),
+        // Paragraph 1
+        new Div({ style: { ...lineStyle, height: '1rem', width: '100%' } }),
+        new Div({ style: { ...lineStyle, height: '1rem', width: '90%' } }),
+        new Div({ style: { ...lineStyle, height: '1rem', width: '95%' } }),
+        // Spacer
+        new Div({ style: { height: '2rem' } }),
+        // Subtitle
+        new Div({ style: { ...lineStyle, height: '1.75rem', width: '40%', marginBottom: '1.5rem' } }),
+        // Paragraph 2
+        new Div({ style: { ...lineStyle, height: '1rem', width: '100%' } }),
+        new Div({ style: { ...lineStyle, height: '1rem', width: '85%' } }),
+      ],
     });
   }
 

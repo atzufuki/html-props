@@ -164,7 +164,10 @@ Deno.test('MarkdownViewer handles loading state', async () => {
     document.body.appendChild(viewer);
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    assertEquals(viewer.textContent?.includes('Loading'), true);
+    // Check for skeleton (should have animation)
+    const skeleton = viewer.querySelector('div');
+    assertEquals(!!skeleton, true);
+    assertEquals(skeleton?.style.animation.includes('pulse'), true);
 
     resolveFetch!(new Response('# Loaded', { status: 200 }));
 

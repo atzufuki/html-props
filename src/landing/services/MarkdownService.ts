@@ -51,6 +51,18 @@ export class MarkdownService {
     return match ? match[1] : 'main';
   }
 
+  hasDoc(page: string, version: string = 'local'): boolean {
+    const resolvedVersion = this.resolveVersion(version);
+    const cacheKey = `${resolvedVersion}:${page}`;
+    return this.cache.has(cacheKey);
+  }
+
+  getDocSync(page: string, version: string = 'local'): DocContent | null {
+    const resolvedVersion = this.resolveVersion(version);
+    const cacheKey = `${resolvedVersion}:${page}`;
+    return this.cache.get(cacheKey) || null;
+  }
+
   async fetchDoc(page: string, version: string = 'local'): Promise<DocContent> {
     const resolvedVersion = this.resolveVersion(version);
     const cacheKey = `${resolvedVersion}:${page}`;
@@ -150,29 +162,39 @@ export class MarkdownService {
   async getSidebarItems(version: string = 'local'): Promise<SidebarItem[]> {
     try {
       const { tokens } = await this.fetchDoc('index', version);
-      const list = tokens.find((t: any) => t.type === 'list');
-
-      if (!list || !list.items) {
-        return [];
-      }
-
-      return list.items.map((item: any) => {
-        // Extract link from list item
-        // Item tokens usually contain 'text' which might contain a link
-        // Or we can look at item.tokens
-        const linkToken = this.findLinkToken(item.tokens);
-        if (linkToken) {
-          return {
-            label: linkToken.text,
-            file: linkToken.href,
-          };
-        }
-        return null;
-      }).filter((item: any) => item !== null);
+      return this.parseSidebarFromDoc(tokens);
     } catch (e) {
       console.error('Failed to load sidebar index', e);
       throw e;
     }
+  }
+
+  getSidebarItemsSync(version: string = 'local'): SidebarItem[] | null {
+    const doc = this.getDocSync('index', version);
+    if (!doc) return null;
+    return this.parseSidebarFromDoc(doc.tokens);
+  }
+
+  private parseSidebarFromDoc(tokens: any[]): SidebarItem[] {
+    const list = tokens.find((t: any) => t.type === 'list');
+
+    if (!list || !list.items) {
+      return [];
+    }
+
+    return list.items.map((item: any) => {
+      // Extract link from list item
+      // Item tokens usually contain 'text' which might contain a link
+      // Or we can look at item.tokens
+      const linkToken = this.findLinkToken(item.tokens);
+      if (linkToken) {
+        return {
+          label: linkToken.text,
+          file: linkToken.href,
+        };
+      }
+      return null;
+    }).filter((item: any) => item !== null);
   }
 
   private findLinkToken(tokens: any[]): any {

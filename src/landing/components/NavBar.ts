@@ -20,7 +20,7 @@ export class NavBar extends HTMLPropsMixin(HTMLElement, {
 
   renderDesktop() {
     return new Container({
-      padding: '1.5rem 2rem',
+      padding: '0.75rem 2rem',
       color: 'color-mix(in srgb, var(--color-bg), transparent 20%)',
       style: {
         borderBottom: `1px solid ${theme.colors.border}`,

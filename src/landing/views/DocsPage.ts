@@ -1,5 +1,5 @@
 import { HTMLPropsMixin, prop } from '@html-props/core';
-import { Button, Option, Select } from '@html-props/built-ins';
+import { Button, Div, Option, Select } from '@html-props/built-ins';
 import { Column, Container, MediaQuery, Responsive, Row } from '@html-props/layout';
 import { signal } from '@html-props/signals';
 import { NavBar } from '../components/NavBar.ts';
@@ -45,6 +45,14 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
 
   async loadSidebar() {
     try {
+      const cached = this.service.getSidebarItemsSync(this.selectedVersion());
+      if (cached) {
+        this.sidebarItems = cached;
+        this.error.set(null);
+        this.requestUpdate();
+        return;
+      }
+
       this.loading = true;
       this.error.set(null);
       this.requestUpdate();
@@ -198,10 +206,7 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
     }
 
     if (this.loading && this.sidebarItems.length === 0) {
-      return new Container({
-        padding: '2rem',
-        content: new Text({ text: 'Loading documentation...' }),
-      });
+      return this.renderSkeleton();
     }
 
     let page = path.replace('/docs', '').replace(/^\//, '');
@@ -222,6 +227,41 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
         maxWidth: '800px',
         width: '100%',
       },
+    });
+  }
+
+  renderSkeleton() {
+    const lineStyle = {
+      backgroundColor: theme.colors.border,
+      borderRadius: '0.25rem',
+      marginBottom: '1rem',
+    };
+
+    const isMobile = MediaQuery.isMobile();
+
+    return new Container({
+      padding: isMobile ? '1rem' : '3rem 4rem',
+      style: {
+        maxWidth: '800px',
+        width: '100%',
+        // Pulse animation + FadeIn with delay to prevent flash on fast loads
+        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite, fadeIn 0.3s 0.2s both',
+      },
+      content: [
+        // Title
+        new Div({ style: { ...lineStyle, height: '2.5rem', width: '60%', marginBottom: '2rem' } }),
+        // Paragraph 1
+        new Div({ style: { ...lineStyle, height: '1rem', width: '100%' } }),
+        new Div({ style: { ...lineStyle, height: '1rem', width: '90%' } }),
+        new Div({ style: { ...lineStyle, height: '1rem', width: '95%' } }),
+        // Spacer
+        new Div({ style: { height: '2rem' } }),
+        // Subtitle
+        new Div({ style: { ...lineStyle, height: '1.75rem', width: '40%', marginBottom: '1.5rem' } }),
+        // Paragraph 2
+        new Div({ style: { ...lineStyle, height: '1rem', width: '100%' } }),
+        new Div({ style: { ...lineStyle, height: '1rem', width: '85%' } }),
+      ],
     });
   }
 
