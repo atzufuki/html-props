@@ -1,26 +1,43 @@
 type Constructor<T> = new (...args: any[]) => T;
 
 /**
- * JSX namespace containing methods for creating elements.
+ * Fragment component that renders its children directly.
  */
-export const JSX = {
-  /**
-   * Creates an HTML element or a custom element.
-   *
-   * @param {Constructor<HTMLElement> | string} type - The type of element to create.
-   * @param {Object|null} props - The properties to set on the element.
-   * @param {...HTMLElement[][]} children - The children of the element.
-   * @returns {HTMLElement | string} The created element or an empty string if the type is not a function.
-   */
-  createElement: (
-    type: Constructor<HTMLElement> | string,
-    props: {} | null,
-    ...children: HTMLElement[][]
-  ): HTMLElement | string => {
-    if (typeof type === 'function') {
-      return new type({ ...props, content: children.flat() });
+export function Fragment(props: { children?: any; content?: any }): any {
+  return props.content ?? props.children;
+}
+
+/**
+ * Creates an HTML element or a custom element (Automatic Runtime).
+ *
+ * @param {Constructor<HTMLElement> | string | typeof Fragment} type - The type of element to create.
+ * @param {Object} props - The properties to set on the element.
+ * @param {string} [key] - The key of the element.
+ * @returns {HTMLElement | string | any[]} The created element.
+ */
+export function jsx(
+  type: Constructor<HTMLElement> | string | typeof Fragment,
+  props: Record<string, any>,
+  key?: string,
+): HTMLElement | string | any[] {
+  if (typeof type === 'function') {
+    // Handle Fragment
+    if (type === Fragment) {
+      return props.children;
     }
 
-    return '';
-  },
-};
+    const { children, ...rest } = props;
+    const componentProps: any = { ...rest };
+
+    if (children !== undefined) {
+      // Flatten children to support Fragments and nested arrays
+      componentProps.content = Array.isArray(children) ? children.flat(Infinity) : children;
+    }
+
+    // We assume it's a constructor for an HTMLElement
+    return new (type as Constructor<HTMLElement>)(componentProps);
+  }
+  return '';
+}
+
+export const jsxs = jsx;

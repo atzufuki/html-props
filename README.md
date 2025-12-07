@@ -1,211 +1,121 @@
-# HTML Props - Props API for Web Components
+# Introduction
 
-HTML Props is a JavaScript library that provides a set of mixins for building web components with declarative props and
-nested child trees. This library simplifies the process of templating and enables passing complex properties via custom
-element's constructor.
+`@html-props/core` is a lightweight, zero-dependency library that brings a type-safe props API and declarative rendering
+to native Custom Elements. It bridges the gap between plain HTML attributes and the rich data requirements of modern
+applications.
 
-## Features
+## Why HTML Props?
 
-- **Props Management**: Define props for custom elements.
-- **Templating**: Implement a `render` method to create a child tree for the component.
-- **Utilities**: Includes utility methods for defining custom elements, and generating selectors.
-- **TypeScript Support**: Written in TypeScript for type safety.
-- **Inheritance Support**: Build component hierarchies with proper mixin application.
+Standard HTML is limited to string-based attributes and imperative DOM manipulation. `html-props` solves this by
+providing:
 
-## Quick Start
+- **Type-Safe Props**: Create components which can take in objects, arrays, functions and even elements as props.
+- **Declarative Layouts**: Build your UI with a clean, nested, and fully typed API. No more imperative spaghetti.
+- **Native Standards**: Relies on Custom Element standards. No opinionated patterns or paradigms.
+- **Zero Dependencies**: No framework lock-in. Just a simple mixin for your native HTMLElement classes.
 
-Scaffold a new project with the create tool:
+It's the missing piece of Custom Elements. Standard HTML is limited to simple attributes and imperative coding style.
+HTML Props brings declarativeness with rich data types and type safety to native components.
 
-```sh
-deno run --reload jsr:@html-props/create my-app
-cd my-app
-# Start hacking!
+```typescript
+import { HTMLPropsMixin, prop } from '@html-props/core';
+import { Button, Div } from '@html-props/built-ins';
+import { Column, Container } from '@html-props/layout';
+
+class CounterApp extends HTMLPropsMixin(HTMLElement, {
+  count: prop(0),
+}) {
+  render() {
+    return new Container({
+      padding: '2rem',
+      content: new Column({
+        crossAxisAlignment: 'center',
+        gap: '1rem',
+        content: [
+          new Div({
+            textContent: `Count is: ${this.count}`,
+            style: { fontSize: '1.2rem' },
+          }),
+          new Button({
+            textContent: 'Increment',
+            style: {
+              backgroundColor: '#a78bfa',
+              color: '#13111c',
+              border: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '0.25rem',
+              cursor: 'pointer',
+              fontWeight: '600',
+            },
+            onclick: () => this.count++,
+          }),
+        ],
+      }),
+    });
+  }
+}
+
+CounterApp.define('counter-app');
 ```
 
-## Installation
+# Installation
 
-Add the package to your project.
+You can install `@html-props/core` via JSR or import it directly from a CDN.
 
-```sh
-deno add jsr:@html-props/core
+## Using Deno
+
+```bash
+deno add @html-props/core
 ```
 
-Then, import it in your project.
+## Using npm
 
-```ts
-import HTMLProps from '@html-props/core';
-
-// Or each mixin separately.
-import { HTMLPropsMixin, HTMLTemplateMixin, HTMLUtilityMixin } from '@html-props/core';
+```bash
+npx jsr add @html-props/core
 ```
+
+## CDN (ES Modules)
+
+```typescript
+import { HTMLPropsMixin } from 'https://esm.sh/jsr/@html-props/core';
+```
+
+# Quick Start
+
+To scaffold a new project quickly, use the CLI tool.
+
+The `@html-props/create` package is a CLI tool to quickly scaffold new `html-props` projects. It sets up a complete
+development environment with Deno, HMR (Hot Module Replacement), and a basic project structure.
 
 ## Usage
 
-### Defining a Custom Element
+To create a new project, run the following command in your terminal:
 
-The default export gives you a mixin including every feature of `HTMLPropsMixin`, `HTMLTemplateMixin` and
-`HTMLUtilityMixin`. Extend it and pass in HTMLElement to create a custom element enabling all features.
-
-```ts
-import HTMLProps from '@html-props/core';
-
-interface MyElementProps {
-  text?: string;
-}
-
-class MyElement extends HTMLProps(HTMLElement)<MyElementProps>() {
-  text?: string;
-
-  render() {
-    return this.text ?? '-';
-  }
-}
-
-MyElement.define('my-element');
+```bash
+deno run jsr:@html-props/create <project-name>
 ```
 
-Finally use the custom element declaratively as follows:
+Replace `<project-name>` with the desired name for your project directory.
 
-```ts
-const element = new MyElement({ text: 'Hello world!' });
-document.body.appendChild(element); // <my-element>Hello world!</my-element>
+### Example
+
+```bash
+deno run jsr:@html-props/create my-awesome-app
+cd my-awesome-app
+deno task dev
 ```
 
-### Building Component Hierarchies
+# Documentation
 
-You can extend components that already use HTMLProps to build inheritance hierarchies:
+For full documentation, visit [html-props.dev](https://html-props.dev) or check the guides below:
 
-```ts
-import HTMLProps from '@html-props/core';
-import { signal } from '@html-props/signals';
-
-// Base widget
-class Widget extends HTMLProps(HTMLElement)<{ visible: boolean }>() {
-  visible = signal(true);
-}
-
-Widget.define('base-widget');
-
-// Extended widget - mixins are automatically handled!
-interface BoxProps {
-  visible?: boolean;
-  orientation: 'horizontal' | 'vertical';
-}
-
-class Box extends HTMLProps(Widget)<BoxProps>() {
-  orientation = signal<'horizontal' | 'vertical'>('horizontal');
-
-  render() {
-    return `Box: ${this.orientation()}`;
-  }
-}
-
-Box.define('widget-box');
-
-// Use it
-const box = new Box({ visible: true, orientation: 'vertical' });
-document.body.appendChild(box);
-```
-
-### Converting an existing Custom Element
-
-You can also convert existing custom elements, like built-in elements to support props. In this case it's unnecessary to
-use `HTMLTemplateMixin`, since we are not implementing a child tree using it's render method. Especially if a component
-already implements it's own rendering logic, it's likely to conflict if used.
-
-```ts
-const Button = HTMLUtilityMixin(HTMLPropsMixin(HTMLButtonElement)<HTMLButtonElement>()).define('html-button', {
-  extends: 'button',
-});
-
-// Or without the utilities
-const Button = HTMLPropsMixin(HTMLButtonElement)<HTMLButtonElement>();
-customElements.define('html-button', Button, { extends: 'button' });
-```
-
-### Defining Default Props
-
-You can define default properties for your custom element by overriding the `getDefaultProps` method.
-
-```ts
-interface MyElementProps {
-  text?: string;
-  textColor?: string;
-}
-
-class MyElement extends HTMLProps(HTMLElement)<MyElementProps>() {
-  text?: string;
-  textColor?: string;
-
-  getDefaultProps(): this['props'] {
-    return {
-      text: 'Default text',
-      style: {
-        color: this.textColor ?? 'blue',
-      },
-    };
-  }
-
-  render() {
-    return this.text ?? '-';
-  }
-}
-
-MyElement.define('my-element');
-
-new MyElement({ text: 'Hello world!', textColor: 'red' }); // <my-element style="color: red;">Hello world!</my-element>
-new MyElement({}); // <my-element style="color: blue;">Default text</my-element>
-```
-
-### Can I use JSX syntax for templating?
-
-Yes you can! Add this package to your project
-
-```sh
-deno add jsr:@html-props/jsx
-```
-
-Configurate your compiler options like so to enable JSX typings.
-
-```jsonc
-"compilerOptions": {
-  // ...
-  "jsx": "react-jsx",
-  "jsxImportSource": "@html-props/jsx"
-}
-```
-
-Finally configurate your transpiler to enable the JSX runtime.
-
-```ts
-esbuild.build({
-  // ...
-  jsxFactory: 'JSX.createElement',
-  jsxImportSource: '@html-props/jsx',
-  inject: ['@html-props/jsx/jsx-runtime'],
-});
-```
-
-You can now start writing render methods with JSX syntax.
-
-```tsx
-const Button = HTMLUtilityMixin(HTMLPropsMixin(HTMLButtonElement)<HTMLButtonElement>()).define('html-button', {
-  extends: 'button',
-});
-
-class MyElement extends HTMLProps(HTMLElement)<{ text?: string }>() {
-  text?: string;
-
-  render() {
-    return <Button>{this.text ?? '-'}</Button>;
-  }
-}
-```
+- [**Guide**](docs/guide.md): Core concepts, properties, lifecycle, and rendering.
+- [**Signals**](docs/signals.md): Fine-grained reactivity system.
+- [**Layout System**](docs/layout.md): Flutter-inspired layout components.
+- [**Built-in Elements**](docs/built-ins.md): Type-safe HTML element wrappers.
+- [**JSX Support**](docs/jsx.md): Using JSX with html-props.
+- [**Create App**](docs/create.md): CLI tool documentation.
 
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request on GitHub.

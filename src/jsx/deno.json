@@ -1,6 +1,6 @@
 {
   "name": "@html-props/jsx",
-  "version": "0.2.0",
+  "version": "1.0.0-beta.1",
   "license": "MIT",
   "exports": {
     "./jsx-runtime": "./jsx-runtime.ts"

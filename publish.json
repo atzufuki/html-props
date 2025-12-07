@@ -3,7 +3,9 @@
     "./src/core",
     "./src/create",
     "./src/jsx",
-    "./src/signals"
+    "./src/layout",
+    "./src/signals",
+    "./src/built-ins"
   ],
   "lint": {
     "rules": {

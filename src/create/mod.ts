@@ -17,12 +17,13 @@ if (import.meta.main) {
   // List of all files in the template (relative to template root)
   const templateFiles = [
     'deno.json',
+    'dev_server.ts',
+    'hmr_client.ts',
     'public/html-props.svg',
     'public/index.html',
     'public/typescript.svg',
     'src/App.css',
     'src/App.ts',
-    'src/html.ts',
     'src/index.css',
     'src/main.ts',
   ];

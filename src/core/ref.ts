@@ -1,14 +1,7 @@
-import type { RefObject } from './types.ts';
+export interface RefObject<T> {
+  current: T | null;
+}
 
-export type { RefObject };
-
-/**
- * Creates a RefObject with an optional default value.
- *
- * @template T - The type of the value held by the RefObject.
- * @param {any} [defaultValue=undefined] - The initial value of the RefObject.
- * @returns {RefObject<T>} - The created RefObject.
- */
-export function createRef<T>(defaultValue: any = undefined): RefObject<T> {
-  return { current: defaultValue };
+export function createRef<T>(initialValue: T | null = null): RefObject<T> {
+  return { current: initialValue };
 }

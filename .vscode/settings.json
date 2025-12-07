@@ -2,6 +2,13 @@
   "editor.formatOnSave": true,
   "editor.tabSize": 2,
   "editor.defaultFormatter": "denoland.vscode-deno",
-  "javascript.validate.enable": false,
-  "deno.enable": true
+  "deno.enablePaths": [
+    "src/built-ins",
+    "src/core",
+    "src/create",
+    "src/jsx",
+    "src/landing",
+    "src/layout",
+    "src/signals"
+  ]
 }

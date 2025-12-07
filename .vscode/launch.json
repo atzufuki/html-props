@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Builder Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/src/builder"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/src/builder/dist/**/*.js"
+      ],
+      "preLaunchTask": "npm: compile - src/builder"
+    }
+  ]
+}

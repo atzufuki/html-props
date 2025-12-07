@@ -1,0 +1,201 @@
+{
+  "name": "html-props-builder",
+  "displayName": "HTML Props Builder",
+  "description": "Visual HTML Props builder with drag and drop interface",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "html-props-builder",
+          "title": "HTML Props Builder",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "html-props-builder": [
+        {
+          "id": "html-props-builder-elements",
+          "name": "Elements",
+          "icon": "media/icon.svg",
+          "when": "config.webBuilder.useTreeViewPanels"
+        },
+        {
+          "id": "webBuilder.resourcesWebview",
+          "name": "Resources",
+          "icon": "media/icon.svg",
+          "type": "webview",
+          "when": "!config.webBuilder.useTreeViewPanels"
+        },
+        {
+          "id": "html-props-builder-layers",
+          "name": "Layers",
+          "icon": "media/icon.svg",
+          "type": "webview"
+        },
+        {
+          "id": "html-props-builder-properties",
+          "name": "Properties",
+          "icon": "media/icon.svg",
+          "when": "html-props-builder.hasSelectedElement && config.webBuilder.useTreeViewPanels"
+        },
+        {
+          "id": "webBuilder.propertiesWebview",
+          "name": "Properties",
+          "icon": "media/icon.svg",
+          "type": "webview"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "HTML Props Builder",
+      "properties": {
+        "webBuilder.useTreeViewPanels": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use TreeView-based panels instead of WebView panels for Elements and Properties. WebView panels offer richer UI (search, color pickers, toggles) but TreeView panels are lighter. Requires reload."
+        },
+        "webBuilder.resourceDirectories": {
+          "type": "array",
+          "default": [],
+          "description": "Directories containing resources (custom web components and HTML templates). Each directory will appear as a separate category in the Resources panel.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Display name for this design system/component library"
+              },
+              "path": {
+                "type": "string",
+                "description": "Relative or absolute path to the directory containing custom elements and HTML templates"
+              }
+            },
+            "required": [
+              "name",
+              "path"
+            ]
+          }
+        },
+        "webBuilder.bundlePath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to pre-bundled component file (relative to workspace root). HTML Props Builder will load this bundle to render TypeScript components. This allows you to use your own bundler (deno bundle, esbuild, etc). Leave empty to use DevServer bundling."
+        }
+      }
+    },
+    "customEditors": [
+      {
+        "viewType": "webBuilder.visualHtmlEditor",
+        "displayName": "HTML Props Builder Visual Editor",
+        "selector": [
+          {
+            "filenamePattern": "*.html"
+          },
+          {
+            "filenamePattern": "*.ts"
+          }
+        ],
+        "priority": "option"
+      }
+    ],
+    "commands": [
+      {
+        "command": "html-props-builder.refreshElements",
+        "title": "Refresh Elements",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "html-props-builder.openPage",
+        "title": "Open Page",
+        "category": "HTML Props Builder"
+      },
+      {
+        "command": "webBuilder.createResource",
+        "title": "HTML Props Builder: Create Resource",
+        "category": "HTML Props Builder"
+      },
+      {
+        "command": "html-props-builder.deleteLayerElement",
+        "title": "Delete Element",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "html-props-builder.duplicateLayerElement",
+        "title": "Duplicate Element",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "html-props-builder.copyLayerElement",
+        "title": "Copy Element",
+        "icon": "$(clippy)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "html-props-builder.refreshElements",
+          "when": "view == html-props-builder-elements",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "html-props-builder.deleteLayerElement",
+          "when": "view == html-props-builder-layers && viewItem == layer",
+          "group": "1_modify@1"
+        },
+        {
+          "command": "html-props-builder.duplicateLayerElement",
+          "when": "view == html-props-builder-layers && viewItem == layer",
+          "group": "1_modify@2"
+        },
+        {
+          "command": "html-props-builder.copyLayerElement",
+          "when": "view == html-props-builder-layers && viewItem == layer",
+          "group": "1_modify@3"
+        }
+      ]
+    },
+    "keybindings": []
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "//watch": "npm-run-all -p watch:*",
+    "//watch:esbuild": "node esbuild.js --watch",
+    "//watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "//watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@types/vscode": "^1.106.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.27.0",
+    "eslint": "^9.39.1",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.3"
+  },
+  "dependencies": {
+    "@vscode/codicons": "^0.0.42",
+    "node-html-parser": "^7.0.1"
+  }
+}
