@@ -75,8 +75,7 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
               new FeatureCard({
                 icon: 'code',
                 heading: 'TypeScript First',
-                description:
-                  'Designed with strong type inference in mind. Define props via static config and get full type safety.',
+                description: 'Designed with strong type inference in mind. Define props and get full type safety.',
               }),
               new FeatureCard({
                 icon: 'globe',
