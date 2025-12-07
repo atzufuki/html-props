@@ -102,6 +102,7 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
       style: {
         minHeight: '100vh',
         fontFamily: theme.fonts.sans,
+        transition: 'background-color 0.3s, color 0.3s',
       },
       content: [
         new NavBar({

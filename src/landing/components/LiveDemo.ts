@@ -84,7 +84,7 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
       if (args[10]) return `<span style="color: ${theme.colors.operator}">${match}</span>`;
 
       // 10. Variable (Group 12)
-      if (args[11]) return `<span style="color: #abb2bf">${match}</span>`;
+      if (args[11]) return `<span style="color: ${theme.colors.text}">${match}</span>`;
 
       return match;
     });
@@ -142,7 +142,7 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
     const editorWrapper = document.createElement('div');
     editorWrapper.style.position = 'relative';
     editorWrapper.style.flex = '1';
-    editorWrapper.style.backgroundColor = '#020617'; // codeBg
+    editorWrapper.style.backgroundColor = theme.colors.codeBg;
     editorWrapper.style.overflow = 'hidden';
 
     const commonStyles = `
@@ -166,7 +166,7 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
     this.pre.style.top = '0';
     this.pre.style.left = '0';
     this.pre.style.pointerEvents = 'none';
-    this.pre.style.color = '#e2e8f0';
+    this.pre.style.color = theme.colors.text;
     this.pre.style.zIndex = '0';
 
     // Textarea (Input)
@@ -179,7 +179,7 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
     this.textarea.style.zIndex = '1';
     this.textarea.style.color = 'transparent';
     this.textarea.style.background = 'transparent';
-    this.textarea.style.caretColor = '#e2e8f0';
+    this.textarea.style.caretColor = theme.colors.text;
     this.textarea.style.outline = 'none';
     this.textarea.style.resize = 'none';
     this.textarea.spellcheck = false;
@@ -226,9 +226,10 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
     const previewCol = document.createElement('div');
     previewCol.style.display = 'flex';
     previewCol.style.flexDirection = 'column';
-    previewCol.style.backgroundColor = '#1e293b';
-    previewCol.style.backgroundImage = 'radial-gradient(#334155 1px, transparent 1px)';
+    previewCol.style.backgroundColor = theme.colors.secondaryBg;
+    previewCol.style.backgroundImage = `radial-gradient(${theme.colors.border} 1px, transparent 1px)`;
     previewCol.style.backgroundSize = '20px 20px';
+    previewCol.style.transition = 'background-color 0.3s';
 
     const previewContentWrapper = document.createElement('div');
     previewContentWrapper.style.flex = '1';

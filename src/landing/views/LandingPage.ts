@@ -127,8 +127,8 @@ class CounterApp extends HTMLPropsMixin(HTMLElement, {
           new Button({
             textContent: 'Increment',
             style: {
-              backgroundColor: '#38bdf8',
-              color: '#0f172a',
+              backgroundColor: '#a78bfa',
+              color: '#13111c',
               border: 'none',
               padding: '0.5rem 1rem',
               borderRadius: '0.25rem',

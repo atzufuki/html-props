@@ -1,11 +1,15 @@
 import { HTMLPropsMixin } from '@html-props/core';
 import { LandingPage } from './views/LandingPage.ts';
 import { DocsPage } from './views/DocsPage.ts';
+import { ThemeService } from './services/ThemeService.ts';
 
 export class App extends HTMLPropsMixin(HTMLElement, {
   route: { type: String, default: '/' },
 }) {
   connectedCallback() {
+    // Initialize theme
+    ThemeService.getInstance();
+
     // @ts-ignore: Mixin implements connectedCallback
     super.connectedCallback();
 

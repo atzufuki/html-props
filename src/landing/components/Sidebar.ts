@@ -43,7 +43,7 @@ export class Sidebar extends HTMLPropsMixin(HTMLElement, {
               padding: '0.5rem 1rem',
               color: item.active ? theme.colors.accent : theme.colors.text,
               textDecoration: 'none',
-              backgroundColor: item.active ? 'rgba(56, 189, 248, 0.1)' : 'transparent',
+              backgroundColor: item.active ? theme.colors.secondaryBg : 'transparent',
               borderRadius: '0.25rem',
               fontWeight: item.active ? '600' : '400',
               transition: 'all 0.2s ease',

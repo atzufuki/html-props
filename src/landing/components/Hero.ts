@@ -2,6 +2,7 @@ import { HTMLPropsMixin, prop } from '@html-props/core';
 import { Column, Container, MediaQuery, Responsive, Row } from '@html-props/layout';
 import { AppButton } from './AppButton.ts';
 import { Heading, Text } from './Typography.ts';
+import { theme } from '../theme.ts';
 
 export class Hero extends HTMLPropsMixin(HTMLElement, {
   heading: prop('', { attribute: true }),
@@ -32,11 +33,7 @@ export class Hero extends HTMLPropsMixin(HTMLElement, {
               fontSize: isMobile ? '1.75rem' : '2.5rem',
               lineHeight: '1.2',
               marginBottom: '1.5rem',
-              background: 'linear-gradient(to right, #fff, #94a3b8)',
-              backgroundClip: 'text',
-              webkitBackgroundClip: 'text',
-              webkitTextFillColor: 'transparent',
-              color: 'transparent', // Fallback
+              color: theme.colors.text,
             },
           }),
           new Text({

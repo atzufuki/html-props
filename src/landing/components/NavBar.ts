@@ -1,8 +1,9 @@
 import { HTMLPropsMixin, prop } from '@html-props/core';
 import { A, Button, Span } from '@html-props/built-ins';
 import { Column, Container, Responsive, Row } from '@html-props/layout';
-import { signal } from '@html-props/signals';
+import { effect, signal } from '@html-props/signals';
 import { theme } from '../theme.ts';
+import { ThemeService } from '../services/ThemeService.ts';
 
 export class NavBar extends HTMLPropsMixin(HTMLElement, {
   links: prop<Array<{ label: string; href: string }>>([], { type: Array }),
@@ -19,7 +20,7 @@ export class NavBar extends HTMLPropsMixin(HTMLElement, {
   renderDesktop() {
     return new Container({
       padding: '1.5rem 2rem',
-      color: 'rgba(15, 23, 42, 0.8)',
+      color: 'color-mix(in srgb, var(--color-bg), transparent 20%)',
       style: {
         borderBottom: `1px solid ${theme.colors.border}`,
         position: 'sticky',
@@ -34,17 +35,63 @@ export class NavBar extends HTMLPropsMixin(HTMLElement, {
           this.renderLogo(),
           new Row({
             gap: '2rem',
-            content: this.links.map((link) => this.renderLink(link)),
+            crossAxisAlignment: 'center',
+            content: [
+              ...this.links.map((link) => this.renderLink(link)),
+              this.renderThemeToggle(),
+            ],
           }),
         ],
       }),
     });
   }
 
+  renderThemeToggle() {
+    const themeService = ThemeService.getInstance();
+
+    const btn = new Button({
+      style: {
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        fontSize: '1.2rem',
+        padding: '0.5rem',
+        borderRadius: '50%',
+        transition: 'background-color 0.2s',
+        color: theme.colors.text,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '2.5rem',
+        height: '2.5rem',
+      },
+      onclick: () => themeService.toggle(),
+    });
+
+    // Add hover effect manually since we can't use :hover in inline styles easily
+    btn.onmouseenter = () => {
+      btn.style.backgroundColor = 'rgba(128, 128, 128, 0.1)';
+    };
+    btn.onmouseleave = () => {
+      btn.style.backgroundColor = 'transparent';
+    };
+
+    effect(() => {
+      const mode = themeService.mode();
+      let icon = '💻';
+      if (mode === 'light') icon = '☀️';
+      if (mode === 'dark') icon = '🌙';
+      btn.textContent = icon;
+      btn.title = `Theme: ${mode}`;
+    });
+
+    return btn;
+  }
+
   renderMobile() {
     return new Container({
       padding: '1rem',
-      color: 'rgba(15, 23, 42, 0.95)',
+      color: 'color-mix(in srgb, var(--color-bg), transparent 5%)',
       style: {
         borderBottom: `1px solid ${theme.colors.border}`,
         position: 'sticky',
@@ -76,7 +123,18 @@ export class NavBar extends HTMLPropsMixin(HTMLElement, {
             ? new Column({
               gap: '1rem',
               style: { padding: '1rem 0' },
-              content: this.links.map((link) => this.renderLink(link, true)),
+              content: [
+                ...this.links.map((link) => this.renderLink(link, true)),
+                new Row({
+                  mainAxisAlignment: 'spaceBetween',
+                  crossAxisAlignment: 'center',
+                  style: { padding: '0.5rem 0', borderTop: `1px solid ${theme.colors.border}`, marginTop: '0.5rem' },
+                  content: [
+                    new Span({ textContent: 'Theme', style: { fontWeight: '500' } }),
+                    this.renderThemeToggle(),
+                  ],
+                }),
+              ],
             })
             : null,
         ],

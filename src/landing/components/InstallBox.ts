@@ -16,7 +16,7 @@ export class InstallBox extends HTMLPropsMixin(HTMLElement, {
       style: {
         fontFamily: theme.fonts.mono,
         marginTop: '2rem',
-        color: '#a5b4fc',
+        color: theme.colors.accent,
         display: 'inline-block',
       },
       content: new Row({
@@ -34,7 +34,7 @@ export class InstallBox extends HTMLPropsMixin(HTMLElement, {
             style: {
               background: 'none',
               border: 'none',
-              color: '#64748b',
+              color: theme.colors.comment,
               cursor: 'pointer',
               padding: '0.5rem',
               fontSize: '1.2rem',
@@ -43,7 +43,7 @@ export class InstallBox extends HTMLPropsMixin(HTMLElement, {
               transition: 'color 0.2s',
             },
             onmouseover: (e: MouseEvent) => (e.target as HTMLElement).style.color = theme.colors.text,
-            onmouseout: (e: MouseEvent) => (e.target as HTMLElement).style.color = '#64748b',
+            onmouseout: (e: MouseEvent) => (e.target as HTMLElement).style.color = theme.colors.comment,
             onclick: () => {
               navigator.clipboard.writeText(this.command);
             },

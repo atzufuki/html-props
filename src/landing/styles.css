@@ -6,17 +6,18 @@
 
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background-color: #0f172a;
-  color: #e2e8f0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
   line-height: 1.6;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 a {
-  color: #38bdf8;
+  color: var(--color-accent);
   text-decoration: none;
   transition: color 0.2s;
 }
 
 a:hover {
-  color: #0ea5e9;
+  color: var(--color-accent-hover);
 }

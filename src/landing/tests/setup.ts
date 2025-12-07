@@ -19,6 +19,7 @@ const keysToPolyfill = [
   'fetch',
   'location',
   'scrollTo',
+  'matchMedia',
 ];
 
 function getDom() {
@@ -49,6 +50,18 @@ function getDom() {
 
   // Mock window.scrollTo
   (window as any).scrollTo = () => {};
+
+  // Mock window.matchMedia
+  (window as any).matchMedia = (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {}, // deprecated
+    removeListener: () => {}, // deprecated
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  });
 
   cachedDom = dom;
   return dom;

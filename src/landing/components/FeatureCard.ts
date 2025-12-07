@@ -20,7 +20,7 @@ export class FeatureCard extends HTMLPropsMixin(HTMLElement, {
         content: [
           new Container({
             padding: '0.5rem',
-            color: 'rgba(56, 189, 248, 0.1)',
+            color: theme.colors.secondaryBg,
             radius: '0.5rem',
             style: {
               fontSize: '1.5rem',
