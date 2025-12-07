@@ -147,6 +147,8 @@ async function handleRequest(req: Request): Promise<Response> {
       ? 'text/typescript; charset=utf-8'
       : ext === 'css'
       ? 'text/css; charset=utf-8'
+      : ext === 'svg'
+      ? 'image/svg+xml'
       : 'application/octet-stream';
 
     return new Response(file, {
