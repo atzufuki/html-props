@@ -1,4 +1,5 @@
 import { HTMLPropsMixin } from '@html-props/core';
+import { Span } from '@html-props/built-ins';
 import { Column, Container, Grid, MediaQuery, SizedBox } from '@html-props/layout';
 import { NavBar } from '../components/NavBar.ts';
 import { Hero } from '../components/Hero.ts';
@@ -16,10 +17,25 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
     const sectionPadding = isMobile ? '3rem 1rem' : '6rem 2rem';
 
     return [
+      new Container({
+        padding: '0.75rem',
+        color: theme.colors.accent,
+        style: {
+          textAlign: 'center',
+          color: 'white',
+          fontWeight: '500',
+          fontSize: '0.9rem',
+        },
+        content: new Span({
+          textContent:
+            '🚀 HTML Props v1 Beta is here! This is a preview release. APIs are stable but subject to feedback.',
+          style: { color: 'white' },
+        }),
+      }),
       new NavBar({
         links: [
+          { label: 'Home', href: '#/' },
           { label: 'Documentation', href: '#/docs' },
-          { label: 'Examples', href: '#/examples' },
           { label: 'GitHub', href: 'https://github.com/atzufuki/html-props' },
         ],
       }),

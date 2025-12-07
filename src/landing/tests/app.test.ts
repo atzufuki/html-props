@@ -1,6 +1,7 @@
 import { assertEquals, assertExists } from 'jsr:@std/assert';
 import { setup, teardown } from './setup.ts';
 import { mockFetch } from './mocks.ts';
+import { MarkdownService } from '../services/MarkdownService.ts';
 
 let App: any;
 let DocsPage: any;
@@ -29,6 +30,10 @@ Deno.test('App renders LandingPage by default', async () => {
 });
 
 Deno.test('App routes to DocsPage', async () => {
+  const fetchMock = mockFetch({
+    '/docs/index.md': '- [Intro](introduction.md)',
+  });
+
   const app = new App();
   document.body.appendChild(app);
 
@@ -40,6 +45,8 @@ Deno.test('App routes to DocsPage', async () => {
   // DocsPage renders a Sidebar (docs-sidebar)
   const sidebar = app.querySelector('docs-sidebar');
   assertExists(sidebar, 'Docs page should render sidebar');
+
+  fetchMock.restore();
 });
 
 Deno.test('DocsPage loads sidebar', async () => {
@@ -90,4 +97,90 @@ Deno.test('DocsPage passes correct src to MarkdownViewer', async () => {
   } finally {
     fetchMock.restore();
   }
+});
+
+Deno.test('DocsPage renders version selector (local)', async () => {
+  const fetchMock = mockFetch({
+    '/docs/index.md': '- [Intro](introduction.md)',
+    'https://raw.githubusercontent.com/atzufuki/html-props/main/docs/versions.json': [
+      { label: 'Latest', ref: 'main' },
+      { label: 'v1.0 Beta', ref: 'v1.0.0-beta.1' },
+    ],
+  });
+
+  const page = new DocsPage();
+  document.body.appendChild(page);
+
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
+  const select = page.querySelector('select');
+  assertExists(select, 'Version selector should exist');
+
+  // Should have 'local', 'main', 'v1.0.0-beta.1'
+  assertEquals(select.options.length, 3);
+  assertEquals(select.options[0].value, 'local');
+  assertEquals(select.options[1].value, 'main');
+  assertEquals(select.options[2].value, 'v1.0.0-beta.1');
+
+  fetchMock.restore();
+});
+
+Deno.test('DocsPage fetches versions from GitHub when not local', async () => {
+  // Save original hostname
+  const originalHostname = window.location.hostname;
+  Object.defineProperty(window.location, 'hostname', {
+    value: 'example.com',
+    writable: true,
+  });
+
+  const fetchMock = mockFetch({
+    'https://raw.githubusercontent.com/atzufuki/html-props/main/docs/versions.json': [
+      { label: 'Latest', ref: 'main' },
+      { label: 'v1.0 Beta', ref: 'v1.0.0-beta.1' },
+    ],
+    'https://raw.githubusercontent.com/atzufuki/html-props/main/docs/index.md': '- [Beta](beta.md)',
+  });
+
+  const page = new DocsPage();
+  document.body.appendChild(page);
+
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
+  const select = page.querySelector('select');
+  assertExists(select, 'Version selector should exist');
+
+  // Should have 'main', 'v1.0.0-beta.1'
+  assertEquals(select.options.length, 2);
+  assertEquals(select.options[0].value, 'main');
+  assertEquals(select.options[1].value, 'v1.0.0-beta.1');
+
+  // Restore
+  Object.defineProperty(window.location, 'hostname', {
+    value: originalHostname,
+    writable: true,
+  });
+  fetchMock.restore();
+});
+
+Deno.test('DocsPage displays error when fetch fails', async () => {
+  MarkdownService.getInstance().clearCache();
+  const fetchMock = mockFetch({}); // No routes mocked, will return 404
+
+  const page = new DocsPage();
+  document.body.appendChild(page);
+
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
+  // Check innerHTML because textContent might be tricky with shadow DOM or custom elements
+  const html = page.innerHTML;
+  if (!html.includes('Oops! Something went wrong')) {
+    console.log('Page content:', html);
+  }
+  assertEquals(html.includes('Oops! Something went wrong'), true);
+  assertEquals(html.includes('Failed to fetch doc'), true);
+
+  const retryBtn = page.querySelector('button');
+  assertExists(retryBtn, 'Retry button should exist');
+
+  fetchMock.restore();
 });

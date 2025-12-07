@@ -95,3 +95,9 @@ export const Pre: BuiltIn<typeof HTMLPreElement> = HTMLPropsMixin(HTMLPreElement
   extends: 'pre',
 });
 export const Code: BuiltIn<typeof HTMLElement> = HTMLPropsMixin(HTMLElement).define('html-code', { extends: 'code' });
+export const Select: BuiltIn<typeof HTMLSelectElement> = HTMLPropsMixin(HTMLSelectElement).define('html-select', {
+  extends: 'select',
+});
+export const Option: BuiltIn<typeof HTMLOptionElement> = HTMLPropsMixin(HTMLOptionElement).define('html-option', {
+  extends: 'option',
+});

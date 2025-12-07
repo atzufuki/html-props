@@ -5,4 +5,3 @@
 - [Layout System](layout.md)
 - [Built-in Elements](built-ins.md)
 - [JSX Support](jsx.md)
-- [Builder](builder.md)

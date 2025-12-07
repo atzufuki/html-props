@@ -10,9 +10,15 @@ export interface SidebarItem {
   file: string;
 }
 
+export interface DocVersion {
+  label: string;
+  ref: string;
+}
+
 export class MarkdownService {
   private static instance: MarkdownService;
   private cache: Map<string, DocContent> = new Map();
+  private baseUrl = 'https://raw.githubusercontent.com/atzufuki/html-props';
 
   private constructor() {}
 
@@ -21,6 +27,10 @@ export class MarkdownService {
       MarkdownService.instance = new MarkdownService();
     }
     return MarkdownService.instance;
+  }
+
+  clearCache() {
+    this.cache.clear();
   }
 
   parse(text: string): any[] {
@@ -57,12 +67,11 @@ export class MarkdownService {
       url = `https://raw.githubusercontent.com/atzufuki/html-props/${resolvedVersion}/docs/${page}.md`;
     }
 
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
+    try {
       const response = await fetch(url, { signal: controller.signal });
-      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch doc: ${response.statusText}`);
@@ -79,6 +88,8 @@ export class MarkdownService {
     } catch (error) {
       console.error('Error fetching doc:', error);
       throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
@@ -109,6 +120,33 @@ export class MarkdownService {
     }
   }
 
+  async getVersions(): Promise<DocVersion[]> {
+    try {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+      // Fetch versions from main
+      const response = await fetch(`${this.baseUrl}/main/docs/versions.json`);
+      let versions: DocVersion[] = [];
+
+      if (response.ok) {
+        versions = await response.json();
+      } else {
+        // Fallback if file doesn't exist yet
+        versions = [{ label: 'Latest', ref: 'main' }];
+      }
+
+      if (isLocal) {
+        // Prepend local
+        return [{ label: 'Local', ref: 'local' }, ...versions];
+      }
+
+      return versions;
+    } catch (e) {
+      console.warn('Failed to fetch versions, falling back to default', e);
+      return [{ label: 'Latest', ref: 'main' }];
+    }
+  }
+
   async getSidebarItems(version: string = 'local'): Promise<SidebarItem[]> {
     try {
       const { tokens } = await this.fetchDoc('index', version);
@@ -133,7 +171,7 @@ export class MarkdownService {
       }).filter((item: any) => item !== null);
     } catch (e) {
       console.error('Failed to load sidebar index', e);
-      return [];
+      throw e;
     }
   }
 
