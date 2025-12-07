@@ -223,7 +223,7 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
       src: page,
       style: {
         flex: '1',
-        padding: isMobile ? '1rem' : '3rem 4rem',
+        padding: isMobile ? '1rem' : '2rem 2rem',
         maxWidth: '800px',
         width: '100%',
       },
@@ -240,7 +240,7 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
     const isMobile = MediaQuery.isMobile();
 
     return new Container({
-      padding: isMobile ? '1rem' : '3rem 4rem',
+      padding: isMobile ? '1rem' : '2rem 2rem',
       style: {
         maxWidth: '800px',
         width: '100%',
