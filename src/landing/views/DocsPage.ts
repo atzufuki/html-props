@@ -25,12 +25,37 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
     this.loadData();
   }
 
+  private parseRoute(route: string) {
+    const cleanPath = route.replace('/docs', '').replace(/^\//, '');
+    if (!cleanPath) return { version: null, page: '' };
+
+    const parts = cleanPath.split('/');
+    const firstPart = parts[0];
+
+    // Check if the first segment matches a known version
+    // We can only do this reliably if versions are loaded.
+    // If not loaded, we assume it might be a version if it looks like one,
+    // but relying on this.versions is safer.
+    const isVersion = this.versions.some((v) => v.ref === firstPart);
+
+    if (isVersion) {
+      return { version: firstPart, page: parts.slice(1).join('/') };
+    }
+
+    return { version: null, page: cleanPath };
+  }
+
   async loadData() {
     try {
       this.error.set(null);
       this.versions = await this.service.getVersions();
-      // Default to first version if not local
-      if (this.versions.length > 0 && !this.versions.some((v) => v.ref === 'local')) {
+
+      const { version } = this.parseRoute(this.route);
+
+      if (version) {
+        this.selectedVersion.set(version);
+      } else if (this.versions.length > 0 && !this.versions.some((v) => v.ref === 'local')) {
+        // If no version in URL, default to first (usually latest)
         this.selectedVersion.set(this.versions[0].ref);
       }
       await this.loadSidebar();
@@ -68,8 +93,11 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
   }
 
   handleVersionChange(version: string) {
-    this.selectedVersion.set(version);
-    this.loadSidebar();
+    const { page } = this.parseRoute(this.route);
+    // If page is empty, go to root of that version
+    const targetPage = page || (this.sidebarItems.length > 0 ? this.sidebarItems[0].file.replace('.md', '') : '');
+    const newHash = `#/docs/${version}/${targetPage}`;
+    window.location.hash = newHash;
   }
 
   render() {
@@ -84,14 +112,15 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
     );
 
     // Determine active page
-    let activePage = currentPath.replace('/docs', '').replace(/^\//, '');
+    let { page: activePage } = this.parseRoute(currentPath);
     if (!activePage && this.sidebarItems.length > 0) {
       activePage = this.sidebarItems[0].file.replace('.md', '');
     }
 
     const sidebarItems = this.sidebarItems.map((item) => {
       const name = item.file.replace('.md', '');
-      const href = `#/docs/${name}`;
+      const version = this.selectedVersion();
+      const href = `#/docs/${version}/${name}`;
       const isActive = name === activePage;
 
       return {
@@ -100,7 +129,6 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
         active: isActive,
       };
     });
-
     const sidebar = new Sidebar({
       items: sidebarItems,
     });
@@ -209,7 +237,7 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
       return this.renderSkeleton();
     }
 
-    let page = path.replace('/docs', '').replace(/^\//, '');
+    let { page } = this.parseRoute(path);
 
     if (!page && this.sidebarItems.length > 0) {
       page = this.sidebarItems[0].file.replace('.md', '');
