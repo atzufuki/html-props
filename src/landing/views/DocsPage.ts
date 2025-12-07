@@ -82,7 +82,6 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
             crossAxisAlignment: 'start',
             style: {
               maxWidth: '1400px',
-              margin: '0 auto',
             },
             content: [
               new Sidebar({ items: sidebarItems }),

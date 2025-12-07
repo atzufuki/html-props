@@ -266,7 +266,7 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
         editorCol.style.borderRight = `1px solid ${theme.colors.border}`;
         editorCol.style.borderBottom = 'none';
         editorCol.style.height = 'auto';
-        editorCol.style.minHeight = '600px';
+        editorCol.style.minHeight = '855px';
       }
     });
 
