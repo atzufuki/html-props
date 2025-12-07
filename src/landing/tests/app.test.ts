@@ -53,8 +53,7 @@ Deno.test('App routes to DocsPage', async () => {
 
 Deno.test('DocsPage loads sidebar', async () => {
   const fetchMock = mockFetch({
-    '/api/docs': ['introduction.md', 'installation.md'], // Mock manifest if used
-    '/docs/index.md': '- [Intro](introduction.md)\n- [Install](installation.md)',
+    '/api/docs/content/index.md': '- [Intro](introduction.md)\n- [Install](installation.md)',
   });
 
   try {
@@ -76,7 +75,7 @@ Deno.test('DocsPage loads sidebar', async () => {
 
 Deno.test('DocsPage passes correct src to MarkdownViewer', async () => {
   const fetchMock = mockFetch({
-    '/docs/index.md': '- [Intro](introduction.md)',
+    '/api/docs/content/index.md': '- [Intro](introduction.md)',
   });
 
   try {

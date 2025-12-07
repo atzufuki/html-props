@@ -35,6 +35,54 @@ if (!globalThis.document) {
   const HTMLTableSectionElementPolyfill = HTMLTableSectionElement ||
     class HTMLTableSectionElement extends HTMLElement {};
 
+  // Polyfill missing elements
+  const missingElements = [
+    'HTMLHRElement',
+    'HTMLQuoteElement',
+    'HTMLDListElement',
+    'HTMLDataElement',
+    'HTMLTimeElement',
+    'HTMLBRElement',
+    'HTMLAudioElement',
+    'HTMLVideoElement',
+    'HTMLSourceElement',
+    'HTMLTrackElement',
+    'HTMLMapElement',
+    'HTMLAreaElement',
+    'HTMLIFrameElement',
+    'HTMLEmbedElement',
+    'HTMLObjectElement',
+    'HTMLParamElement',
+    'HTMLPictureElement',
+    'HTMLCanvasElement',
+    'HTMLScriptElement',
+    'HTMLModElement',
+    'HTMLTableCaptionElement',
+    'HTMLTableColElement',
+    'HTMLDataListElement',
+    'HTMLFieldSetElement',
+    'HTMLLegendElement',
+    'HTMLMeterElement',
+    'HTMLOptGroupElement',
+    'HTMLOutputElement',
+    'HTMLProgressElement',
+    'HTMLTextAreaElement',
+    'HTMLDetailsElement',
+    'HTMLDialogElement',
+    'HTMLMenuElement',
+    'HTMLSlotElement',
+    'HTMLTemplateElement',
+  ];
+
+  const polyfills: Record<string, any> = {};
+  missingElements.forEach((name) => {
+    if (!(window as any)[name]) {
+      polyfills[name] = class extends HTMLElement {};
+    } else {
+      polyfills[name] = (window as any)[name];
+    }
+  });
+
   Object.assign(globalThis, {
     window,
     document,
@@ -63,5 +111,6 @@ if (!globalThis.document) {
     Node,
     CustomEvent,
     MutationObserver,
+    ...polyfills,
   });
 }

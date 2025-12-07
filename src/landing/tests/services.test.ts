@@ -18,7 +18,7 @@ Deno.test.afterAll(() => {
 Deno.test('MarkdownService fetches and parses doc', async () => {
   const mockContent = '# Test Doc\nHello';
   const fetchMock = mockFetch({
-    '/docs/test.md': mockContent,
+    '/api/docs/content/test.md': mockContent,
   });
 
   try {
@@ -37,7 +37,7 @@ Deno.test('MarkdownService fetches and parses doc', async () => {
 
 Deno.test('MarkdownService caches docs', async () => {
   const fetchMock = mockFetch({
-    '/docs/cached.md': '# Cached',
+    '/api/docs/content/cached.md': '# Cached',
   });
 
   try {

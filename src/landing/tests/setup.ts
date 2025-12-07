@@ -20,6 +20,62 @@ const keysToPolyfill = [
   'location',
   'scrollTo',
   'matchMedia',
+  'history',
+  // HTML Elements
+  'HTMLDivElement',
+  'HTMLSpanElement',
+  'HTMLButtonElement',
+  'HTMLParagraphElement',
+  'HTMLAnchorElement',
+  'HTMLImageElement',
+  'HTMLInputElement',
+  'HTMLLabelElement',
+  'HTMLHeadingElement',
+  'HTMLUListElement',
+  'HTMLOListElement',
+  'HTMLLIElement',
+  'HTMLTableElement',
+  'HTMLTableRowElement',
+  'HTMLTableCellElement',
+  'HTMLFormElement',
+  'HTMLSelectElement',
+  'HTMLOptionElement',
+  'HTMLPreElement',
+  'HTMLHRElement',
+  'HTMLQuoteElement',
+  'HTMLDListElement',
+  'HTMLDataElement',
+  'HTMLTimeElement',
+  'HTMLBRElement',
+  'HTMLAudioElement',
+  'HTMLVideoElement',
+  'HTMLSourceElement',
+  'HTMLTrackElement',
+  'HTMLMapElement',
+  'HTMLAreaElement',
+  'HTMLIFrameElement',
+  'HTMLEmbedElement',
+  'HTMLObjectElement',
+  'HTMLParamElement',
+  'HTMLPictureElement',
+  'HTMLCanvasElement',
+  'HTMLScriptElement',
+  'HTMLModElement',
+  'HTMLTableCaptionElement',
+  'HTMLTableColElement',
+  'HTMLDataListElement',
+  'HTMLFieldSetElement',
+  'HTMLLegendElement',
+  'HTMLMeterElement',
+  'HTMLOptGroupElement',
+  'HTMLOutputElement',
+  'HTMLProgressElement',
+  'HTMLTextAreaElement',
+  'HTMLDetailsElement',
+  'HTMLDialogElement',
+  'HTMLMenuElement',
+  'HTMLSlotElement',
+  'HTMLTemplateElement',
 ];
 
 function getDom() {
@@ -32,6 +88,51 @@ function getDom() {
   if (!(window as any).HTMLTableSectionElement) {
     (window as any).HTMLTableSectionElement = class HTMLTableSectionElement extends (dom.HTMLElement as any) {};
   }
+
+  // Mock other missing elements
+  const missingElements = [
+    'HTMLHRElement',
+    'HTMLQuoteElement',
+    'HTMLDListElement',
+    'HTMLDataElement',
+    'HTMLTimeElement',
+    'HTMLBRElement',
+    'HTMLAudioElement',
+    'HTMLVideoElement',
+    'HTMLSourceElement',
+    'HTMLTrackElement',
+    'HTMLMapElement',
+    'HTMLAreaElement',
+    'HTMLIFrameElement',
+    'HTMLEmbedElement',
+    'HTMLObjectElement',
+    'HTMLParamElement',
+    'HTMLPictureElement',
+    'HTMLCanvasElement',
+    'HTMLScriptElement',
+    'HTMLModElement',
+    'HTMLTableCaptionElement',
+    'HTMLTableColElement',
+    'HTMLDataListElement',
+    'HTMLFieldSetElement',
+    'HTMLLegendElement',
+    'HTMLMeterElement',
+    'HTMLOptGroupElement',
+    'HTMLOutputElement',
+    'HTMLProgressElement',
+    'HTMLTextAreaElement',
+    'HTMLDetailsElement',
+    'HTMLDialogElement',
+    'HTMLMenuElement',
+    'HTMLSlotElement',
+    'HTMLTemplateElement',
+  ];
+
+  missingElements.forEach((name) => {
+    if (!(window as any)[name]) {
+      (window as any)[name] = class extends (dom.HTMLElement as any) {};
+    }
+  });
 
   // Mock window.location
   if (!(window as any).location) {
@@ -103,36 +204,12 @@ export function setup() {
     CustomEvent,
   });
 
-  // Assign other elements from window
-  const elements = [
-    'HTMLDivElement',
-    'HTMLSpanElement',
-    'HTMLButtonElement',
-    'HTMLParagraphElement',
-    'HTMLAnchorElement',
-    'HTMLImageElement',
-    'HTMLHeadingElement',
-    'HTMLUListElement',
-    'HTMLOListElement',
-    'HTMLLIElement',
-    'HTMLPreElement',
-    'HTMLQuoteElement',
-    'HTMLTableElement',
-    'HTMLTableRowElement',
-    'HTMLTableCellElement',
-    'HTMLInputElement',
-    'HTMLFormElement',
-    'HTMLLabelElement',
-    'HTMLTextAreaElement',
-    'HTMLSelectElement',
-    'HTMLOptionElement',
-    'HTMLTableSectionElement',
-  ];
-
-  for (const key of elements) {
-    if ((window as any)[key]) {
+  // Assign globals from window based on keysToPolyfill
+  for (const key of keysToPolyfill) {
+    if ((dom as any)[key]) {
+      (globalThis as any)[key] = (dom as any)[key];
+    } else if ((window as any)[key]) {
       (globalThis as any)[key] = (window as any)[key];
-      if (!keysToPolyfill.includes(key)) keysToPolyfill.push(key);
     }
   }
 
