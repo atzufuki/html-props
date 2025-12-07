@@ -48,6 +48,24 @@ Deno.serve(async (req) => {
 
     response = await serveFile(req, filePath);
 
+    // If 404 and looks like a route (no extension), try serving index.html
+    if (response.status === 404 && !pathname.includes('.')) {
+      const indexPath = join(BASE_DIR, 'index.html');
+      try {
+        let content = await Deno.readTextFile(indexPath);
+        // Remove HMR client script
+        content = content.replace(/<script[^>]+src="\/hmr-client\.js"[^>]*><\/script>/, '');
+        response = new Response(content, {
+          headers: {
+            'content-type': 'text/html; charset=utf-8',
+            'Cache-Control': 'public, max-age=3600',
+          },
+        });
+      } catch (e) {
+        // Keep original 404 if index fails
+      }
+    }
+
     // Cache images and css
     if (pathname.match(/\.(png|jpg|jpeg|gif|svg|css)$/)) {
       response.headers.set('Cache-Control', 'public, max-age=86400');
