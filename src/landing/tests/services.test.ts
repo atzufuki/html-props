@@ -117,3 +117,22 @@ Deno.test('MarkdownService resolves version from hostname', async () => {
     (window.location as any).hostname = originalHostname;
   }
 });
+
+Deno.test('MarkdownService caches versions', async () => {
+  const fetchMock = mockFetch({
+    '/api/docs/content/versions.json': '[{"label":"Latest","ref":"main"}]',
+  });
+
+  try {
+    const service = MarkdownService.getInstance();
+    service.clearCache();
+
+    await service.getVersions();
+    assertEquals(fetchMock.stub.calls.length, 1);
+
+    await service.getVersions();
+    assertEquals(fetchMock.stub.calls.length, 1, 'Should use cached versions');
+  } finally {
+    fetchMock.restore();
+  }
+});

@@ -1,7 +1,7 @@
-import { HTMLPropsMixin, prop } from '@html-props/core';
+import { createRef, HTMLPropsMixin, prop } from '@html-props/core';
 import { Column, Container, Responsive, Row } from '@html-props/layout';
 import { Button, Div, Option, Select } from '@html-props/built-ins';
-import { effect, signal } from '@html-props/signals';
+import { effect, signal, untracked } from '@html-props/signals';
 import { NavBar } from '../components/NavBar.ts';
 import { Sidebar } from '../components/Sidebar.ts';
 import { MarkdownViewer } from '../components/MarkdownViewer.ts';
@@ -20,8 +20,14 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
   private error = signal<string | null>(null);
   private showMobileSidebar = signal(false);
 
-  // Refs - mostly removed, keeping selectRef for value reading if needed, but onchange passes value
-  // Actually, I don't need refs for updates anymore.
+  // Refs
+  private desktopSidebarRef = createRef<Sidebar>();
+  private mobileSidebarRef = createRef<Sidebar>();
+  private desktopViewerRef = createRef<MarkdownViewer>();
+  private mobileViewerRef = createRef<MarkdownViewer>();
+  private selectRef = createRef<InstanceType<typeof Select>>();
+  private mobileMenuRef = createRef<InstanceType<typeof Div>>();
+  private versionFabRef = createRef<InstanceType<typeof Container>>();
 
   connectedCallback() {
     super.connectedCallback();
@@ -37,7 +43,9 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
     // Load sidebar when version changes
     effect(() => {
       const version = this.selectedVersion();
-      this.loadSidebar(version);
+      untracked(() => {
+        this.loadSidebar(version);
+      });
     });
 
     this.loadData();
@@ -132,7 +140,7 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
 
   // Declarative render
   render() {
-    // Track dependencies
+    // Track dependencies for initial render
     const route = this.route;
     const versions = this.versions();
     const items = this.sidebarItems();
@@ -173,11 +181,15 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
             crossAxisAlignment: 'start',
             style: { maxWidth: '1400px' },
             content: [
-              new Sidebar({ items: processedItems }),
+              new Sidebar({
+                ref: this.desktopSidebarRef,
+                items: processedItems,
+              }),
               new Container({
                 padding: '0 2rem',
                 style: { flex: '1', width: '100%' },
                 content: new MarkdownViewer({
+                  ref: this.desktopViewerRef,
                   src: activePage,
                   version: version,
                   style: {
@@ -206,20 +218,30 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
                 }),
               }),
               new Div({
-                content: new Sidebar({ items: processedItems }),
+                ref: this.mobileMenuRef,
+                content: new Sidebar({
+                  ref: this.mobileSidebarRef,
+                  items: processedItems,
+                }),
                 style: { display: showMobile ? 'block' : 'none' },
               }),
-              new MarkdownViewer({
-                src: activePage,
-                version: version,
-                style: {
-                  display: error ? 'none' : 'block',
-                },
+              new Container({
+                padding: '0 2rem',
+                style: { flex: '1', width: '100%' },
+                content: new MarkdownViewer({
+                  ref: this.mobileViewerRef,
+                  src: activePage,
+                  version: version,
+                  style: {
+                    display: error ? 'none' : 'block',
+                  },
+                }),
               }),
             ],
           }),
         }),
         new Container({
+          ref: this.versionFabRef,
           style: {
             position: 'fixed',
             bottom: '2rem',
@@ -233,6 +255,7 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
             display: versions.length > 0 ? 'block' : 'none',
           },
           content: new Select({
+            ref: this.selectRef,
             name: 'version-selector',
             style: {
               backgroundColor: 'transparent',
@@ -262,6 +285,78 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
         }),
       ],
     });
+  }
+
+  // Optimized update strategy
+  update() {
+    // Track dependencies
+    const route = this.route;
+    const version = this.selectedVersion();
+    const items = this.sidebarItems();
+    const versions = this.versions();
+    const showMobile = this.showMobileSidebar();
+    const error = this.error();
+
+    const { page } = this.parseRoute(route);
+    const activePage = page || (items.length > 0 ? items[0].file.replace('.md', '') : '');
+
+    // Update Sidebars
+    const sidebarItemsData = items.map((item) => {
+      const name = item.file.replace('.md', '');
+      return {
+        label: item.label,
+        href: `/docs/${version}/${name}`,
+        active: name === activePage,
+      };
+    });
+
+    if (this.desktopSidebarRef.current) {
+      this.desktopSidebarRef.current.items = sidebarItemsData;
+    }
+    if (this.mobileSidebarRef.current) {
+      this.mobileSidebarRef.current.items = sidebarItemsData;
+    }
+
+    // Update Viewers
+    const updateViewer = (viewer: MarkdownViewer) => {
+      if (error) {
+        viewer.style.display = 'none';
+      } else {
+        viewer.style.display = 'block';
+        viewer.src = activePage;
+        viewer.version = version;
+      }
+    };
+
+    if (this.desktopViewerRef.current) updateViewer(this.desktopViewerRef.current);
+    if (this.mobileViewerRef.current) updateViewer(this.mobileViewerRef.current);
+
+    // Update Mobile Menu Visibility
+    if (this.mobileMenuRef.current) {
+      this.mobileMenuRef.current.style.display = showMobile ? 'block' : 'none';
+    }
+
+    // Update Version FAB Visibility
+    if (this.versionFabRef.current) {
+      this.versionFabRef.current.style.display = versions.length > 0 ? 'block' : 'none';
+    }
+
+    // Update Version Select
+    if (this.selectRef.current) {
+      this.selectRef.current.replaceChildren(
+        ...versions.map((v) =>
+          new Option({
+            value: v.ref,
+            textContent: v.label,
+            selected: v.ref === version,
+            style: {
+              backgroundColor: theme.colors.secondaryBg,
+              color: theme.colors.text,
+            },
+          })
+        ),
+      );
+    }
   }
 }
 
