@@ -18,6 +18,9 @@ export interface DocVersion {
 export class MarkdownService {
   private static instance: MarkdownService;
   private cache: Map<string, DocContent> = new Map();
+  private pendingRequests: Map<string, Promise<DocContent>> = new Map();
+  private versionsCache: DocVersion[] | null = null;
+  private versionsPromise: Promise<DocVersion[]> | null = null;
   private baseUrl = 'https://raw.githubusercontent.com/atzufuki/html-props';
 
   private constructor() {}
@@ -31,6 +34,9 @@ export class MarkdownService {
 
   clearCache() {
     this.cache.clear();
+    this.pendingRequests.clear();
+    this.versionsCache = null;
+    this.versionsPromise = null;
   }
 
   parse(text: string): any[] {
@@ -66,8 +72,13 @@ export class MarkdownService {
   async fetchDoc(page: string, version: string = 'local'): Promise<DocContent> {
     const resolvedVersion = this.resolveVersion(version);
     const cacheKey = `${resolvedVersion}:${page}`;
+
     if (this.cache.has(cacheKey)) {
       return this.cache.get(cacheKey)!;
+    }
+
+    if (this.pendingRequests.has(cacheKey)) {
+      return this.pendingRequests.get(cacheKey)!;
     }
 
     let url: string;
@@ -79,30 +90,36 @@ export class MarkdownService {
       url = `https://raw.githubusercontent.com/atzufuki/html-props/${resolvedVersion}/docs/${page}.md`;
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const promise = (async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    try {
-      const response = await fetch(url, { signal: controller.signal });
+      try {
+        const response = await fetch(url, { signal: controller.signal });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch doc: ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch doc: ${response.statusText}`);
+        }
+        const text = await response.text();
+
+        // Parse markdown
+        const tokens = marked.lexer(text);
+        const html = marked.parser(tokens);
+
+        const content = { html, tokens };
+        this.cache.set(cacheKey, content);
+        return content;
+      } catch (error) {
+        console.error('Error fetching doc:', error);
+        throw error;
+      } finally {
+        clearTimeout(timeoutId);
+        this.pendingRequests.delete(cacheKey);
       }
-      const text = await response.text();
+    })();
 
-      // Parse markdown
-      const tokens = marked.lexer(text);
-      const html = marked.parser(tokens);
-
-      const content = { html, tokens };
-      this.cache.set(cacheKey, content);
-      return content;
-    } catch (error) {
-      console.error('Error fetching doc:', error);
-      throw error;
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    this.pendingRequests.set(cacheKey, promise);
+    return promise;
   }
 
   async getManifest(version: string = 'local'): Promise<string[]> {
@@ -133,44 +150,59 @@ export class MarkdownService {
   }
 
   async getVersions(): Promise<DocVersion[]> {
-    try {
-      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const currentVersion = this.resolveVersion('local');
+    if (this.versionsCache) return this.versionsCache;
+    if (this.versionsPromise) return this.versionsPromise;
 
-      let url: string;
-      if (isLocal) {
-        url = '/api/docs/content/versions.json';
-      } else {
-        url = `${this.baseUrl}/${currentVersion}/docs/versions.json`;
+    this.versionsPromise = (async () => {
+      try {
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const currentVersion = this.resolveVersion('local');
+
+        let url: string;
+        if (isLocal) {
+          url = '/api/docs/content/versions.json';
+        } else {
+          url = `${this.baseUrl}/${currentVersion}/docs/versions.json`;
+        }
+
+        // Fetch versions
+        let response = await fetch(url);
+
+        // If failed and we are not on main (and not local), try main as fallback
+        if (!response.ok && !isLocal && currentVersion !== 'main') {
+          response = await fetch(`${this.baseUrl}/main/docs/versions.json`);
+        }
+
+        let versions: DocVersion[] = [];
+
+        if (response.ok) {
+          versions = await response.json();
+        } else {
+          // Fallback if file doesn't exist yet
+          versions = [{ label: 'Latest', ref: 'main' }];
+        }
+
+        if (isLocal) {
+          // Prepend local
+          versions = [{ label: 'Local', ref: 'local' }, ...versions];
+
+          // Ensure main is present if missing (e.g. if versions.json is empty or failed)
+          if (!versions.some((v) => v.ref === 'main')) {
+            versions.push({ label: 'Latest', ref: 'main' });
+          }
+        }
+
+        this.versionsCache = versions;
+        return versions;
+      } catch (e) {
+        console.warn('Failed to fetch versions, falling back to default', e);
+        return [{ label: 'Latest', ref: 'main' }];
+      } finally {
+        this.versionsPromise = null;
       }
+    })();
 
-      // Fetch versions
-      let response = await fetch(url);
-
-      // If failed and we are not on main (and not local), try main as fallback
-      if (!response.ok && !isLocal && currentVersion !== 'main') {
-        response = await fetch(`${this.baseUrl}/main/docs/versions.json`);
-      }
-
-      let versions: DocVersion[] = [];
-
-      if (response.ok) {
-        versions = await response.json();
-      } else {
-        // Fallback if file doesn't exist yet
-        versions = [{ label: 'Latest', ref: 'main' }];
-      }
-
-      if (isLocal) {
-        // Prepend local
-        return [{ label: 'Local', ref: 'local' }, ...versions];
-      }
-
-      return versions;
-    } catch (e) {
-      console.warn('Failed to fetch versions, falling back to default', e);
-      return [{ label: 'Latest', ref: 'main' }];
-    }
+    return this.versionsPromise;
   }
 
   async getSidebarItems(version: string = 'local'): Promise<SidebarItem[]> {

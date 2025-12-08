@@ -1,28 +1,49 @@
 import { HTMLPropsMixin, prop } from '@html-props/core';
+import { Column, Container, Responsive, Row } from '@html-props/layout';
 import { Button, Div, Option, Select } from '@html-props/built-ins';
-import { Column, Container, MediaQuery, Responsive, Row } from '@html-props/layout';
-import { signal } from '@html-props/signals';
+import { effect, signal } from '@html-props/signals';
 import { NavBar } from '../components/NavBar.ts';
 import { Sidebar } from '../components/Sidebar.ts';
 import { MarkdownViewer } from '../components/MarkdownViewer.ts';
-import { Text } from '../components/Typography.ts';
 import { type DocVersion, MarkdownService, type SidebarItem } from '../services/MarkdownService.ts';
 import { theme } from '../theme.ts';
 
 export class DocsPage extends HTMLPropsMixin(HTMLElement, {
   route: prop('/docs'),
 }) {
+  // State
   private service = MarkdownService.getInstance();
-  private sidebarItems: SidebarItem[] = [];
-  private versions: DocVersion[] = [];
+  private versions = signal<DocVersion[]>([]);
+  private sidebarItems = signal<SidebarItem[]>([]);
   private selectedVersion = signal('local');
-  private loading = true;
+  private loading = signal(true);
   private error = signal<string | null>(null);
   private showMobileSidebar = signal(false);
 
+  // Refs - mostly removed, keeping selectRef for value reading if needed, but onchange passes value
+  // Actually, I don't need refs for updates anymore.
+
   connectedCallback() {
     super.connectedCallback();
+
+    // Sync route prop to selectedVersion signal
+    effect(() => {
+      const { version } = this.parseRoute(this.route);
+      if (version && version !== this.selectedVersion()) {
+        this.selectedVersion.set(version);
+      }
+    });
+
+    // Load sidebar when version changes
+    effect(() => {
+      const version = this.selectedVersion();
+      this.loadSidebar(version);
+    });
+
     this.loadData();
+
+    // Trigger initial update to bind signals since render() doesn't access them
+    this.requestUpdate();
   }
 
   private parseRoute(route: string) {
@@ -33,10 +54,8 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
     const firstPart = parts[0];
 
     // Check if the first segment matches a known version
-    // We can only do this reliably if versions are loaded.
-    // If not loaded, we assume it might be a version if it looks like one,
-    // but relying on this.versions is safer.
-    const isVersion = this.versions.some((v) => v.ref === firstPart);
+    // We also treat 'local' as a version explicitly to handle initial load before versions are fetched
+    const isVersion = this.versions().some((v) => v.ref === firstPart) || firstPart === 'local' || firstPart === 'main';
 
     if (isVersion) {
       return { version: firstPart, page: parts.slice(1).join('/') };
@@ -48,92 +67,90 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
   async loadData() {
     try {
       this.error.set(null);
-      this.versions = await this.service.getVersions();
+      const versions = await this.service.getVersions();
+
+      const detectedVersion = this.service.resolveVersion('local');
+      // Always add 'local' version if we are in a local environment
+      if (detectedVersion === 'local' && !versions.some((v) => v.ref === 'local')) {
+        versions.unshift({ label: 'Local', ref: 'local' });
+      }
+
+      this.versions.set(versions);
 
       const { version } = this.parseRoute(this.route);
-      const detectedVersion = this.service.resolveVersion('local');
 
       if (version) {
         this.selectedVersion.set(version);
       } else if (detectedVersion !== 'local' && detectedVersion !== 'main') {
-        // We are on a branch deploy (e.g. v1)
         this.selectedVersion.set(detectedVersion);
-
-        // Add to versions list if missing so it shows in dropdown
-        if (!this.versions.some((v) => v.ref === detectedVersion)) {
-          this.versions.unshift({ label: detectedVersion, ref: detectedVersion });
+        // Add to versions list if missing
+        if (!versions.some((v) => v.ref === detectedVersion)) {
+          this.versions.update((v) => [{ label: detectedVersion, ref: detectedVersion }, ...v]);
         }
-      } else if (this.versions.length > 0 && !this.versions.some((v) => v.ref === 'local')) {
-        // If no version in URL, default to first (usually latest)
-        this.selectedVersion.set(this.versions[0].ref);
+      } else if (versions.length > 0 && !versions.some((v) => v.ref === 'local')) {
+        this.selectedVersion.set(versions[0].ref);
       }
-      await this.loadSidebar();
     } catch (e: any) {
       console.error('Failed to load data', e);
       this.error.set(e.message || 'Failed to load documentation data');
-    } finally {
-      this.loading = false;
-      this.requestUpdate();
     }
   }
 
-  async loadSidebar() {
+  async loadSidebar(version: string) {
     try {
-      const cached = this.service.getSidebarItemsSync(this.selectedVersion());
+      const cached = this.service.getSidebarItemsSync(version);
       if (cached) {
-        this.sidebarItems = cached;
+        this.sidebarItems.set(cached);
         this.error.set(null);
-        this.requestUpdate();
+        this.loading.set(false);
         return;
       }
 
-      this.loading = true;
+      if (!this.loading()) this.loading.set(true);
+
+      const items = await this.service.getSidebarItems(version);
+      this.sidebarItems.set(items);
       this.error.set(null);
-      this.requestUpdate();
-      this.sidebarItems = await this.service.getSidebarItems(this.selectedVersion());
     } catch (e: any) {
       console.error('Failed to load sidebar', e);
-      this.sidebarItems = [];
+      this.sidebarItems.set([]);
       this.error.set(e.message || 'Failed to load sidebar');
     } finally {
-      this.loading = false;
-      this.requestUpdate();
+      this.loading.set(false);
     }
   }
 
   handleVersionChange(version: string) {
     const { page } = this.parseRoute(this.route);
+    const items = this.sidebarItems();
     // If page is empty, go to root of that version
-    const targetPage = page || (this.sidebarItems.length > 0 ? this.sidebarItems[0].file.replace('.md', '') : '');
+    const targetPage = page || (items.length > 0 ? items[0].file.replace('.md', '') : '');
     const newPath = `/docs/${version}/${targetPage}`;
     window.history.pushState({}, '', newPath);
-    // Manually trigger route update since pushState doesn't fire popstate
     window.dispatchEvent(new PopStateEvent('popstate'));
   }
 
+  // Declarative render
   render() {
-    const currentPath = this.route;
+    // Track dependencies
+    const route = this.route;
+    const versions = this.versions();
+    const items = this.sidebarItems();
+    const version = this.selectedVersion();
+    const showMobile = this.showMobileSidebar();
+    const error = this.error();
 
-    // Determine active page
-    let { page: activePage } = this.parseRoute(currentPath);
-    if (!activePage && this.sidebarItems.length > 0) {
-      activePage = this.sidebarItems[0].file.replace('.md', '');
-    }
+    const { page } = this.parseRoute(route);
+    const activePage = page || (items.length > 0 ? items[0].file.replace('.md', '') : '');
 
-    const sidebarItems = this.sidebarItems.map((item) => {
+    // Prepare Sidebar Items with active state
+    const processedItems = items.map((item) => {
       const name = item.file.replace('.md', '');
-      const version = this.selectedVersion();
-      const href = `/docs/${version}/${name}`;
-      const isActive = name === activePage;
-
       return {
         label: item.label,
-        href,
-        active: isActive,
+        href: `/docs/${version}/${name}`,
+        active: name === activePage,
       };
-    });
-    const sidebar = new Sidebar({
-      items: sidebarItems,
     });
 
     return new Container({
@@ -152,15 +169,22 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
           ],
         }),
         new Responsive({
-          // desktop: row,
           desktop: new Row({
             crossAxisAlignment: 'start',
-            style: {
-              maxWidth: '1400px',
-            },
+            style: { maxWidth: '1400px' },
             content: [
-              sidebar,
-              this.renderContent(currentPath),
+              new Sidebar({ items: processedItems }),
+              new Container({
+                padding: '0 2rem',
+                style: { flex: '1', width: '100%' },
+                content: new MarkdownViewer({
+                  src: activePage,
+                  version: version,
+                  style: {
+                    display: error ? 'none' : 'block',
+                  },
+                }),
+              }),
             ],
           }),
           mobile: new Column({
@@ -169,7 +193,7 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
                 padding: '1rem',
                 style: { borderBottom: `1px solid ${theme.colors.border}` },
                 content: new Button({
-                  textContent: this.showMobileSidebar() ? 'Hide Menu' : 'Show Menu',
+                  textContent: 'Menu',
                   style: {
                     background: theme.colors.secondaryBg,
                     color: theme.colors.text,
@@ -181,158 +205,60 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
                   onclick: () => this.showMobileSidebar.update((v) => !v),
                 }),
               }),
-              this.showMobileSidebar() ? new Sidebar({ items: sidebarItems }) : null,
-              this.renderContent(currentPath),
+              new Div({
+                content: new Sidebar({ items: processedItems }),
+                style: { display: showMobile ? 'block' : 'none' },
+              }),
+              new MarkdownViewer({
+                src: activePage,
+                version: version,
+                style: {
+                  display: error ? 'none' : 'block',
+                },
+              }),
             ],
           }),
         }),
-        this.renderVersionFab(),
-      ],
-    });
-  }
-
-  renderVersionFab() {
-    if (!this.versions || this.versions.length === 0) return null;
-
-    return new Container({
-      style: {
-        position: 'fixed',
-        bottom: '2rem',
-        right: '2rem',
-        zIndex: '100',
-        backgroundColor: theme.colors.secondaryBg,
-        border: `1px solid ${theme.colors.border}`,
-        borderRadius: '0.5rem',
-        padding: '0.5rem',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-      },
-      content: new Select({
-        style: {
-          backgroundColor: 'transparent',
-          color: theme.colors.text,
-          border: 'none',
-          outline: 'none',
-          fontSize: '0.9rem',
-          cursor: 'pointer',
-          paddingRight: '0.5rem',
-        },
-        onchange: (e: Event) => {
-          const target = e.target as HTMLSelectElement;
-          this.handleVersionChange(target.value);
-        },
-        content: this.versions.map((v) =>
-          new Option({
-            value: v.ref,
-            textContent: v.label,
-            selected: v.ref === this.selectedVersion(),
-            style: {
-              backgroundColor: theme.colors.secondaryBg,
-              color: theme.colors.text,
-            },
-          })
-        ),
-      }),
-    });
-  }
-
-  renderContent(path: string) {
-    if (this.error()) {
-      return this.renderError();
-    }
-
-    if (this.loading && this.sidebarItems.length === 0) {
-      return this.renderSkeleton();
-    }
-
-    let { page } = this.parseRoute(path);
-
-    if (!page && this.sidebarItems.length > 0) {
-      page = this.sidebarItems[0].file.replace('.md', '');
-    }
-
-    if (!page) return null;
-
-    const isMobile = MediaQuery.isMobile();
-
-    return new MarkdownViewer({
-      src: page,
-      style: {
-        flex: '1',
-        padding: isMobile ? '1rem' : '2rem 2rem',
-        maxWidth: '800px',
-        width: '100%',
-      },
-    });
-  }
-
-  renderSkeleton() {
-    const lineStyle = {
-      backgroundColor: theme.colors.border,
-      borderRadius: '0.25rem',
-      marginBottom: '1rem',
-    };
-
-    const isMobile = MediaQuery.isMobile();
-
-    return new Container({
-      padding: isMobile ? '1rem' : '2rem 2rem',
-      style: {
-        maxWidth: '800px',
-        width: '100%',
-        // Pulse animation + FadeIn with delay to prevent flash on fast loads
-        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite, fadeIn 0.3s 0.2s both',
-      },
-      content: [
-        // Title
-        new Div({ style: { ...lineStyle, height: '2.5rem', width: '60%', marginBottom: '2rem' } }),
-        // Paragraph 1
-        new Div({ style: { ...lineStyle, height: '1rem', width: '100%' } }),
-        new Div({ style: { ...lineStyle, height: '1rem', width: '90%' } }),
-        new Div({ style: { ...lineStyle, height: '1rem', width: '95%' } }),
-        // Spacer
-        new Div({ style: { height: '2rem' } }),
-        // Subtitle
-        new Div({ style: { ...lineStyle, height: '1.75rem', width: '40%', marginBottom: '1.5rem' } }),
-        // Paragraph 2
-        new Div({ style: { ...lineStyle, height: '1rem', width: '100%' } }),
-        new Div({ style: { ...lineStyle, height: '1rem', width: '85%' } }),
-      ],
-    });
-  }
-
-  renderError() {
-    return new Container({
-      padding: '2rem',
-      style: {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '50vh',
-        color: theme.colors.text,
-        width: '100%',
-      },
-      content: [
-        new Text({
-          text: 'Oops! Something went wrong.',
-          tag: 'h2',
-          style: { marginBottom: '1rem' },
-        }),
-        new Text({
-          text: this.error()!,
-          style: { color: 'red', marginBottom: '1.5rem' },
-        }),
-        new Button({
-          textContent: 'Retry',
+        new Container({
           style: {
-            padding: '0.5rem 1rem',
-            backgroundColor: theme.colors.accent,
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
+            position: 'fixed',
+            bottom: '2rem',
+            right: '2rem',
+            zIndex: '100',
+            backgroundColor: theme.colors.secondaryBg,
+            border: `1px solid ${theme.colors.border}`,
+            borderRadius: '0.5rem',
+            padding: '0.5rem',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            display: versions.length > 0 ? 'block' : 'none',
           },
-          onclick: () => this.loadData(),
+          content: new Select({
+            name: 'version-selector',
+            style: {
+              backgroundColor: 'transparent',
+              color: theme.colors.text,
+              border: 'none',
+              outline: 'none',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              paddingRight: '0.5rem',
+            },
+            onchange: (e: Event) => {
+              const target = e.target as HTMLSelectElement;
+              this.handleVersionChange(target.value);
+            },
+            content: versions.map((v) =>
+              new Option({
+                value: v.ref,
+                textContent: v.label,
+                selected: v.ref === version,
+                style: {
+                  backgroundColor: theme.colors.secondaryBg,
+                  color: theme.colors.text,
+                },
+              })
+            ),
+          }),
         }),
       ],
     });

@@ -7,39 +7,54 @@
 
 const clients = new Set<ReadableStreamDefaultController<any>>();
 
+const MIME_TYPES: Record<string, string> = {
+  html: 'text/html; charset=utf-8',
+  js: 'text/javascript; charset=utf-8',
+  ts: 'text/typescript; charset=utf-8',
+  css: 'text/css; charset=utf-8',
+  json: 'application/json; charset=utf-8',
+  svg: 'image/svg+xml',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  ico: 'image/x-icon',
+  md: 'text/markdown; charset=utf-8',
+};
+
+function getContentType(path: string): string {
+  const ext = path.split('.').pop()?.toLowerCase() || '';
+  return MIME_TYPES[ext] || 'application/octet-stream';
+}
+
+async function bundleJS(entry: string, out: string) {
+  // @ts-ignore: Deno.bundle is unstable
+  const result = await Deno.bundle({
+    entrypoints: [entry],
+    platform: 'browser',
+    minify: false,
+    write: false,
+  });
+
+  let code = '';
+  if (result.outputFiles?.length > 0) {
+    code = await result.outputFiles[0].text();
+  } else if (result.code) {
+    code = result.code;
+  } else {
+    throw new Error(`No output for ${entry}`);
+  }
+  await Deno.writeTextFile(out, code);
+}
+
 async function bundle() {
   try {
     await Deno.mkdir('src/landing/dist', { recursive: true });
-
-    // @ts-ignore: Deno.bundle is unstable
-    const mainResult = await Deno.bundle({
-      entrypoints: ['src/landing/main.ts'],
-      platform: 'browser',
-      minify: false,
-      write: false,
-    });
-
-    if (mainResult.outputFiles && mainResult.outputFiles.length > 0) {
-      const text = await mainResult.outputFiles[0].text();
-      await Deno.writeTextFile('src/landing/dist/main.bundle.js', text);
-    } else {
-      console.error('[landing] main bundle failed: no output');
-    }
-
-    // @ts-ignore: Deno.bundle is unstable
-    const hmrResult = await Deno.bundle({
-      entrypoints: ['src/landing/hmr-client.ts'],
-      platform: 'browser',
-      minify: false,
-      write: false,
-    });
-
-    if (hmrResult.outputFiles && hmrResult.outputFiles.length > 0) {
-      const text = await hmrResult.outputFiles[0].text();
-      await Deno.writeTextFile('src/landing/dist/hmr-client.js', text);
-    } else {
-      console.error('[landing] hmr bundle failed: no output');
-    }
+    console.log('[landing] bundling...');
+    await Promise.all([
+      bundleJS('src/landing/main.ts', 'src/landing/dist/main.bundle.js'),
+      bundleJS('src/landing/hmr-client.ts', 'src/landing/dist/hmr-client.js'),
+    ]);
 
     console.log('[landing] bundle ok');
     broadcastReload();
@@ -53,7 +68,7 @@ function broadcastReload() {
   for (const client of clients) {
     try {
       client.enqueue(msg);
-    } catch (_err) {
+    } catch {
       clients.delete(client);
     }
   }
@@ -61,8 +76,9 @@ function broadcastReload() {
 
 async function handleRequest(req: Request): Promise<Response> {
   const url = new URL(req.url);
+  const path = url.pathname;
 
-  if (url.pathname === '/hmr') {
+  if (path === '/hmr') {
     let controller: ReadableStreamDefaultController<any>;
     const stream = new ReadableStream({
       start(c) {
@@ -84,8 +100,6 @@ async function handleRequest(req: Request): Promise<Response> {
       },
     });
   }
-
-  let path = url.pathname;
 
   if (path === '/api/docs') {
     try {
@@ -111,49 +125,28 @@ async function handleRequest(req: Request): Promise<Response> {
       const docsUrl = new URL(`../../docs/${filename}`, import.meta.url);
       const file = await Deno.readFile(docsUrl);
 
-      const ext = filename.split('.').pop()?.toLowerCase();
-      let contentType = 'text/markdown; charset=utf-8';
-
-      if (ext === 'png') contentType = 'image/png';
-      else if (ext === 'jpg' || ext === 'jpeg') contentType = 'image/jpeg';
-      else if (ext === 'gif') contentType = 'image/gif';
-      else if (ext === 'svg') contentType = 'image/svg+xml';
-
       return new Response(file, {
-        headers: { 'Content-Type': contentType },
+        headers: { 'Content-Type': getContentType(filename) },
       });
-    } catch (_) {
+    } catch {
       return new Response('Doc not found', { status: 404 });
     }
   }
 
-  if (path === '/') path = '/index.html';
-
-  if (path === '/main.bundle.js' || path === '/hmr-client.js') {
-    path = '/dist' + path;
+  let filePath = path;
+  if (filePath === '/') filePath = '/index.html';
+  if (filePath === '/main.bundle.js' || filePath === '/hmr-client.js') {
+    filePath = '/dist' + filePath;
   }
 
   try {
-    const fileUrl = new URL('.' + path, import.meta.url);
+    const fileUrl = new URL('.' + filePath, import.meta.url);
     const file = await Deno.readFile(fileUrl);
 
-    const ext = path.split('.').pop();
-    const type = ext === 'html'
-      ? 'text/html; charset=utf-8'
-      : ext === 'js'
-      ? 'text/javascript; charset=utf-8'
-      : ext === 'ts'
-      ? 'text/typescript; charset=utf-8'
-      : ext === 'css'
-      ? 'text/css; charset=utf-8'
-      : ext === 'svg'
-      ? 'image/svg+xml'
-      : 'application/octet-stream';
-
     return new Response(file, {
-      headers: { 'Content-Type': type },
+      headers: { 'Content-Type': getContentType(filePath) },
     });
-  } catch (_) {
+  } catch {
     // SPA Fallback: Serve index.html for unknown paths (if not an API call)
     if (!path.startsWith('/api/')) {
       try {
@@ -162,7 +155,7 @@ async function handleRequest(req: Request): Promise<Response> {
         return new Response(index, {
           headers: { 'Content-Type': 'text/html; charset=utf-8' },
         });
-      } catch (e) {
+      } catch {
         return new Response('Not found', { status: 404 });
       }
     }

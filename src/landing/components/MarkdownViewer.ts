@@ -36,6 +36,7 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
   private error: string | null = null;
   private tokens: any[] = [];
   private _lastSrc = '';
+  private _lastVersion = '';
   private _lastMarkdown = ''; // Track markdown changes
   private _disposeEffect: (() => void) | null = null;
 
@@ -49,6 +50,7 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
       if (cached) {
         this.tokens = cached.tokens;
         this._lastSrc = this.src;
+        this._lastVersion = this.version;
       } else {
         // Do not set loading=true here, let loadDoc handle it to avoid race conditions
         // or just rely on loadDoc being called by effect
@@ -60,6 +62,7 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
     this._disposeEffect = effect(() => {
       const markdown = this.markdown;
       const src = this.src;
+      const version = this.version;
 
       if (markdown) {
         // Avoid infinite loops if parseMarkdown triggers update which triggers effect?
@@ -69,7 +72,7 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
           this.parseMarkdown(markdown);
         }
       } else if (src) {
-        if (src !== this._lastSrc) {
+        if (src !== this._lastSrc || version !== this._lastVersion) {
           this.loadDoc();
         }
       }
@@ -87,6 +90,7 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
   async loadDoc() {
     if (this.loading) return;
     this._lastSrc = this.src;
+    this._lastVersion = this.version;
 
     const isCached = this.service.hasDoc(this.src, this.version);
 
