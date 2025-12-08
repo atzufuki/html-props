@@ -1,3 +1,4 @@
 template/public/bundle.css
 template/public/bundle.js
+template/public/hmr-client.js
 template/public/deno.lock

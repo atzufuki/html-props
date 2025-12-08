@@ -10,56 +10,49 @@ const clients = new Set<ReadableStreamDefaultController<any>>();
 async function bundleCSS() {
   try {
     const cssFiles = ['src/index.css', 'src/App.css'];
-    let bundleContent = '';
-    for (const file of cssFiles) {
-      try {
-        const content = await Deno.readTextFile(file);
-        bundleContent += content + '\n';
-      } catch (e) {
-        console.warn(`[dev] failed to read css file ${file}`, e);
-      }
-    }
-    await Deno.writeTextFile('public/bundle.css', bundleContent);
+    const contents = await Promise.all(
+      cssFiles.map((f) =>
+        Deno.readTextFile(f).catch((e) => {
+          console.warn(`[dev] failed to read css file ${f}`, e);
+          return '';
+        })
+      ),
+    );
+    await Deno.writeTextFile('public/bundle.css', contents.join('\n'));
     console.log('[dev] css bundle ok');
   } catch (e) {
     console.error('[dev] css bundle failed', e);
   }
 }
 
+async function bundleJS(entry: string, out: string) {
+  // @ts-ignore: Deno.bundle is unstable
+  const result = await Deno.bundle({
+    entrypoints: [entry],
+    platform: 'browser',
+    minify: false,
+    write: false,
+  });
+
+  let code = '';
+  if (result.outputFiles?.length > 0) {
+    code = await result.outputFiles[0].text();
+  } else if (result.code) {
+    code = result.code;
+  } else {
+    throw new Error(`No output for ${entry}`);
+  }
+  await Deno.writeTextFile(out, code);
+}
+
 async function bundle() {
   try {
-    await bundleCSS();
-
-    // @ts-ignore: Deno.bundle is unstable
-    const mainResult = await Deno.bundle({
-      entrypoints: ['src/main.ts'],
-      platform: 'browser',
-      minify: false,
-      write: false,
-    });
-
-    if (mainResult.outputFiles && mainResult.outputFiles.length > 0) {
-      const text = await mainResult.outputFiles[0].text();
-      await Deno.writeTextFile('public/bundle.js', text);
-    } else {
-      console.error('[dev] main bundle failed: no output');
-    }
-
-    // @ts-ignore: Deno.bundle is unstable
-    const hmrResult = await Deno.bundle({
-      entrypoints: ['hmr_client.ts'],
-      platform: 'browser',
-      minify: false,
-      write: false,
-    });
-
-    if (hmrResult.outputFiles && hmrResult.outputFiles.length > 0) {
-      const text = await hmrResult.outputFiles[0].text();
-      await Deno.writeTextFile('public/hmr-client.js', text);
-    } else {
-      console.error('[dev] hmr bundle failed: no output');
-    }
-
+    console.log('[dev] bundling...');
+    await Promise.all([
+      bundleCSS(),
+      bundleJS('src/main.ts', 'public/bundle.js'),
+      bundleJS('hmr_client.ts', 'public/hmr-client.js'),
+    ]);
     console.log('[dev] bundle ok');
     broadcastReload();
   } catch (e) {
@@ -72,7 +65,7 @@ function broadcastReload() {
   for (const client of clients) {
     try {
       client.enqueue(msg);
-    } catch (_err) {
+    } catch {
       clients.delete(client);
     }
   }
@@ -108,21 +101,22 @@ async function handleRequest(req: Request): Promise<Response> {
   if (path === '/') path = '/index.html';
 
   try {
-    // Serve from public/
     const fileUrl = new URL('./public' + path, import.meta.url);
     const file = await Deno.readFile(fileUrl);
-
-    const ext = path.split('.').pop();
-    const type = ext === 'html'
-      ? 'text/html'
-      : ext === 'js'
-      ? 'text/javascript'
-      : ext === 'css'
-      ? 'text/css'
-      : 'application/octet-stream';
+    const ext = path.split('.').pop() || '';
+    const types: Record<string, string> = {
+      html: 'text/html',
+      js: 'text/javascript',
+      css: 'text/css',
+      svg: 'image/svg+xml',
+      png: 'image/png',
+      jpg: 'image/jpeg',
+      ico: 'image/x-icon',
+      json: 'application/json',
+    };
 
     return new Response(file, {
-      headers: { 'Content-Type': type },
+      headers: { 'Content-Type': types[ext] || 'application/octet-stream' },
     });
   } catch {
     return new Response('Not Found', { status: 404 });

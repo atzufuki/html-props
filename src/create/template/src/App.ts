@@ -1,7 +1,6 @@
 import { createRef, HTMLPropsMixin } from '@html-props/core';
 import { computed, effect, signal } from '@html-props/signals';
 import { Anchor, Button, Code, Div, Heading1, Image, Paragraph } from '@html-props/built-ins';
-import './App.css';
 
 export default class App extends HTMLPropsMixin(HTMLElement) {
   aborter = new AbortController();

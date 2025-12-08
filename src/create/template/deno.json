@@ -12,7 +12,8 @@
     "lib": [
       "dom",
       "dom.iterable",
-      "esnext"
+      "esnext",
+      "deno.ns"
     ],
     "noImplicitOverride": false
   }
