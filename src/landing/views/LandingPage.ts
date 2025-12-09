@@ -109,8 +109,8 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
 import { Div } from '@html-props/built-ins';
 import { Column, Container } from '@html-props/layout';
 
-class MyButton extends HTMLPropsMixin(HTMLButtonElement, {
-  is: prop('my-button', { attribute: true }),
+class CounterButton extends HTMLPropsMixin(HTMLButtonElement, {
+  is: prop('counter-button', { attribute: true }),
   style: {
     backgroundColor: '#a78bfa',
     color: '#13111c',
@@ -136,7 +136,7 @@ class CounterApp extends HTMLPropsMixin(HTMLElement, {
             textContent: \`Count is: \${this.count}\`,
             style: { fontSize: '1.2rem' }
           }),
-          new MyButton({
+          new CounterButton({
             textContent: 'Increment',
             onclick: () => this.count++
           })
@@ -146,7 +146,7 @@ class CounterApp extends HTMLPropsMixin(HTMLElement, {
   }
 }
 
-MyButton.define('my-button', { extends: 'button' });
+CounterButton.define('counter-button', { extends: 'button' });
 CounterApp.define('counter-app');`,
           }),
         ],
