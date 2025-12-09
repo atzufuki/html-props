@@ -9,6 +9,31 @@ function shouldCompress(contentType: string | null) {
   return /^(text\/|application\/(javascript|json|xml|wasm)|image\/svg\+xml)/.test(contentType);
 }
 
+async function getProcessedIndexHtml() {
+  const indexPath = join(BASE_DIR, 'index.html');
+  let content = await Deno.readTextFile(indexPath);
+
+  // Get bundle version
+  let bundleVersion = Date.now().toString();
+  try {
+    const bundlePath = join(DIST_DIR, 'main.bundle.js');
+    const fileInfo = await Deno.stat(bundlePath);
+    if (fileInfo.mtime) {
+      bundleVersion = fileInfo.mtime.getTime().toString();
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // Inject version
+  content = content.replace('src="/main.bundle.js"', `src="/main.bundle.js?v=${bundleVersion}"`);
+
+  // Remove HMR client script
+  content = content.replace(/<script[^>]+src="\/hmr-client\.js"[^>]*><\/script>/, '');
+
+  return content;
+}
+
 Deno.serve(async (req) => {
   const url = new URL(req.url);
   const pathname = url.pathname;
@@ -18,11 +43,8 @@ Deno.serve(async (req) => {
 
   // Serve index.html
   if (pathname === '/' || pathname === '/index.html') {
-    const indexPath = join(BASE_DIR, 'index.html');
     try {
-      let content = await Deno.readTextFile(indexPath);
-      // Remove HMR client script
-      content = content.replace(/<script[^>]+src="\/hmr-client\.js"[^>]*><\/script>/, '');
+      const content = await getProcessedIndexHtml();
       response = new Response(content, {
         headers: {
           'content-type': 'text/html; charset=utf-8',
@@ -50,11 +72,8 @@ Deno.serve(async (req) => {
 
     // If 404 and looks like a route (no extension), try serving index.html
     if (response.status === 404 && !pathname.includes('.')) {
-      const indexPath = join(BASE_DIR, 'index.html');
       try {
-        let content = await Deno.readTextFile(indexPath);
-        // Remove HMR client script
-        content = content.replace(/<script[^>]+src="\/hmr-client\.js"[^>]*><\/script>/, '');
+        const content = await getProcessedIndexHtml();
         response = new Response(content, {
           headers: {
             'content-type': 'text/html; charset=utf-8',
