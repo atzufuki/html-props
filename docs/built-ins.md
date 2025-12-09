@@ -6,7 +6,7 @@ native HTML elements with the `HTMLPropsMixin`, allowing you to use the declarat
 ## Installation
 
 ```bash
-deno add @html-props/built-ins
+deno add @html-props/built-ins@^1.0.0-beta
 ```
 
 ## Usage

@@ -1,12 +1,12 @@
 import { HTMLPropsMixin } from '@html-props/core';
 import { Span } from '@html-props/built-ins';
-import { Column, Container, Grid, MediaQuery, SizedBox } from '@html-props/layout';
+import { Column, Container, Grid, MediaQuery, Row, SizedBox } from '@html-props/layout';
 import { NavBar } from '../components/NavBar.ts';
 import { Hero } from '../components/Hero.ts';
 import { FeatureCard } from '../components/FeatureCard.ts';
 import { InstallBox } from '../components/InstallBox.ts';
 import { LiveDemo } from '../components/LiveDemo.ts';
-import { SectionHeading, Text } from '../components/Typography.ts';
+import { Typography } from '../components/Typography.ts';
 import { AppFooter } from '../components/AppFooter.ts';
 import { AppButton } from '../components/AppButton.ts';
 import { theme } from '../theme.ts';
@@ -91,17 +91,21 @@ export class LandingPage extends HTMLPropsMixin(HTMLElement) {
         content: [
           new Column({
             crossAxisAlignment: 'center',
+            gap: '1.5rem',
             content: [
-              new SectionHeading({
+              new Typography({
+                variant: 'headlineLarge',
                 text: 'The Missing Piece of Custom Elements',
-              }),
-              new Text({
-                html:
-                  'Standard HTML is limited to simple attributes and imperative coding style.<br>HTML Props brings declarativeness with rich data types and type safety to native components.',
-                variant: 'muted',
                 align: 'center',
               }),
-              new SizedBox({ height: '3rem' }),
+              new Typography({
+                variant: 'bodyLarge',
+                html:
+                  'Standard HTML is limited to simple attributes and imperative coding style.<br>HTML Props brings declarativeness with rich data types and type safety to native components.',
+                color: '#94a3b8',
+                align: 'center',
+              }),
+              new SizedBox({ height: '1.5rem' }),
             ],
           }),
           new LiveDemo({
@@ -160,19 +164,38 @@ CounterApp.define('counter-app');`,
         },
         content: new Column({
           crossAxisAlignment: 'center',
+          gap: '2rem',
           content: [
-            new SectionHeading({
-              text: 'Start "real" HTML programming today 🔥',
-            }),
-            new Text({
-              text: 'Type-safe, reactive, and standard-compliant web components.',
-              variant: 'muted',
+            new Typography({
+              variant: 'headlineLarge',
+              text: 'Join the HTML Props v1 Beta',
               align: 'center',
-              style: { fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto 2rem' },
             }),
-            new InstallBox({ command: 'deno add @html-props/core' }),
+            new Typography({
+              variant: 'bodyLarge',
+              text: 'The v1 Beta is now available. Scaffold a new project or add it to your existing project.',
+              color: '#94a3b8',
+              align: 'center',
+              style: { maxWidth: '600px' },
+            }),
             new Container({
-              style: { marginTop: '3rem', display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' },
+              alignment: 'center',
+              content: new Column({
+                crossAxisAlignment: 'center',
+                gap: '1rem',
+                content: [
+                  new InstallBox({ command: 'deno run jsr:@html-props/create@^1.0.0-beta my-app' }),
+                  new Typography({
+                    variant: 'bodyMedium',
+                    text: 'or',
+                    color: '#94a3b8',
+                  }),
+                  new InstallBox({ command: 'deno add jsr:@html-props/core@^1.0.0-beta' }),
+                ],
+              }),
+            }),
+            new Row({
+              gap: '1rem',
               content: [
                 new AppButton({
                   label: 'Read the Docs',

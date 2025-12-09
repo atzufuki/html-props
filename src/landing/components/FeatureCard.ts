@@ -1,7 +1,7 @@
 import { HTMLPropsMixin, prop } from '@html-props/core';
 import { Column, Container } from '@html-props/layout';
 import { Div } from '@html-props/built-ins';
-import { Heading, Text } from './Typography.ts';
+import { Typography } from './Typography.ts';
 import { theme } from '../theme.ts';
 
 const FEATURE_ICONS = {
@@ -50,17 +50,18 @@ export class FeatureCard extends HTMLPropsMixin(HTMLElement, {
             },
             content: new Div({ innerHTML: svg, style: { display: 'flex' } }),
           }),
-          new Heading({
+          new Typography({
             text: this.heading,
-            level: '3',
+            variant: 'titleMedium',
             style: {
               marginBottom: '0.5rem',
               fontSize: '1.1rem',
             },
           }),
-          new Text({
+          new Typography({
             text: this.description,
-            variant: 'muted',
+            variant: 'bodyMedium',
+            color: '#94a3b8',
             style: { fontSize: '0.95rem' },
           }),
         ],

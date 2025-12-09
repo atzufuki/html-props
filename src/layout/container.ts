@@ -3,20 +3,33 @@ import {
   HTMLPropsMixin,
   type InferConstructorProps,
   type InferProps,
+  type Prop,
+  prop,
 } from '@html-props/core';
 import { effect } from '@html-props/signals';
 import { Alignment } from './stack.ts';
 
-const config = {
-  width: { type: String, default: '' },
-  height: { type: String, default: '' },
-  padding: { type: String, default: '' },
-  margin: { type: String, default: '' },
-  color: { type: String, default: '' },
-  border: { type: String, default: '' },
-  radius: { type: String, default: '' },
-  alignment: { type: String, default: '' },
-  shadow: { type: String, default: '' },
+const config: {
+  width: Prop<string>;
+  height: Prop<string>;
+  padding: Prop<string>;
+  margin: Prop<string>;
+  color: Prop<string>;
+  border: Prop<string>;
+  radius: Prop<string>;
+  alignment: Prop<string>;
+  shadow: Prop<string>;
+  style: { display: string; boxSizing: string };
+} = {
+  width: prop(''),
+  height: prop(''),
+  padding: prop(''),
+  margin: prop(''),
+  color: prop(''),
+  border: prop(''),
+  radius: prop(''),
+  alignment: prop(''),
+  shadow: prop(''),
   style: { display: 'block', boxSizing: 'border-box' },
 };
 

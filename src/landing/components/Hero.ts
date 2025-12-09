@@ -1,7 +1,7 @@
 import { HTMLPropsMixin, prop } from '@html-props/core';
 import { Column, Container, MediaQuery, Responsive, Row } from '@html-props/layout';
 import { AppButton } from './AppButton.ts';
-import { Heading, Text } from './Typography.ts';
+import { Typography } from './Typography.ts';
 import { theme } from '../theme.ts';
 
 export class Hero extends HTMLPropsMixin(HTMLElement, {
@@ -24,23 +24,21 @@ export class Hero extends HTMLPropsMixin(HTMLElement, {
       content: new Column({
         crossAxisAlignment: 'center',
         content: [
-          new Heading({
-            level: '1',
+          new Typography({
+            variant: isMobile ? 'displaySmall' : 'displayLarge',
             align: 'center',
             html: this.heading,
             style: {
-              fontSize: isMobile ? '1.75rem' : '2.5rem',
-              lineHeight: '1.2',
               marginBottom: '1.5rem',
               color: theme.colors.text,
             },
           }),
-          new Text({
+          new Typography({
             html: this.subtitle,
-            variant: 'muted',
+            variant: isMobile ? 'bodyLarge' : 'titleLarge',
             align: 'center',
+            color: '#94a3b8',
             style: {
-              fontSize: isMobile ? '1rem' : '1.25rem',
               maxWidth: '600px',
               margin: '0 auto 2.5rem',
             },

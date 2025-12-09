@@ -3,12 +3,16 @@ import {
   HTMLPropsMixin,
   type InferConstructorProps,
   type InferProps,
+  type Prop,
   prop,
-  type PropsConfig,
 } from '@html-props/core';
 import { MediaQuery } from './media_query.ts';
 
-const config: PropsConfig = {
+const config: {
+  mobile: Prop<any>;
+  tablet: Prop<any>;
+  desktop: Prop<any>;
+} = {
   mobile: prop<any>(null),
   tablet: prop<any>(null),
   desktop: prop<any>(null),

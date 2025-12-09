@@ -6,7 +6,7 @@ responsive and flexible UIs without writing complex CSS.
 ## Installation
 
 ```bash
-deno add @html-props/layout
+deno add @html-props/layout@^1.0.0-beta
 ```
 
 ## Components

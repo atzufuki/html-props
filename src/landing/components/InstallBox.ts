@@ -1,7 +1,7 @@
 import { HTMLPropsMixin, prop } from '@html-props/core';
 import { signal } from '@html-props/signals';
 import { Container, Row } from '@html-props/layout';
-import { Text } from './Typography.ts';
+import { Typography } from './Typography.ts';
 import { theme } from '../theme.ts';
 import { IconButton } from './IconButton.ts';
 
@@ -20,7 +20,7 @@ export class InstallBox extends HTMLPropsMixin(HTMLElement, {
       border: `1px solid ${theme.colors.border}`,
       style: {
         fontFamily: theme.fonts.mono,
-        marginTop: '2rem',
+        // marginTop: '2rem',
         color: theme.colors.accent,
         display: 'inline-block',
       },
@@ -28,10 +28,10 @@ export class InstallBox extends HTMLPropsMixin(HTMLElement, {
         crossAxisAlignment: 'center',
         gap: '1rem',
         content: [
-          new Text({
+          new Typography({
             text: '$ ' + this.command,
-            variant: 'code',
-            style: { color: 'inherit', fontSize: '1rem' },
+            variant: 'bodyMedium',
+            style: { color: 'inherit', fontSize: '1rem', fontFamily: theme.fonts.mono },
           }),
           new IconButton({
             icon: isCopied ? 'check' : 'copy',

@@ -3,13 +3,20 @@ import {
   HTMLPropsMixin,
   type InferConstructorProps,
   type InferProps,
+  type Prop,
+  prop,
 } from '@html-props/core';
 import { effect } from '@html-props/signals';
 
-const config = {
-  columns: { type: String, default: '1fr' },
-  rows: { type: String, default: 'auto' },
-  gap: { type: String, default: '0' },
+const config: {
+  columns: Prop<string>;
+  rows: Prop<string>;
+  gap: Prop<string>;
+  style: { display: string };
+} = {
+  columns: prop('1fr'),
+  rows: prop('auto'),
+  gap: prop('0'),
   style: { display: 'grid' },
 };
 

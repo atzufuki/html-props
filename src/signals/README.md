@@ -13,7 +13,7 @@
 ## Installation
 
 ```sh
-deno add @html-props/signals
+deno add @html-props/signals@^1.0.0-beta
 ```
 
 ## Usage

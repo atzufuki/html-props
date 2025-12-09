@@ -5,7 +5,7 @@ Use JSX syntax for templating in your components.
 ## Installation
 
 ```bash
-deno add jsr:@html-props/jsx
+deno add jsr:@html-props/jsx@^1.0.0-beta
 ```
 
 ## Configuration

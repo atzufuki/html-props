@@ -3,11 +3,16 @@ import {
   HTMLPropsMixin,
   type InferConstructorProps,
   type InferProps,
+  type Prop,
+  prop,
 } from '@html-props/core';
 import { effect } from '@html-props/signals';
 
-const config = {
-  padding: { type: String, default: '0' },
+const config: {
+  padding: Prop<string>;
+  style: { display: string };
+} = {
+  padding: prop('0'),
   style: { display: 'block' },
 };
 

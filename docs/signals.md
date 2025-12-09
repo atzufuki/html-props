@@ -6,7 +6,7 @@ create state that automatically updates your UI when changed.
 ## Installation
 
 ```bash
-deno add @html-props/signals
+deno add @html-props/signals@^1.0.0-beta
 ```
 
 ## Basic Usage

@@ -1,5 +1,7 @@
 import type { PropConfig } from './types.ts';
 
+export type Prop<T> = { default: T } & PropConfig;
+
 /**
  * Helper to define a property with an explicit type and default value.
  *
@@ -12,7 +14,7 @@ import type { PropConfig } from './types.ts';
 export function prop<T>(
   defaultValue: T,
   config: Omit<PropConfig, 'default'> = {},
-): { default: T } & PropConfig {
+): Prop<T> {
   return {
     default: defaultValue,
     ...config,

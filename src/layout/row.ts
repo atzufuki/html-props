@@ -3,13 +3,19 @@ import {
   HTMLPropsMixin,
   type InferConstructorProps,
   type InferProps,
+  type Prop,
   prop,
-  type PropsConfig,
 } from '@html-props/core';
 import { effect } from '@html-props/signals';
 import { CrossAxisAlignment, MainAxisAlignment } from './flex_types.ts';
 
-const config: PropsConfig = {
+const config: {
+  mainAxisAlignment: Prop<keyof typeof MainAxisAlignment>;
+  crossAxisAlignment: Prop<keyof typeof CrossAxisAlignment>;
+  gap: Prop<string>;
+  wrap: Prop<'nowrap' | 'wrap' | 'wrap-reverse'>;
+  style: { display: string; flexDirection: string };
+} = {
   mainAxisAlignment: prop<keyof typeof MainAxisAlignment>('start'),
   crossAxisAlignment: prop<keyof typeof CrossAxisAlignment>('stretch'),
   gap: prop('0'),

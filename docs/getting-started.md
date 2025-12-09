@@ -65,13 +65,13 @@ You can install `@html-props/core` via JSR or import it directly from a CDN.
 ## Using Deno
 
 ```bash
-deno add @html-props/core
+deno add @html-props/core@^1.0.0-beta
 ```
 
 ## Using npm
 
 ```bash
-npx jsr add @html-props/core
+npx jsr add @html-props/core@^1.0.0-beta
 ```
 
 ## CDN (ES Modules)

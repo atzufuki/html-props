@@ -1,6 +1,6 @@
 {
   "name": "@html-props/layout",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "exports": "./mod.ts",
   "tasks": {
     "test": "deno test --allow-read --allow-env"

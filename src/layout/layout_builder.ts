@@ -3,11 +3,12 @@ import {
   HTMLPropsMixin,
   type InferConstructorProps,
   type InferProps,
-  type PropsConfig,
 } from '@html-props/core';
 import { signal } from '@html-props/signals';
 
-const config: PropsConfig = {
+const config: {
+  builder: { type: FunctionConstructor };
+} = {
   builder: { type: Function },
 };
 

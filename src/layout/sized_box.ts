@@ -3,12 +3,18 @@ import {
   HTMLPropsMixin,
   type InferConstructorProps,
   type InferProps,
+  type Prop,
+  prop,
 } from '@html-props/core';
 import { effect } from '@html-props/signals';
 
-const config = {
-  width: { type: String, default: '' },
-  height: { type: String, default: '' },
+const config: {
+  width: Prop<string>;
+  height: Prop<string>;
+  style: { display: string };
+} = {
+  width: prop(''),
+  height: prop(''),
   style: { display: 'block' },
 };
 

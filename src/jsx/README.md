@@ -16,7 +16,7 @@ in web components built with HTML Props.
 Add the package to your project.
 
 ```sh
-deno add jsr:@html-props/jsx
+deno add jsr:@html-props/jsx@^1.0.0-beta
 ```
 
 ## Usage

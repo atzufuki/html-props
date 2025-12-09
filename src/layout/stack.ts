@@ -3,6 +3,8 @@ import {
   HTMLPropsMixin,
   type InferConstructorProps,
   type InferProps,
+  type Prop,
+  prop,
 } from '@html-props/core';
 import { effect } from '@html-props/signals';
 
@@ -18,8 +20,11 @@ export const Alignment = {
   bottomRight: 'end end',
 } as const;
 
-const config = {
-  alignment: { type: String, default: 'topLeft' as keyof typeof Alignment },
+const config: {
+  alignment: Prop<keyof typeof Alignment>;
+  style: { display: string; gridTemplateAreas: string };
+} = {
+  alignment: prop<keyof typeof Alignment>('topLeft'),
   style: { display: 'grid', gridTemplateAreas: '"stack"' },
 };
 

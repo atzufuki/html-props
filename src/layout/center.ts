@@ -5,7 +5,15 @@ import {
   type InferProps,
 } from '@html-props/core';
 
-const config = {
+const config: {
+  style: {
+    display: string;
+    justifyContent: string;
+    alignItems: string;
+    width: string;
+    height: string;
+  };
+} = {
   style: {
     display: 'flex',
     justifyContent: 'center',

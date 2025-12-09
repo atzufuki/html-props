@@ -1,6 +1,6 @@
 import { HTMLPropsMixin, prop } from '@html-props/core';
 import { Footer } from '@html-props/built-ins';
-import { Text } from './Typography.ts';
+import { Typography } from './Typography.ts';
 import { theme } from '../theme.ts';
 
 export class AppFooter extends HTMLPropsMixin(HTMLElement, {
@@ -13,10 +13,12 @@ export class AppFooter extends HTMLPropsMixin(HTMLElement, {
         textAlign: 'center',
         borderTop: `1px solid ${theme.colors.border}`,
       },
-      content: new Text({
+      content: new Typography({
         text: this.copyright,
-        variant: 'small',
+        variant: 'bodyMedium',
         align: 'center',
+        color: '#64748b',
+        style: { fontSize: '0.9rem' },
       }),
     });
   }

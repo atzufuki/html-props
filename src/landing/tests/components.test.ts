@@ -123,8 +123,8 @@ Deno.test('FeatureCard renders content', async () => {
 
   await new Promise((resolve) => setTimeout(resolve, 0));
 
-  const h3 = card.querySelector('h3');
-  assertEquals(h3?.textContent, 'Fast');
+  const h6 = card.querySelector('h6');
+  assertEquals(h6?.textContent, 'Fast');
 
   const p = card.querySelector('p');
   assertEquals(p?.textContent, 'Very fast indeed.');
@@ -235,7 +235,7 @@ Deno.test('Hero renders heading with HTML correctly', async () => {
   document.body.appendChild(hero);
   await new Promise((resolve) => setTimeout(resolve, 0));
 
-  const heading = hero.querySelector('app-heading');
+  const heading = hero.querySelector('app-typography');
   const h1 = heading?.querySelector('h1');
 
   assertEquals(h1?.innerHTML.includes('<br>'), true, 'Heading should contain <br> tag');
