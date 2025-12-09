@@ -267,7 +267,7 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
         editorCol.style.borderRight = `1px solid ${theme.colors.border}`;
         editorCol.style.borderBottom = 'none';
         editorCol.style.height = 'auto';
-        editorCol.style.minHeight = '855px';
+        editorCol.style.minHeight = '962px';
       }
     });
 
@@ -299,16 +299,18 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
       // 1. Strip imports
       const cleanCode = code.replace(/import\s+.*?from\s+['"].*?['"];?/g, '');
 
-      // 2. Find class name
-      const classMatch = cleanCode.match(/class\s+(\w+)/);
-      if (!classMatch) throw new Error('No class definition found');
-      const className = classMatch[1];
+      // 2. Find class name (use the last one defined, assuming it's the main app)
+      const classMatches = [...cleanCode.matchAll(/class\s+(\w+)/g)];
+      if (classMatches.length === 0) throw new Error('No class definition found');
+      const className = classMatches[classMatches.length - 1][1];
 
-      // 3. Replace define with unique tag
-      const uniqueTag = `live-${className.toLowerCase()}-${Math.random().toString(36).substring(7)}`;
-      const codeWithUniqueTag = cleanCode.replace(
-        /\.define\(['"](.*?)['"]\)/,
-        `.define('${uniqueTag}')`,
+      // 3. Replace ALL define calls with unique tags to avoid registry collisions
+      const codeWithUniqueTags = cleanCode.replace(
+        /\.define\s*\(\s*(['"`])(.*?)\1/g,
+        (_match, quote, tagName) => {
+          const random = Math.random().toString(36).substring(7);
+          return `.define(${quote}live-${tagName}-${random}${quote}`;
+        },
       );
 
       // 4. Execute
@@ -326,7 +328,7 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
       const func = new Function(
         ...keys,
         `return (function() { 
-          ${codeWithUniqueTag};
+          ${codeWithUniqueTags};
           return ${className};
         })()`,
       );
