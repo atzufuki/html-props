@@ -303,9 +303,10 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
       }
       if (t.type === 'link') {
         let href = t.href;
-        // Transform relative .md links to hash routes
+        // Transform relative .md links to absolute paths for the router
         if (href && !href.startsWith('http') && !href.startsWith('/') && href.endsWith('.md')) {
-          href = `#/docs/${href.slice(0, -3)}`;
+          const page = href.slice(0, -3);
+          href = `/docs/${this.version}/${page}`;
         }
 
         return new A({
