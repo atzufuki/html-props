@@ -19,8 +19,21 @@ HTML Props brings declarativeness with rich data types and type safety to native
 
 ```typescript
 import { HTMLPropsMixin, prop } from '@html-props/core';
-import { Button, Div } from '@html-props/built-ins';
+import { Div } from '@html-props/built-ins';
 import { Column, Container } from '@html-props/layout';
+
+class CounterButton extends HTMLPropsMixin(HTMLButtonElement, {
+  is: prop('counter-button', { attribute: true }),
+  style: {
+    backgroundColor: '#a78bfa',
+    color: '#13111c',
+    border: 'none',
+    padding: '0.5rem 1rem',
+    borderRadius: '0.25rem',
+    cursor: 'pointer',
+    fontWeight: '600',
+  },
+}) {}
 
 class CounterApp extends HTMLPropsMixin(HTMLElement, {
   count: prop(0),
@@ -36,17 +49,8 @@ class CounterApp extends HTMLPropsMixin(HTMLElement, {
             textContent: `Count is: ${this.count}`,
             style: { fontSize: '1.2rem' },
           }),
-          new Button({
+          new CounterButton({
             textContent: 'Increment',
-            style: {
-              backgroundColor: '#a78bfa',
-              color: '#13111c',
-              border: 'none',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.25rem',
-              cursor: 'pointer',
-              fontWeight: '600',
-            },
             onclick: () => this.count++,
           }),
         ],
@@ -55,6 +59,7 @@ class CounterApp extends HTMLPropsMixin(HTMLElement, {
   }
 }
 
+CounterButton.define('counter-button', { extends: 'button' });
 CounterApp.define('counter-app');
 ```
 
