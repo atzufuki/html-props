@@ -1,8 +1,8 @@
 {
   "name": "@html-props/built-ins",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "imports": {
-    "@html-props/core": "jsr:@html-props/core@^1.0.0-beta.1"
+    "@html-props/core": "jsr:@html-props/core@^1.0.0-beta.2"
   },
   "exports": "./mod.ts",
   "compilerOptions": {

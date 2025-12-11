@@ -3,10 +3,10 @@
     "dev": "deno run -A --unstable-bundle dev_server.ts"
   },
   "imports": {
-    "@html-props/core": "jsr:@html-props/core@^1.0.0-beta.1",
+    "@html-props/core": "jsr:@html-props/core@^1.0.0-beta.2",
     "@html-props/signals": "jsr:@html-props/signals@^1.0.0-beta.1",
-    "@html-props/built-ins": "jsr:@html-props/built-ins@^1.0.0-beta.1",
-    "@html-props/layout": "jsr:@html-props/layout@^1.0.0-beta.2",
+    "@html-props/built-ins": "jsr:@html-props/built-ins@^1.0.0-beta.2",
+    "@html-props/layout": "jsr:@html-props/layout@^1.0.0-beta.3",
     "@std/http": "jsr:@std/http@^1.0.20"
   },
   "compilerOptions": {

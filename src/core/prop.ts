@@ -1,6 +1,4 @@
-import type { PropConfig } from './types.ts';
-
-export type Prop<T> = { default: T } & PropConfig;
+import type { Prop, PropConfig } from './types.ts';
 
 /**
  * Helper to define a property with an explicit type and default value.

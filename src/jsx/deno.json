@@ -1,9 +1,12 @@
 {
   "name": "@html-props/jsx",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "license": "MIT",
   "exports": {
     "./jsx-runtime": "./jsx-runtime.ts"
+  },
+  "imports": {
+    "@html-props/jsx/jsx-runtime": "./jsx-runtime.ts"
   },
   "compilerOptions": {
     "lib": [
@@ -12,6 +15,8 @@
       "DOM.Iterable",
       "DOM.AsyncIterable"
     ],
+    "jsx": "react-jsx",
+    "jsxImportSource": "@html-props/jsx",
     "strict": true,
     "strictFunctionTypes": false,
     "noUnusedLocals": true,

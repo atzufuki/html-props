@@ -41,3 +41,14 @@ export function jsx(
 }
 
 export const jsxs = jsx;
+
+export namespace JSX {
+  export interface Element {}
+  export interface ElementClass {
+    render(): any;
+  }
+  // We don't define ElementAttributesProperty so TS uses the constructor signature for class components
+
+  // For intrinsic elements (lowercase tag names)
+  export interface IntrinsicElements {}
+}

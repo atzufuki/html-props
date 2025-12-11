@@ -13,6 +13,8 @@ export interface PropConfig {
   event?: string;
 }
 
+export type Prop<T> = { default: T } & PropConfig;
+
 // Generic PropsConfig that includes native properties of T for suggestions
 export type PropsConfig<T = any> =
   & {

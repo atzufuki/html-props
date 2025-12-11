@@ -1,6 +1,6 @@
 {
   "name": "@html-props/core",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "exports": "./mod.ts",
   "imports": {
     "@html-props/signals": "jsr:@html-props/signals@^1.0.0-beta.1"

@@ -23,7 +23,7 @@ type Constructor<T = HTMLElementLike> = new (...args: any[]) => T;
 
 export interface HTMLPropsElementConstructor<T extends Constructor, P = {}, IP = P> {
   new (
-    props?: Omit<Partial<InstanceType<T>>, 'style'> & {
+    props?: Omit<Partial<InstanceType<T>>, 'style' | 'children'> & {
       style?: Partial<CSSStyleDeclaration> | string;
       ref?: RefObject<any> | ((el: InstanceType<T>) => void);
       children?: any;
@@ -36,6 +36,7 @@ export interface HTMLPropsElementConstructor<T extends Constructor, P = {}, IP =
     update?(): void;
     defaultUpdate(newContent?: any): void;
     requestUpdate(): void;
+    render(): any;
   };
   define(tagName: string, options?: any): HTMLPropsElementConstructor<T, P, IP> & Pick<T, keyof T>;
 }
@@ -103,6 +104,8 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
     }
 
     private __applyProps(props: Record<string, any>) {
+      const propsConfig = (this.constructor as any).__props as PropsConfig;
+
       Object.entries(props).forEach(([key, value]) => {
         if (key === 'style') {
           if (typeof value === 'object') {
@@ -117,6 +120,11 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
         } else if (key.startsWith('on') && typeof value === 'function') {
           const eventName = key.substring(2).toLowerCase();
           this.addEventListener(eventName, value as any);
+        } else if (
+          (key === 'content' || key === 'children') &&
+          (propsConfig && key in propsConfig)
+        ) {
+          (this as any)[key] = value;
         } else if (key === 'content' || key === 'children') {
           const nodes = (Array.isArray(value) ? value : [value]).filter((n: any) =>
             n != null && n !== false && n !== true
@@ -145,6 +153,9 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       if (!props) return;
 
       Object.entries(props).forEach(([key, config]) => {
+        // Skip children and content as they are handled specially
+        if (key === 'children' || key === 'content') return;
+
         // Check if it's a PropConfig (has type constructor OR default OR attribute)
         const isPropConfig = config && typeof config === 'object' && (
           typeof config.type === 'function' ||
