@@ -28,7 +28,6 @@ if (!globalThis.document) {
     HTMLPreElement,
     Node,
     CustomEvent,
-    Event,
     MutationObserver,
   } = parseHTML('<!DOCTYPE html><html><body></body></html>');
 
@@ -110,7 +109,6 @@ if (!globalThis.document) {
     HTMLPreElement,
     Node,
     CustomEvent,
-    Event,
     MutationObserver,
     ...polyfills,
   });
