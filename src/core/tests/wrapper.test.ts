@@ -184,26 +184,42 @@ Deno.test('HTMLPropsMixin: wraps WiredButton with props API', async () => {
   // Dynamic import to ensure DOM is ready before Lit loads
   const { WiredButton } = await import('https://esm.sh/wired-elements@3.0.0-rc.6?target=es2022');
 
-  // Wrap WITHOUT custom props - just expose native props via constructor API
-  const Wrapped = HTMLPropsMixin(WiredButton);
+  // Import prop config for custom props
+  const { prop } = await import('../prop.ts');
+
+  // Wrap WITH custom props - add custom reactive props alongside native ones
+  const Wrapped = HTMLPropsMixin(WiredButton, {
+    label: prop('Click me'),
+    count: prop(0),
+  });
 
   const tagName = 'wrapped-wired-button-2';
   if (!customElements.get(tagName)) {
     Wrapped.define(tagName);
   }
 
-  // Use props API to set native properties
+  // Use props API to set both native and custom properties
   const el = new Wrapped({
     elevation: 2,
     disabled: false,
+    label: 'Submit Form',
+    count: 5,
   });
   document.body.appendChild(el);
 
-  // Verify props were set via constructor
+  // Verify native props were set via constructor
   assertEquals(el.elevation, 2);
   assertEquals(el.disabled, false);
 
-  // Update via property setter
+  // Verify custom props were set
+  assertEquals(el.label, 'Submit Form');
+  assertEquals(el.count, 5);
+
+  // Update custom prop via property setter
+  el.count = 10;
+  assertEquals(el.count, 10);
+
+  // Update native prop
   el.elevation = 4;
   assertEquals(el.elevation, 4);
 });

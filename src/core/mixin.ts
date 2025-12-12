@@ -68,13 +68,23 @@ class PropsController {
         } else {
           host.setAttribute('style', String(value));
         }
-      } else if (key === 'className' || key === 'class') {
-        host.setAttribute('class', value as string);
       } else if (key === 'ref') {
         this.ref = value;
       } else if (key.startsWith('on') && typeof value === 'function') {
-        const eventName = key.substring(2).toLowerCase();
-        host.addEventListener(eventName, value as any);
+        // Event handlers: set as property (like all props)
+        if (key in host) {
+          try {
+            (host as any)[key] = value;
+          } catch {
+            // Property might be readonly
+          }
+        }
+        // Also add as event listener if propsConfig has event option for this key
+        const config = propsConfig?.[key];
+        if (config?.event) {
+          const eventName = typeof config.event === 'string' ? config.event : key.substring(2).toLowerCase();
+          host.addEventListener(eventName, value as any);
+        }
       } else if (
         (key === 'content' || key === 'children') &&
         (propsConfig && key in propsConfig)
