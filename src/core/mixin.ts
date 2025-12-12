@@ -21,6 +21,289 @@ interface HTMLElementLike {
 
 type Constructor<T = HTMLElementLike> = new (...args: any[]) => T;
 
+// Unique symbols to avoid any property name conflicts
+const PROPS_CONTROLLER = Symbol.for('html-props:controller');
+const HTML_PROPS_MIXIN = Symbol.for('html-props:mixin');
+
+/**
+ * Controller class that manages all html-props functionality.
+ * This is stored on a single Symbol property to avoid conflicts.
+ */
+class PropsController {
+  private signals: Record<string, Signal<any>> = {};
+  private cleanup: (() => void) | null = null;
+  private isFirstRender = true;
+  private updateSignal: Signal<number> = signal(0);
+  private ref: any = null;
+  private host: HTMLElementLike;
+  private propsConfig: PropsConfig | null;
+  private baseHasOwnRendering: boolean;
+
+  constructor(host: HTMLElementLike, propsConfig: PropsConfig | null, baseHasOwnRendering: boolean) {
+    this.host = host;
+    this.propsConfig = propsConfig;
+    this.baseHasOwnRendering = baseHasOwnRendering;
+  }
+
+  requestUpdate() {
+    this.updateSignal.update((n: number) => n + 1);
+  }
+
+  setRef(ref: any) {
+    this.ref = ref;
+  }
+
+  getSignal(key: string): Signal<any> | undefined {
+    return this.signals[key];
+  }
+
+  applyProps(props: Record<string, any>) {
+    const host = this.host;
+    const propsConfig = this.propsConfig;
+
+    Object.entries(props).forEach(([key, value]) => {
+      if (key === 'style') {
+        if (typeof value === 'object') {
+          Object.assign(host.style, value);
+        } else {
+          host.setAttribute('style', String(value));
+        }
+      } else if (key === 'className' || key === 'class') {
+        host.setAttribute('class', value as string);
+      } else if (key === 'ref') {
+        this.ref = value;
+      } else if (key.startsWith('on') && typeof value === 'function') {
+        const eventName = key.substring(2).toLowerCase();
+        host.addEventListener(eventName, value as any);
+      } else if (
+        (key === 'content' || key === 'children') &&
+        (propsConfig && key in propsConfig)
+      ) {
+        (host as any)[key] = value;
+      } else if (key === 'content' || key === 'children') {
+        const nodes = (Array.isArray(value) ? value : [value]).filter((n: any) =>
+          n != null && n !== false && n !== true
+        );
+        host.replaceChildren(...nodes);
+      } else {
+        if (key in host) {
+          try {
+            (host as any)[key] = value;
+          } catch {
+            // Property might be readonly
+          }
+        } else {
+          if (value === true) {
+            host.setAttribute(key, '');
+          } else if (value != null && value !== false) {
+            host.setAttribute(key, String(value));
+          }
+        }
+      }
+    });
+  }
+
+  initializeProps() {
+    const host = this.host;
+    const props = this.propsConfig;
+    if (!props) return;
+
+    Object.entries(props).forEach(([key, config]) => {
+      // Skip children and content as they are handled specially
+      if (key === 'children' || key === 'content') return;
+
+      // Check if it's a PropConfig (has type constructor OR default OR attribute)
+      const isPropConfig = config && typeof config === 'object' && (
+        typeof config.type === 'function' ||
+        'default' in config ||
+        'attribute' in config
+      );
+
+      if (!isPropConfig) {
+        // Direct value (default for native prop)
+        if (key === 'style' && typeof config === 'object') {
+          Object.assign(host.style, config);
+        } else {
+          (host as any)[key] = config;
+        }
+        return;
+      }
+
+      // Special handling for style in PropConfig format
+      if (key === 'style') {
+        if (config.default) {
+          if (typeof config.default === 'object') {
+            Object.assign(host.style, config.default);
+          } else {
+            host.setAttribute('style', String(config.default));
+          }
+        }
+        return;
+      }
+
+      // Initialize signal with default value
+      const initialValue = config.default;
+      const s = signal(initialValue);
+      this.signals[key] = s;
+
+      // Define property getter/setter on host
+      Object.defineProperty(host, key, {
+        get: () => s(),
+        set: (v) => {
+          const oldValue = s();
+          if (oldValue !== v) {
+            s.set(v);
+            if (config.event) {
+              host.dispatchEvent(new CustomEvent(config.event, { detail: v }));
+            }
+          }
+        },
+        enumerable: true,
+        configurable: true,
+      });
+    });
+
+    // Initial reflection of defaults
+    this.reflectAttributes();
+  }
+
+  defaultUpdate(newContent?: any) {
+    const host = this.host;
+    if (newContent === undefined && !(host as any).render) {
+      return;
+    }
+    const content = newContent === undefined && (host as any).render ? (host as any).render() : newContent;
+
+    const target = host.shadowRoot || host;
+    target.replaceChildren(
+      ...(Array.isArray(content) ? content : [content]).filter((n: any) => n != null && n !== false && n !== true),
+    );
+  }
+
+  reflectAttributes() {
+    const host = this.host;
+    const props = this.propsConfig;
+    if (!props) return;
+
+    Object.entries(props).forEach(([key, config]) => {
+      const isPropConfig = config && typeof config === 'object' && (
+        typeof config.type === 'function' ||
+        'default' in config ||
+        'attribute' in config
+      );
+      if (!isPropConfig) return;
+
+      if (config.attribute) {
+        const s = this.signals[key];
+        if (!s) return;
+        const val = s();
+        const attrName = typeof config.attribute === 'string' ? config.attribute : key.toLowerCase();
+
+        const isBoolean = config.type === Boolean || (typeof config.default === 'boolean');
+
+        if (isBoolean) {
+          if (val) {
+            if (!host.hasAttribute(attrName)) {
+              host.setAttribute(attrName, '');
+            }
+          } else {
+            if (host.hasAttribute(attrName)) {
+              host.removeAttribute(attrName);
+            }
+          }
+        } else {
+          if (val != null) {
+            const strVal = String(val);
+            if (host.getAttribute(attrName) !== strVal) {
+              host.setAttribute(attrName, strVal);
+            }
+          } else {
+            host.removeAttribute(attrName);
+          }
+        }
+      }
+    });
+  }
+
+  onConnected() {
+    // Apply ref
+    if (this.ref) {
+      if (typeof this.ref === 'function') {
+        this.ref(this.host);
+      } else if (typeof this.ref === 'object' && 'current' in this.ref) {
+        this.ref.current = this.host;
+      }
+    }
+
+    // Setup effects
+    let renderDispose = () => {};
+
+    // Only set up render effect if base doesn't have its own rendering
+    if (!this.baseHasOwnRendering) {
+      renderDispose = effect(() => {
+        this.updateSignal();
+        if (this.isFirstRender) {
+          this.defaultUpdate();
+          this.isFirstRender = false;
+        } else if (typeof (this.host as any).update === 'function') {
+          (this.host as any).update();
+        } else {
+          this.defaultUpdate();
+        }
+      });
+    }
+
+    const reflectDispose = effect(() => this.reflectAttributes());
+
+    this.cleanup = () => {
+      renderDispose();
+      reflectDispose();
+    };
+  }
+
+  onDisconnected() {
+    // Unset ref
+    if (this.ref) {
+      if (typeof this.ref === 'function') {
+        this.ref(null);
+      } else if (typeof this.ref === 'object' && 'current' in this.ref) {
+        this.ref.current = null;
+      }
+    }
+
+    if (this.cleanup) {
+      this.cleanup();
+      this.cleanup = null;
+    }
+  }
+
+  onAttributeChanged(name: string, oldVal: string | null, newVal: string | null) {
+    if (oldVal === newVal) return;
+
+    const props = this.propsConfig;
+    if (!props) return;
+
+    // Find prop for attribute
+    const entry = Object.entries(props).find(([key, config]) => {
+      const attr = typeof config.attribute === 'string' ? config.attribute : key.toLowerCase();
+      return attr === name;
+    });
+
+    if (entry) {
+      const [key, config] = entry;
+      let val: any = newVal;
+
+      if (config.type === Boolean || (typeof config.default === 'boolean')) {
+        val = newVal !== null;
+      } else if (config.type === Number || (typeof config.default === 'number')) {
+        val = newVal === null ? null : Number(newVal);
+      }
+
+      (this.host as any)[key] = val;
+    }
+  }
+}
+
 export interface HTMLPropsElementConstructor<T extends Constructor, P = {}, IP = P> {
   new (
     props?: Omit<Partial<InstanceType<T>>, 'style' | 'children'> & {
@@ -54,305 +337,97 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
   Base: T,
   config?: POrConfig,
 ): HTMLPropsElementConstructor<T, any> & Pick<T, keyof T> {
+  // Check if the base class has its own rendering system (not from our mixin)
+  // If base has our marker, it's from a previous HTMLPropsMixin application - we should render
+  // If base has requestUpdate but NOT our marker, it's an external framework (LitElement etc) - skip rendering
+  const baseIsHtmlProps = (Base as any)[HTML_PROPS_MIXIN] === true;
+  const baseHasOwnRendering = !baseIsHtmlProps && 'requestUpdate' in Base.prototype;
+
   class HTMLPropsElement extends Base {
+    // Marker to identify classes created by HTMLPropsMixin
+    static [HTML_PROPS_MIXIN] = true;
+
+    // Single Symbol property to avoid any conflicts
+    [PROPS_CONTROLLER]: PropsController;
+
     static define(tagName: string, options?: any) {
       customElements.define(tagName, this as any, options);
       return this;
-    }
-
-    // Store signals for props
-    private __signals: Record<string, Signal<any>> = {};
-    private __cleanup: (() => void) | null = null;
-    private __isFirstRender = true;
-    private __updateSignal = signal(0);
-    private __ref: any = null;
-
-    requestUpdate() {
-      this.__updateSignal.update((n: number) => n + 1);
     }
 
     static get observedAttributes() {
       const props = (this as any).__props as PropsConfig;
       if (!props) return [];
       return Object.entries(props)
-        .filter(([_, config]) => config.attribute)
-        .map(([key, config]) => {
-          if (typeof config.attribute === 'string') return config.attribute;
+        .filter(([_, cfg]) => cfg.attribute)
+        .map(([key, cfg]) => {
+          if (typeof cfg.attribute === 'string') return cfg.attribute;
           return key.toLowerCase();
         });
     }
 
+    // Only define requestUpdate if base doesn't have it
+    requestUpdate() {
+      // Guard: controller may not exist yet if base calls this in constructor
+      if (this[PROPS_CONTROLLER]) {
+        this[PROPS_CONTROLLER].requestUpdate();
+      }
+      // Call super if it exists
+      // @ts-ignore
+      if (typeof super.requestUpdate === 'function') {
+        // @ts-ignore
+        super.requestUpdate();
+      }
+    }
+
+    defaultUpdate(newContent?: any) {
+      if (this[PROPS_CONTROLLER]) {
+        this[PROPS_CONTROLLER].defaultUpdate(newContent);
+      }
+    }
+
     constructor(...args: any[]) {
-      // @ts-ignore: Allow passing args to super even if Base doesn't declare them
+      // @ts-ignore
       if ('props' in Base) {
         super(...args);
       } else {
         super();
       }
 
-      // Workaround for linkedom: ownerDocument might be missing after constructor
+      // Workaround for linkedom
       if (!(this as any).ownerDocument && globalThis.document) {
         Object.defineProperty(this, 'ownerDocument', { value: globalThis.document });
       }
 
-      this.__initializeProps();
+      // Create controller with props config
+      const propsConfig = (this.constructor as any).__props as PropsConfig || null;
+      this[PROPS_CONTROLLER] = new PropsController(this, propsConfig, baseHasOwnRendering);
+      this[PROPS_CONTROLLER].initializeProps();
 
       const props = args[0];
       if (props && typeof props === 'object' && !props.nodeType && !Array.isArray(props)) {
-        this.__applyProps(props);
+        this[PROPS_CONTROLLER].applyProps(props);
       }
-    }
-
-    private __applyProps(props: Record<string, any>) {
-      const propsConfig = (this.constructor as any).__props as PropsConfig;
-
-      Object.entries(props).forEach(([key, value]) => {
-        if (key === 'style') {
-          if (typeof value === 'object') {
-            Object.assign(this.style, value);
-          } else {
-            this.setAttribute('style', String(value));
-          }
-        } else if (key === 'className' || key === 'class') {
-          this.setAttribute('class', value as string);
-        } else if (key === 'ref') {
-          this.__ref = value;
-        } else if (key.startsWith('on') && typeof value === 'function') {
-          const eventName = key.substring(2).toLowerCase();
-          this.addEventListener(eventName, value as any);
-        } else if (
-          (key === 'content' || key === 'children') &&
-          (propsConfig && key in propsConfig)
-        ) {
-          (this as any)[key] = value;
-        } else if (key === 'content' || key === 'children') {
-          const nodes = (Array.isArray(value) ? value : [value]).filter((n: any) =>
-            n != null && n !== false && n !== true
-          );
-          this.replaceChildren(...nodes);
-        } else {
-          if (key in this) {
-            try {
-              (this as any)[key] = value;
-            } catch {
-              // Property might be readonly
-            }
-          } else {
-            if (value === true) {
-              this.setAttribute(key, '');
-            } else if (value != null && value !== false) {
-              this.setAttribute(key, String(value));
-            }
-          }
-        }
-      });
-    }
-
-    private __initializeProps() {
-      const props = (this.constructor as any).__props as PropsConfig;
-      if (!props) return;
-
-      Object.entries(props).forEach(([key, config]) => {
-        // Skip children and content as they are handled specially
-        if (key === 'children' || key === 'content') return;
-
-        // Check if it's a PropConfig (has type constructor OR default OR attribute)
-        const isPropConfig = config && typeof config === 'object' && (
-          typeof config.type === 'function' ||
-          'default' in config ||
-          'attribute' in config
-        );
-
-        if (!isPropConfig) {
-          // Direct value (default for native prop)
-          // Special handling for style
-          if (key === 'style' && typeof config === 'object') {
-            Object.assign(this.style, config);
-          } else {
-            // Apply directly to instance
-            // If it's a native prop, this will trigger native setter
-            // For tabIndex, we need to be careful about timing or type coercion?
-            // No, direct assignment should work.
-            (this as any)[key] = config;
-
-            // If it's a native prop that reflects, we might need to ensure attribute is set if setter doesn't?
-            // Native setters usually set attributes.
-          }
-          return;
-        }
-
-        // Special handling for style in PropConfig format
-        if (key === 'style') {
-          if (config.default) {
-            if (typeof config.default === 'object') {
-              Object.assign(this.style, config.default);
-            } else {
-              this.setAttribute('style', String(config.default));
-            }
-          }
-          return;
-        }
-
-        // Initialize signal with default value
-        const initialValue = config.default;
-        const s = signal(initialValue);
-        this.__signals[key] = s;
-
-        // Define property getter/setter
-        Object.defineProperty(this, key, {
-          get: () => s(),
-          set: (v) => {
-            const oldValue = s();
-            if (oldValue !== v) {
-              s.set(v);
-              if (config.event) {
-                this.dispatchEvent(new CustomEvent(config.event, { detail: v }));
-              }
-            }
-          },
-          enumerable: true,
-          configurable: true,
-        });
-      });
-
-      // Initial reflection of defaults
-      this.__reflectAttributes();
-    }
-
-    defaultUpdate(newContent?: any) {
-      if (newContent === undefined && !(this as any).render) {
-        return;
-      }
-      const content = newContent === undefined && (this as any).render ? (this as any).render() : newContent;
-
-      const target = this.shadowRoot || this;
-      target.replaceChildren(
-        ...(Array.isArray(content) ? content : [content]).filter((n: any) => n != null && n !== false && n !== true),
-      );
-    }
-
-    private __reflectAttributes() {
-      const props = (this.constructor as any).__props as PropsConfig;
-      if (!props) return;
-
-      Object.entries(props).forEach(([key, config]) => {
-        // Only reflect PropConfigs with attribute: true or string
-        const isPropConfig = config && typeof config === 'object' && (
-          typeof config.type === 'function' ||
-          'default' in config ||
-          'attribute' in config
-        );
-        if (!isPropConfig) return;
-
-        if (config.attribute) {
-          const val = this.__signals[key]();
-          const attrName = typeof config.attribute === 'string' ? config.attribute : key.toLowerCase();
-
-          const isBoolean = config.type === Boolean || (typeof config.default === 'boolean');
-
-          if (isBoolean) {
-            if (val) {
-              if (!this.hasAttribute(attrName)) {
-                this.setAttribute(attrName, '');
-              }
-            } else {
-              if (this.hasAttribute(attrName)) {
-                this.removeAttribute(attrName);
-              }
-            }
-          } else {
-            // String or Number
-            if (val != null) {
-              const strVal = String(val);
-              if (this.getAttribute(attrName) !== strVal) {
-                this.setAttribute(attrName, strVal);
-              }
-            } else {
-              this.removeAttribute(attrName);
-            }
-          }
-        }
-      });
     }
 
     override connectedCallback() {
       // @ts-ignore
       if (super.connectedCallback) super.connectedCallback();
-
-      // Apply ref
-      if (this.__ref) {
-        if (typeof this.__ref === 'function') {
-          this.__ref(this);
-        } else if (typeof this.__ref === 'object' && 'current' in this.__ref) {
-          this.__ref.current = this;
-        }
-      }
-
-      // Setup effects
-      const renderDispose = effect(() => {
-        this.__updateSignal();
-        if (this.__isFirstRender) {
-          this.defaultUpdate();
-          this.__isFirstRender = false;
-        } else if (typeof (this as any).update === 'function') {
-          (this as any).update();
-        } else {
-          this.defaultUpdate();
-        }
-      });
-      const reflectDispose = effect(() => this.__reflectAttributes());
-
-      this.__cleanup = () => {
-        renderDispose();
-        reflectDispose();
-      };
+      this[PROPS_CONTROLLER].onConnected();
     }
 
     override disconnectedCallback() {
       // @ts-ignore
       if (super.disconnectedCallback) super.disconnectedCallback();
-
-      // Unset ref
-      if (this.__ref) {
-        if (typeof this.__ref === 'function') {
-          this.__ref(null);
-        } else if (typeof this.__ref === 'object' && 'current' in this.__ref) {
-          this.__ref.current = null;
-        }
-      }
-
-      if (this.__cleanup) {
-        this.__cleanup();
-        this.__cleanup = null;
-      }
+      this[PROPS_CONTROLLER].onDisconnected();
     }
 
     override attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null) {
       // @ts-ignore
       if (super.attributeChangedCallback) super.attributeChangedCallback(name, oldVal, newVal);
-
-      if (oldVal === newVal) return;
-
-      const props = (this.constructor as any).__props as PropsConfig;
-      if (!props) return;
-
-      // Find prop for attribute
-      const entry = Object.entries(props).find(([key, config]) => {
-        const attr = typeof config.attribute === 'string' ? config.attribute : key.toLowerCase();
-        return attr === name;
-      });
-
-      if (entry) {
-        const [key, config] = entry;
-        let val: any = newVal;
-
-        if (config.type === Boolean || (typeof config.default === 'boolean')) {
-          val = newVal !== null;
-        } else if (config.type === Number || (typeof config.default === 'number')) {
-          val = newVal === null ? null : Number(newVal);
-        }
-
-        (this as any)[key] = val;
+      // Guard: controller may not exist yet during early attribute setting
+      if (this[PROPS_CONTROLLER]) {
+        this[PROPS_CONTROLLER].onAttributeChanged(name, oldVal, newVal);
       }
     }
   }

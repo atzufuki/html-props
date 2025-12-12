@@ -2892,8 +2892,51 @@
     }
   },
   "remote": {
+    "https://esm.sh/@lit/reactive-element@1.6.3/es2022/css-tag.mjs": "fdbbc69a817dc227c9ea63523a6699a64b0bc34a7a4fdd2003c71e57a15700ae",
+    "https://esm.sh/@lit/reactive-element@1.6.3/es2022/decorators/base.mjs": "7ed28ea991d8fe8596df22e798bb9d88a6c5c24e926bcea083368296e3620d89",
+    "https://esm.sh/@lit/reactive-element@1.6.3/es2022/decorators/custom-element.mjs": "0cdc5ead89b7d4e5a3f1c51245cf6aec144496b5e544d386a5db96deb6399f00",
+    "https://esm.sh/@lit/reactive-element@1.6.3/es2022/decorators/event-options.mjs": "6d9d50f8b8542c1bbf38c62fdbdc3e42458b78fb793a6896a1788b62f2087c17",
+    "https://esm.sh/@lit/reactive-element@1.6.3/es2022/decorators/property.mjs": "7ce987b8056422edbc1ea84d23e1e9a14933fc77ee4c7dfeee277e7c89eb5bd3",
+    "https://esm.sh/@lit/reactive-element@1.6.3/es2022/decorators/query-all.mjs": "6a5029bc1909add70a42435f77036c53686749bb871097188c7553424c5683c5",
+    "https://esm.sh/@lit/reactive-element@1.6.3/es2022/decorators/query-assigned-elements.mjs": "f629c09392758d24a1c67b31059e612887d045d74c63684543bdbcc8854b172d",
+    "https://esm.sh/@lit/reactive-element@1.6.3/es2022/decorators/query-assigned-nodes.mjs": "2dd84334eed3d402804cdfa8fdfaa151f21c3058d0fdc7fa850eb0414c839121",
+    "https://esm.sh/@lit/reactive-element@1.6.3/es2022/decorators/query-async.mjs": "e0be0a46937c065a1243cac98fc1c5f3c8ea8963a2fe66ef641fa2e1d930b3ba",
+    "https://esm.sh/@lit/reactive-element@1.6.3/es2022/decorators/query.mjs": "153003284abd611ad506b50c8111fbc7df04640f30bf24bd4ecf44cd7fc91aeb",
+    "https://esm.sh/@lit/reactive-element@1.6.3/es2022/decorators/state.mjs": "07bea2d357ad8f700e42e9c7d0d809bfe676c3a231af74c982d4cdab6b51472d",
+    "https://esm.sh/@lit/reactive-element@1.6.3/es2022/reactive-element.mjs": "5203e24df32100797a2dc051172258ed5aa11f1d7618a62730b688e983100ff6",
+    "https://esm.sh/@lit/reactive-element@^1.3.0?target=es2022": "d2ae354c563fbe1a0c0f5e4d8b085c65c25e2d46ca43bfaaf70a3e31b7af518d",
+    "https://esm.sh/@lit/reactive-element@^1.6.0/decorators/custom-element?target=es2022": "bdb2dffa720d7efdd51688a4d66f2061f20040b6fbf1efe42a51836a7909026c",
+    "https://esm.sh/@lit/reactive-element@^1.6.0/decorators/event-options?target=es2022": "523bdae0c101cb17ad7d80cd431298f438d97cf6a65cb572e965e5cf8ab2d6d7",
+    "https://esm.sh/@lit/reactive-element@^1.6.0/decorators/property?target=es2022": "183557cccb952b0b5ad0764f168e109613216e9135edac16839fe64b65045881",
+    "https://esm.sh/@lit/reactive-element@^1.6.0/decorators/query-all?target=es2022": "563a7c1180c41f766df81b0db9351d39a31f2cf4cbb0cb2a66480d7d6896e80a",
+    "https://esm.sh/@lit/reactive-element@^1.6.0/decorators/query-assigned-elements?target=es2022": "45acc4671f0e9f3897597a5febd06263780c229392a51be32687150020037b9b",
+    "https://esm.sh/@lit/reactive-element@^1.6.0/decorators/query-assigned-nodes?target=es2022": "3397ec6ab4887b67990a33fd6ba613c8e87e06e7d69e80222e1465c6deb594e3",
+    "https://esm.sh/@lit/reactive-element@^1.6.0/decorators/query-async?target=es2022": "954f642439c74ec9343cc273edb5310d9c8d5ff3c3275e9621ecb0b0876962b6",
+    "https://esm.sh/@lit/reactive-element@^1.6.0/decorators/query?target=es2022": "c33dcac72d15c2b00b04e455ccf4b10b85491fea5dba1412088efa22d63d2ce5",
+    "https://esm.sh/@lit/reactive-element@^1.6.0/decorators/state?target=es2022": "0eb94b6af99e2b10f84aaba3b490c5d88deef17a4e67f1bbea71443d2f616306",
+    "https://esm.sh/@lit/reactive-element@^1.6.0?target=es2022": "d2ae354c563fbe1a0c0f5e4d8b085c65c25e2d46ca43bfaaf70a3e31b7af518d",
+    "https://esm.sh/hachure-fill@0.5.2/es2022/hachure-fill.mjs": "89816bc816be0e27b2975a03f53f0aec401eed53568f34420c3a53b690743c81",
+    "https://esm.sh/hachure-fill@^0.5.2?target=es2022": "752fcb6696a84072eeb45669c1f1d2742475880e6004bd8eba8e90f32c698c79",
+    "https://esm.sh/lit-element@3.3.3/es2022/__lit-element.mjs": "73de4941cf5d9bf78ece38741bb217b1f35dd781bbb5992226ea3ff2a3fac012",
+    "https://esm.sh/lit-element@^3.3.0/lit-element?target=es2022": "b91bb7ad82d937b9be805fa107fc871828be291461840a2cc80fc659a451b454",
+    "https://esm.sh/lit-html@2.8.0/es2022/is-server.mjs": "e7b498ec2db905f8bf47a68f6098d5761bb498b37c98f6a86553ad5008abf874",
+    "https://esm.sh/lit-html@2.8.0/es2022/lit-html.mjs": "adc36aab8c2384383093ea76d7321efb8acdeaa44fd2ead6828453251a42d9a2",
+    "https://esm.sh/lit-html@^2.8.0/is-server?target=es2022": "eafb9188adac25feeb7e115a8c0444f3b26e7bf5a1efb565802860ac1ae35f6f",
+    "https://esm.sh/lit-html@^2.8.0?target=es2022": "d161a9631c3ea08a354527c8db55bf18afb62288220800019e2e6e79a7d710be",
+    "https://esm.sh/lit@2.8.0/es2022/decorators.mjs": "1aa3ad8889def7e001ad942cf8da92ea3ff3a1c129066dd32c2a08af0524d35d",
+    "https://esm.sh/lit@2.8.0/es2022/lit.mjs": "eb98443811a93d36fd8c9cf15878c7a2882ae5a5d5944761531367126c444905",
+    "https://esm.sh/lit@^2.0.0-rc.1/decorators?target=es2022": "6563bf96d82af405c730540702dd39b22e675737c96ac70243b5337dcb8af217",
+    "https://esm.sh/lit@^2.0.0-rc.1?target=es2022": "58ea69e78c2ba9cc7bcb2a5736b94c3e58cfae6f5859c1df9b175c7fcadafb8a",
     "https://esm.sh/marked@15.0.2": "eb70fba7c580c7418f3af3d4949907170d957ab6e78f776b825d4af75e12dac5",
-    "https://esm.sh/marked@15.0.2/denonext/marked.mjs": "9e98f643ed602eccb236033ef579ba938838f9003e5e715d92953675a323b4e2"
+    "https://esm.sh/marked@15.0.2/denonext/marked.mjs": "9e98f643ed602eccb236033ef579ba938838f9003e5e715d92953675a323b4e2",
+    "https://esm.sh/path-data-parser@0.1.0/es2022/path-data-parser.mjs": "89253d9e2f88788f7c4ae2ef77d7c431f73d7ca1feb8ecd0aa60598e2bcdf3d8",
+    "https://esm.sh/path-data-parser@^0.1.0?target=es2022": "497e254f180c3a967693e89f63ce63bd12dfd8af021a6b78d0f4980f26e173f2",
+    "https://esm.sh/roughjs@4.6.6/es2022/bin/fillers/zigzag-filler.mjs": "d1b7974e0010f6d268839433fe5ac18505c6bd35203c2a815496a2670977c53a",
+    "https://esm.sh/roughjs@4.6.6/es2022/bin/renderer.mjs": "0b28f97c23883fbae0e243d2fb047be7324df453c66194d747c2a19c7e0494c7",
+    "https://esm.sh/roughjs@^4.3.1/bin/fillers/zigzag-filler?target=es2022": "d1956ff46a6b68cd057fc57c252831248977af3c455743309c0279c0aea6dcd0",
+    "https://esm.sh/roughjs@^4.3.1/bin/renderer?target=es2022": "f122a48075f388c7e1e4a5b908a70c8668d51eb53749ab79ae5c77ba607a8427",
+    "https://esm.sh/wired-elements@3.0.0-rc.6/es2022/wired-elements.mjs": "456315fad89a8f7d59c116aefbac2d3415058441ea61de30d55c9bf99b2310df",
+    "https://esm.sh/wired-elements@3.0.0-rc.6?target=es2022": "0f9194b4fcf8d794e871340634474086e814c5450f25a91f9f3c91d227299e9c"
   },
   "workspace": {
     "dependencies": [
@@ -2923,7 +2966,7 @@
       },
       "src/built-ins": {
         "dependencies": [
-          "jsr:@html-props/core@^1.0.0-beta.2"
+          "jsr:@html-props/core@^1.0.0-beta.3"
         ]
       },
       "src/core": {
@@ -2934,7 +2977,7 @@
       "src/create/template": {
         "dependencies": [
           "jsr:@html-props/built-ins@^1.0.0-beta.2",
-          "jsr:@html-props/core@^1.0.0-beta.2",
+          "jsr:@html-props/core@^1.0.0-beta.3",
           "jsr:@html-props/layout@^1.0.0-beta.3",
           "jsr:@html-props/signals@^1.0.0-beta.1",
           "jsr:@std/http@^1.0.20"
@@ -2943,7 +2986,7 @@
       "src/landing": {
         "dependencies": [
           "jsr:@html-props/built-ins@^1.0.0-beta.2",
-          "jsr:@html-props/core@^1.0.0-beta.2",
+          "jsr:@html-props/core@^1.0.0-beta.3",
           "jsr:@html-props/layout@^1.0.0-beta.3",
           "jsr:@html-props/signals@^1.0.0-beta.1",
           "npm:marked@^17.0.1"
@@ -2952,7 +2995,7 @@
       "src/layout": {
         "dependencies": [
           "jsr:@html-props/built-ins@^1.0.0-beta.2",
-          "jsr:@html-props/core@^1.0.0-beta.2",
+          "jsr:@html-props/core@^1.0.0-beta.3",
           "jsr:@html-props/signals@^1.0.0-beta.1"
         ]
       }
