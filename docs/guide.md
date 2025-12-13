@@ -163,15 +163,15 @@ integrating with third-party DOM libraries.
 
 ### Creating Refs
 
-The standard way to create a ref is using the `createRef` helper.
+The standard way to create a ref is using the `ref` helper.
 
 ```typescript
-import { createRef, HTMLPropsMixin, prop } from '@html-props/core';
+import { HTMLPropsMixin, prop, ref } from '@html-props/core';
 import { Input } from '@html-props/built-ins';
 
 class MyForm extends HTMLPropsMixin(HTMLElement) {
   // Initialize the ref
-  inputRef = createRef<HTMLInputElement>();
+  inputRef = ref<HTMLInputElement>();
 
   connectedCallback() {
     super.connectedCallback();

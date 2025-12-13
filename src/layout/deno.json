@@ -1,13 +1,13 @@
 {
   "name": "@html-props/layout",
-  "version": "1.0.0-beta.5",
+  "version": "1.0.0-beta.6",
   "exports": "./mod.ts",
   "tasks": {
     "test": "deno test --allow-read --allow-env"
   },
   "imports": {
-    "@html-props/core": "jsr:@html-props/core@^1.0.0-beta.4",
-    "@html-props/built-ins": "jsr:@html-props/built-ins@^1.0.0-beta.4",
+    "@html-props/core": "jsr:@html-props/core@^1.0.0-beta.5",
+    "@html-props/built-ins": "jsr:@html-props/built-ins@^1.0.0-beta.5",
     "@html-props/signals": "jsr:@html-props/signals@^1.0.0-beta.1"
   },
   "compilerOptions": {

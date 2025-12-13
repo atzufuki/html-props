@@ -1,4 +1,4 @@
-import { createRef, HTMLPropsMixin, prop } from '@html-props/core';
+import { HTMLPropsMixin, prop, ref } from '@html-props/core';
 import { Column, Container, Responsive, Row } from '@html-props/layout';
 import { Button, Div, Option, Select } from '@html-props/built-ins';
 import { effect, signal, untracked } from '@html-props/signals';
@@ -21,13 +21,13 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
   private showMobileSidebar = signal(false);
 
   // Refs
-  private desktopSidebarRef = createRef<Sidebar>();
-  private mobileSidebarRef = createRef<Sidebar>();
-  private desktopViewerRef = createRef<MarkdownViewer>();
-  private mobileViewerRef = createRef<MarkdownViewer>();
-  private selectRef = createRef<InstanceType<typeof Select>>();
-  private mobileMenuRef = createRef<InstanceType<typeof Div>>();
-  private versionFabRef = createRef<InstanceType<typeof Container>>();
+  private desktopSidebarRef = ref<Sidebar>();
+  private mobileSidebarRef = ref<Sidebar>();
+  private desktopViewerRef = ref<MarkdownViewer>();
+  private mobileViewerRef = ref<MarkdownViewer>();
+  private selectRef = ref<InstanceType<typeof Select>>();
+  private mobileMenuRef = ref<InstanceType<typeof Div>>();
+  private versionFabRef = ref<InstanceType<typeof Container>>();
 
   connectedCallback() {
     super.connectedCallback();

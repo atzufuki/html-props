@@ -1,7 +1,7 @@
 import { assertEquals } from 'jsr:@std/assert';
 import './setup.ts';
 import { Button, Div, Span } from '../mod.ts';
-import { createRef } from '../../core/ref.ts';
+import { ref } from '../../core/ref.ts';
 
 const Event = (globalThis as any).window.Event;
 
@@ -31,13 +31,13 @@ Deno.test('Element handles style object', () => {
 });
 
 Deno.test('Element handles ref', () => {
-  const ref = createRef<any>();
-  const div = new Div({ ref });
+  const divRef = ref<any>();
+  const div = new Div({ ref: divRef });
 
   // Simulate mount
   div.connectedCallback();
 
-  assertEquals(ref.current, div);
+  assertEquals(divRef.current, div);
 });
 
 Deno.test('Element handles content', () => {

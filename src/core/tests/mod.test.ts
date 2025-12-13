@@ -5,7 +5,7 @@ import type { PropsConfig } from '../types.ts';
 
 import { parseHTML } from 'linkedom';
 import { effect } from '@html-props/signals';
-import { createRef } from '@html-props/core';
+import { ref } from '@html-props/core';
 
 // Setup environment
 if (!globalThis.document) {
@@ -380,7 +380,7 @@ Deno.test('HTMLPropsMixin: refs', () => {
   customElements.define('my-button-ref', MyButton, { extends: 'button' });
 
   class MyElement extends HTMLPropsMixin(HTMLElement) {
-    buttonRef = createRef<HTMLButtonElement>(null);
+    buttonRef = ref<HTMLButtonElement>(null);
 
     render() {
       return new MyButton({
