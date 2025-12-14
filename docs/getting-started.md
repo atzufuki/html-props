@@ -14,49 +14,16 @@ providing:
 - **Native Standards**: Relies on Custom Element standards. No opinionated patterns or paradigms.
 - **Zero Dependencies**: No framework lock-in. Just a simple mixin for your native HTMLElement classes.
 
-It's the missing piece of Custom Elements. Standard HTML is limited to simple attributes and imperative coding style.
-HTML Props brings declarativeness with rich data types and type safety to native components.
+It's the missing piece of Custom Elements. HTML Props brings declarativeness with rich data types and type safety to
+native components.
 
-```typescript
-import { HTMLPropsMixin, prop } from '@html-props/core';
-import { Button, Div } from '@html-props/built-ins';
-import { Column, Container } from '@html-props/layout';
+## Works With Any Web Component
 
-class CounterApp extends HTMLPropsMixin(HTMLElement, {
-  count: prop(0),
-}) {
-  render() {
-    return new Container({
-      padding: '2rem',
-      content: new Column({
-        crossAxisAlignment: 'center',
-        gap: '1rem',
-        content: [
-          new Div({
-            textContent: `Count is: ${this.count}`,
-            style: { fontSize: '1.2rem' },
-          }),
-          new Button({
-            textContent: 'Increment',
-            style: {
-              backgroundColor: '#a78bfa',
-              color: '#13111c',
-              border: 'none',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.25rem',
-              cursor: 'pointer',
-              fontWeight: '600',
-            },
-            onclick: () => this.count++,
-          }),
-        ],
-      }),
-    });
-  }
-}
+The `HTMLPropsMixin` adds a props API to any standard-compliant web component. Whether you are wrapping built-in HTML
+elements, writing your own custom elements from scratch, or using components from other libraries like Lit or Stencil,
+you can use `HTMLPropsMixin` to get a declarative props API.
 
-CounterApp.define('counter-app');
-```
+See the [Guide](guide.md#wrapping-components) for examples of wrapping native and third-party components.
 
 # Installation
 

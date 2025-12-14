@@ -1,9 +1,58 @@
 # Core Concepts
 
-## Basic Usage
+## Wrapping Components
 
-Create a new component by extending `HTMLPropsMixin(HTMLElement)`. This is the core mixin that adds type-safe props and
-declarative rendering to your Custom Elements.
+The `HTMLPropsMixin` is designed to work with any standard-compliant web component. As long as the base class adheres to
+the Custom Elements specification, you can wrap it to gain the benefits of the props API. This includes native HTML
+elements and components authored in other frameworks.
+
+Here's an example of wrapping a built-in element to enable declarativity:
+
+```typescript
+import { HTMLPropsMixin } from '@html-props/core';
+
+// Wrap the native HTMLButtonElement
+const Button = HTMLPropsMixin(HTMLButtonElement).define('button-with-props', {
+  extends: 'button',
+});
+
+// Now use it declaratively
+new Button({
+  textContent: 'Click me',
+  onclick: () => console.log('clicked'),
+  style: { backgroundColor: 'purple', color: 'white' },
+});
+```
+
+The same pattern applies to components from other libraries, such as Material Web:
+
+```typescript
+import { HTMLPropsMixin } from '@html-props/core';
+import { MdFilledButton } from '@material/web/button/filled-button.js';
+
+// Wrap Material Web's button with HTMLPropsMixin
+const FilledButton = HTMLPropsMixin(MdFilledButton).define('md-filled-button-with-props');
+
+// Use it declaratively
+new FilledButton({
+  textContent: 'Submit',
+  disabled: false,
+  onclick: () => console.log('clicked'),
+});
+```
+
+## Defining Custom Props APIs
+
+When you extend `HTMLPropsMixin(HTMLElement)`, you can define a declarative API for your component using the `prop()`
+helper. This eliminates the boilerplate typically required for Custom Elements by automatically handling:
+
+- **Property Access**: Typed getters and setters.
+- **Attribute Reflection**: Syncing properties to attributes (and vice-versa) with type coercion.
+- **Event Emission**: Dispatching change events when properties update.
+
+### Basic Usage
+
+Pass a configuration object as the second argument to the mixin. The keys become the property names on your element.
 
 ```typescript
 import { HTMLPropsMixin, prop } from '@html-props/core';
@@ -29,10 +78,9 @@ class Counter extends HTMLPropsMixin(HTMLElement, {
 Counter.define('my-counter');
 ```
 
-## Properties
+### Advanced Configuration
 
-Define reactive properties by passing a configuration object as the second argument to the mixin. Use the `prop` helper
-for type safety and cleaner syntax.
+The `prop()` helper accepts a second argument for fine-grained control over attributes and events.
 
 ```typescript
 import { HTMLPropsMixin, prop } from '@html-props/core';
@@ -51,7 +99,7 @@ class MyElement extends HTMLPropsMixin(HTMLElement, {
   myProp: prop('val', {
     attribute: true, // Reflect to attribute (kebab-case)
     // or attribute: 'my-attr' for custom name
-    event: 'change', // Dispatch event on change
+    event: 'my-prop-change', // Dispatch event on change
   }),
 }) {}
 ```
@@ -84,9 +132,14 @@ Called when the component is disconnected from the DOM. Use this to clean up tim
 `super.disconnectedCallback()`.
 
 ```typescript
+import { HTMLPropsMixin } from '@html-props/core';
+import { signal } from '@html-props/signals';
+import { Div } from '@html-props/built-ins';
+
 class Timer extends HTMLPropsMixin(HTMLElement) {
+  // Internal state with signal
   count = signal(0);
-  intervalId = null;
+  intervalId: number | undefined;
 
   connectedCallback() {
     super.connectedCallback();
@@ -118,6 +171,8 @@ custom update strategy.
 Define an `update()` method to take control of subsequent renders. The initial render is always handled automatically.
 
 ```typescript
+import { HTMLPropsMixin, prop } from '@html-props/core';
+
 class MyElement extends HTMLPropsMixin(HTMLElement, {
   count: prop(0),
 }) {
@@ -130,10 +185,10 @@ class MyElement extends HTMLPropsMixin(HTMLElement, {
   update() {
     // Called ONLY for updates (not initial render)
     // Manually call render() if needed
-    const newContent = this.render();
+    const newContent = this.render() as Text;
 
     // Perform fine-grained DOM updates
-    this.firstChild.textContent = newContent.textContent;
+    this.firstChild!.textContent = newContent.textContent;
   }
 }
 ```
