@@ -20,8 +20,8 @@ native components.
 ## Works With Any Web Component
 
 The `HTMLPropsMixin` adds a props API to any standard-compliant web component. Whether you are wrapping built-in HTML
-elements, writing your own custom elements from scratch, or using components from other libraries like Lit or Stencil,
-you can use `HTMLPropsMixin` to get a declarative props API.
+elements, writing your own custom elements from scratch, or using components made with other libraries, you can use
+`HTMLPropsMixin` to get a declarative props API.
 
 See the [Guide](guide.md) for examples of wrapping native and third-party components.
 
