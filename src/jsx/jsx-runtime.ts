@@ -45,7 +45,9 @@ export const jsxs = jsx;
 export namespace JSX {
   export interface Element {}
   export interface ElementClass {
-    render(): any;
+    // render is optional as it's a user hook
+    render?(): any;
+    connectedCallback?(): void;
   }
   // We don't define ElementAttributesProperty so TS uses the constructor signature for class components
 

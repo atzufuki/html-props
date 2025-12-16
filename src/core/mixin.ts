@@ -190,6 +190,19 @@ class PropsController {
     );
   }
 
+  build(newContent?: any) {
+    const host = this.host;
+    if (newContent === undefined && !(host as any).render) {
+      return;
+    }
+    const content = newContent === undefined && (host as any).render ? (host as any).render() : newContent;
+
+    const target = host.shadowRoot || host;
+    target.replaceChildren(
+      ...(Array.isArray(content) ? content : [content]).filter((n: any) => n != null && n !== false && n !== true),
+    );
+  }
+
   reflectAttributes() {
     const host = this.host;
     const props = this.propsConfig;
@@ -314,25 +327,44 @@ class PropsController {
   }
 }
 
-export interface HTMLPropsElementConstructor<T extends Constructor, P = {}, IP = P> {
-  new (
-    props?: Omit<Partial<InstanceType<T>>, 'style' | 'children'> & {
-      style?: Partial<CSSStyleDeclaration> | string;
-      ref?: RefObject<any> | ((el: InstanceType<T>) => void);
-      children?: any;
-      content?: any;
-    } & P,
-    ...args: any[]
-  ): InstanceType<T> & IP & {
-    connectedCallback(): void;
-    disconnectedCallback(): void;
-    update?(): void;
-    defaultUpdate(newContent?: any): void;
-    requestUpdate(): void;
-    render(): any;
-  };
-  define(tagName: string, options?: any): HTMLPropsElementConstructor<T, P, IP> & Pick<T, keyof T>;
+/**
+ * Lifecycle methods that are always present on the element.
+ * We define them as an interface so they are treated as methods, not properties.
+ */
+interface HTMLPropsLifecycle {
+  connectedCallback(): void;
+  disconnectedCallback(): void;
+  attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null): void;
 }
+
+/**
+ * Utility methods provided by the mixin.
+ * These are subject to Omit if the base class already defines them.
+ */
+interface HTMLPropsMethods {
+  build(): void;
+  defaultUpdate(newContent?: any): void;
+  requestUpdate(): void;
+}
+
+interface HTMLPropsStaticMethods<Result> {
+  define(tagName: string, options?: any): Result;
+}
+
+export type HTMLPropsElementConstructor<T extends Constructor, P = {}, IP = P> =
+  & {
+    new (
+      props?: Omit<Partial<InstanceType<T>>, 'style' | 'children'> & {
+        style?: Partial<CSSStyleDeclaration> | string;
+        ref?: RefObject<any> | ((el: InstanceType<T>) => void);
+        children?: any;
+        content?: any;
+      } & P,
+      ...args: any[]
+    ): InstanceType<T> & IP & HTMLPropsLifecycle & Omit<HTMLPropsMethods, keyof InstanceType<T>>;
+  }
+  & ('define' extends keyof T ? unknown
+    : HTMLPropsStaticMethods<HTMLPropsElementConstructor<T, P, IP> & Pick<T, keyof T>>);
 
 export function HTMLPropsMixin<T extends Constructor, C extends PropsConfig<InstanceType<T>>>(
   Base: T,
@@ -360,39 +392,61 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
     // Single Symbol property to avoid any conflicts
     [PROPS_CONTROLLER]: PropsController;
 
-    static define(tagName: string, options?: any) {
-      customElements.define(tagName, this as any, options);
+    static define(...args: any[]) {
+      // @ts-ignore
+      if (typeof super.define === 'function') {
+        // @ts-ignore
+        return super.define(...args);
+      }
+      customElements.define(args[0], this as any, args[1]);
       return this;
     }
 
     static get observedAttributes() {
+      // @ts-ignore
+      const parentAttrs: string[] = super.observedAttributes || [];
+
       const props = (this as any).__props as PropsConfig;
-      if (!props) return [];
-      return Object.entries(props)
+      if (!props) return parentAttrs;
+
+      const ownAttrs = Object.entries(props)
         .filter(([_, cfg]) => cfg.attribute)
         .map(([key, cfg]) => {
           if (typeof cfg.attribute === 'string') return cfg.attribute;
           return key.toLowerCase();
         });
+
+      return [...new Set([...parentAttrs, ...ownAttrs])];
     }
 
-    // Only define requestUpdate if base doesn't have it
-    requestUpdate() {
-      // Guard: controller may not exist yet if base calls this in constructor
+    requestUpdate(...args: any[]) {
       if (this[PROPS_CONTROLLER]) {
         this[PROPS_CONTROLLER].requestUpdate();
       }
-      // Call super if it exists
       // @ts-ignore
       if (typeof super.requestUpdate === 'function') {
         // @ts-ignore
-        super.requestUpdate();
+        super.requestUpdate(...args);
       }
     }
 
-    defaultUpdate(newContent?: any) {
-      if (this[PROPS_CONTROLLER]) {
-        this[PROPS_CONTROLLER].defaultUpdate(newContent);
+    defaultUpdate(...args: any[]) {
+      // @ts-ignore
+      if (typeof super.defaultUpdate === 'function') {
+        // @ts-ignore
+        super.defaultUpdate(...args);
+      } else if (this[PROPS_CONTROLLER]) {
+        this[PROPS_CONTROLLER].defaultUpdate(args[0]);
+      }
+    }
+
+    build(...args: any[]) {
+      // @ts-ignore
+      if (typeof super.build === 'function') {
+        // @ts-ignore
+        super.build(...args);
+      } else if (this[PROPS_CONTROLLER]) {
+        this[PROPS_CONTROLLER].build(args[0]);
       }
     }
 
