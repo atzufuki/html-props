@@ -1,4 +1,4 @@
-import { computed, type Signal, signal } from '@html-props/signals';
+import { batch, computed, type Signal, signal } from '@html-props/signals';
 
 const hasWindow = typeof window !== 'undefined';
 
@@ -14,9 +14,11 @@ class MediaQueryService {
   constructor() {
     if (hasWindow) {
       window.addEventListener('resize', () => {
-        this.width.set(window.innerWidth);
-        this.height.set(window.innerHeight);
-        this.devicePixelRatio.set(window.devicePixelRatio);
+        batch(() => {
+          this.width.set(window.innerWidth);
+          this.height.set(window.innerHeight);
+          this.devicePixelRatio.set(window.devicePixelRatio);
+        });
       });
     }
   }

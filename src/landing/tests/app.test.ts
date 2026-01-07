@@ -7,7 +7,7 @@ let App: any;
 let DocsPage: any;
 
 Deno.test.beforeAll(async () => {
-  setup();
+  await setup();
   const appMod = await import('../App.ts');
   App = appMod.App;
   const docsMod = await import('../views/DocsPage.ts');
@@ -34,6 +34,7 @@ Deno.test('App routes to DocsPage', async () => {
   const fetchMock = mockFetch({
     '/api/docs/content/index.md': '- [Intro](introduction.md)',
     '/api/docs/content/versions.json': '[{"label":"Latest","ref":"main"}]',
+    '/api/docs/content/introduction.md': '# Introduction',
   });
 
   try {
@@ -89,6 +90,8 @@ Deno.test('DocsPage passes correct src to MarkdownViewer', async () => {
   const fetchMock = mockFetch({
     '/api/docs/content/index.md': '- [Intro](introduction.md)',
     '/api/docs/content/versions.json': '[{"label":"Latest","ref":"main"}]',
+    '/api/docs/content/installation.md': '# Installation',
+    '/api/docs/content/introduction.md': '# Introduction',
   });
 
   try {

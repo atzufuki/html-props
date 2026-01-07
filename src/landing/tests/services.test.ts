@@ -6,7 +6,7 @@ let MarkdownService: any;
 
 // @ts-ignore: Deno.test.beforeAll is available in Deno 2+
 Deno.test.beforeAll(async () => {
-  setup();
+  await setup();
   MarkdownService = (await import('../services/MarkdownService.ts')).MarkdownService;
 });
 

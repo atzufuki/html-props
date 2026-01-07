@@ -1,4 +1,5 @@
 import { effect, type Signal, signal } from '@html-props/signals';
+import { morph } from './morph.ts';
 import type { RefObject } from './ref.ts';
 import type { InferConstructorProps, InferProps, PropsConfig, PropsConfigValidator } from './types.ts';
 
@@ -33,7 +34,7 @@ class PropsController {
   private signals: Record<string, Signal<any>> = {};
   private cleanup: (() => void) | null = null;
   private isFirstRender = true;
-  private updateSignal: Signal<number> = signal(0);
+  private renderTrigger: Signal<number> = signal(0); // Triggers re-render on manual updates
   private ref: any = null;
   private host: HTMLElementLike;
   private propsConfig: PropsConfig | null;
@@ -46,7 +47,7 @@ class PropsController {
   }
 
   requestUpdate() {
-    this.updateSignal.update((n: number) => n + 1);
+    this.renderTrigger.update((n: number) => n + 1);
   }
 
   setRef(ref: any) {
@@ -185,9 +186,27 @@ class PropsController {
     const content = newContent === undefined && (host as any).render ? (host as any).render() : newContent;
 
     const target = host.shadowRoot || host;
-    target.replaceChildren(
-      ...(Array.isArray(content) ? content : [content]).filter((n: any) => n != null && n !== false && n !== true),
+
+    // Normalize content for morph
+    const items = (Array.isArray(content) ? content : [content]).filter((n: any) =>
+      n != null && n !== false && n !== true
     );
+
+    if (items.length === 0) {
+      morph(target, document.createDocumentFragment());
+    } else if (items.length === 1 && items[0] instanceof Node) {
+      morph(target, items[0]);
+    } else {
+      const fragment = document.createDocumentFragment();
+      for (const item of items) {
+        if (item instanceof Node) {
+          fragment.appendChild(item);
+        } else {
+          fragment.appendChild(document.createTextNode(String(item)));
+        }
+      }
+      morph(target, fragment);
+    }
   }
 
   build(newContent?: any) {
@@ -258,20 +277,38 @@ class PropsController {
       }
     }
 
+    // Call user's onMount hook if it exists
+    if (typeof (this.host as any).onMount === 'function') {
+      (this.host as any).onMount();
+    }
+
     // Setup effects
     let renderDispose = () => {};
 
     // Only set up render effect if base doesn't have its own rendering
     if (!this.baseHasOwnRendering) {
       renderDispose = effect(() => {
-        this.updateSignal();
-        if (this.isFirstRender) {
-          this.defaultUpdate();
+        // Read render trigger for manual updates
+        this.renderTrigger();
+
+        // Read all prop signals so effect re-runs when any prop changes
+        if (this.propsConfig) {
+          Object.keys(this.propsConfig).forEach((key) => {
+            const signal = this.signals[key];
+            if (signal) signal();
+          });
+        }
+
+        // Execute update which will call render() and track any other signal dependencies
+        const isFirstRender = this.isFirstRender;
+        if (isFirstRender) {
           this.isFirstRender = false;
-        } else if (typeof (this.host as any).update === 'function') {
-          (this.host as any).update();
-        } else {
+        }
+
+        if (isFirstRender || typeof (this.host as any).update !== 'function') {
           this.defaultUpdate();
+        } else {
+          (this.host as any).update();
         }
       });
     }
@@ -285,6 +322,11 @@ class PropsController {
   }
 
   onDisconnected() {
+    // Call user's onUnmount hook if it exists
+    if (typeof (this.host as any).onUnmount === 'function') {
+      (this.host as any).onUnmount();
+    }
+
     // Unset ref
     if (this.ref) {
       if (typeof this.ref === 'function') {

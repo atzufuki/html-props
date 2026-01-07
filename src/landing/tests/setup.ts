@@ -8,6 +8,7 @@ const keysToPolyfill = [
   'document',
   'customElements',
   'HTMLElement',
+  'Element',
   'Node',
   'MutationObserver',
   'Text',
@@ -152,6 +153,25 @@ function getDom() {
   // Mock window.scrollTo
   (window as any).scrollTo = () => {};
 
+  // Mock window dimensions
+  (window as any).innerWidth = 1200;
+  (window as any).innerHeight = 800;
+
+  // Mock window.location
+  Object.defineProperty(window, 'location', {
+    value: {
+      hostname: 'localhost',
+      href: 'http://localhost/',
+      pathname: '/',
+      search: '',
+      hash: '',
+      assign: () => {},
+      replace: () => {},
+      reload: () => {},
+    },
+    writable: true,
+  });
+
   // Mock window.matchMedia
   (window as any).matchMedia = (query: string) => ({
     matches: false,
@@ -164,11 +184,14 @@ function getDom() {
     dispatchEvent: () => false,
   });
 
+  Object.defineProperty(window, 'innerWidth', { value: 1024 });
+  Object.defineProperty(window, 'innerHeight', { value: 768 });
+
   cachedDom = dom;
   return dom;
 }
 
-export function setup() {
+export async function setup() {
   // Save originals
   if (Object.keys(originalGlobals).length === 0) {
     for (const key of keysToPolyfill) {
@@ -225,6 +248,13 @@ export function setup() {
   }
 
   (globalThis as any).scrollTo = (window as any).scrollTo;
+
+  // Update MediaQuery singleton to reflect test environment dimensions
+  // This is needed because MediaQuery is a singleton initialized at module load time
+  // Use dynamic import to avoid importing before globals are set
+  const { MediaQuery } = await import('@html-props/layout');
+  MediaQuery.width.set(1024);
+  MediaQuery.height.set(768);
 
   // Mock requestAnimationFrame
   (globalThis as any).requestAnimationFrame = (callback: FrameRequestCallback) => {

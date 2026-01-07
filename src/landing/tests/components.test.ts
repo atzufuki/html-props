@@ -13,7 +13,7 @@ let Hero: any;
 
 // @ts-ignore: Deno.test.beforeAll is available in Deno 2+
 Deno.test.beforeAll(async () => {
-  setup();
+  await setup();
   MarkdownViewer = (await import('../components/MarkdownViewer.ts')).MarkdownViewer;
   NavBar = (await import('../components/NavBar.ts')).NavBar;
   Sidebar = (await import('../components/Sidebar.ts')).Sidebar;

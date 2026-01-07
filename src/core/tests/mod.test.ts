@@ -15,6 +15,9 @@ if (!globalThis.document) {
     customElements,
     HTMLElement,
     HTMLButtonElement,
+    HTMLInputElement,
+    HTMLTextAreaElement,
+    HTMLSelectElement,
     Node,
     CustomEvent,
     Event,
@@ -31,6 +34,9 @@ if (!globalThis.document) {
     customElements,
     HTMLElement,
     HTMLButtonElement,
+    HTMLInputElement,
+    HTMLTextAreaElement,
+    HTMLSelectElement,
     HTMLTableSectionElement: HTMLTableSectionElementPolyfill,
     Node,
     CustomEvent,
@@ -83,6 +89,48 @@ Deno.test('HTMLPropsMixin: updates props and renders', () => {
   assertEquals(el.textContent, 'Count: 5');
 
   el.disconnectedCallback();
+});
+
+Deno.test('HTMLPropsMixin: child render survives parent re-render', async () => {
+  class ChildEl extends HTMLPropsMixin(HTMLElement, {
+    label: prop(''),
+  }) {
+    render() {
+      return [this.label];
+    }
+  }
+
+  class ParentEl extends HTMLPropsMixin(HTMLElement, {
+    childLabel: prop('hello'),
+  }) {
+    child = new ChildEl({ label: this.childLabel });
+
+    render() {
+      // Update child props instead of recreating it
+      this.child.label = this.childLabel;
+      return this.child;
+    }
+  }
+
+  customElements.define('persist-child', ChildEl);
+  customElements.define('persist-parent', ParentEl);
+
+  const parent = new ParentEl();
+  document.body.appendChild(parent);
+  await Promise.resolve();
+
+  const initialChild = parent.querySelector('persist-child');
+  assert(initialChild, 'Child should be rendered initially');
+  assertEquals(initialChild?.textContent, 'hello');
+
+  // Update parent prop, which updates child prop
+  parent.childLabel = 'updated';
+  await Promise.resolve();
+
+  const childAfter = parent.querySelector('persist-child');
+  assert(childAfter, 'Child should still exist after re-render');
+  assert(childAfter === initialChild, 'Should be same element instance');
+  assertEquals(childAfter?.textContent, 'updated');
 });
 
 Deno.test('HTMLPropsMixin: reflects props to attributes', () => {
