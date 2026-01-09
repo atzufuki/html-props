@@ -6,7 +6,6 @@ import {
   type Prop,
   prop,
 } from '@html-props/core';
-import { effect } from '@html-props/signals';
 
 export const Alignment = {
   topLeft: 'start start',
@@ -37,7 +36,7 @@ const StackBase:
   & Pick<typeof HTMLElement, keyof typeof HTMLElement> = HTMLPropsMixin(HTMLElement, config);
 
 export class Stack extends StackBase {
-  private _dispose: (() => void) | null = null;
+  private _observer?: MutationObserver;
 
   connectedCallback() {
     super.connectedCallback();
@@ -45,23 +44,12 @@ export class Stack extends StackBase {
 
     this._observer = new MutationObserver(() => this.updateChildren());
     this._observer.observe(this, { childList: true });
-
-    this._dispose = effect(() => {
-      const align = this.alignment;
-      this.style.placeItems = (Alignment as any)[align] || align;
-    });
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this._observer?.disconnect();
-    if (this._dispose) {
-      this._dispose();
-      this._dispose = null;
-    }
   }
-
-  private _observer?: MutationObserver;
 
   private updateChildren() {
     Array.from(this.children).forEach((child) => {
@@ -69,6 +57,11 @@ export class Stack extends StackBase {
         child.style.gridArea = 'stack';
       }
     });
+  }
+
+  render() {
+    const align = this.alignment;
+    this.style.placeItems = (Alignment as any)[align] || align;
   }
 }
 Stack.define('layout-stack');

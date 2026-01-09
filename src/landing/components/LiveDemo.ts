@@ -5,17 +5,42 @@ import * as Layout from '@html-props/layout';
 import { theme } from '../theme.ts';
 
 const { HTMLPropsMixin, prop } = Core;
-const { effect } = Signals;
+const { signal, effect } = Signals;
 const { MediaQuery } = Layout;
+const { Div } = BuiltIns;
 
 export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
   code: prop(''),
 }) {
-  private textarea!: HTMLTextAreaElement;
-  private pre!: HTMLPreElement;
-  private previewContainer!: HTMLElement;
-  private errorContainer!: HTMLElement;
-  private _disposeEffect: (() => void) | null = null;
+  private codeSignal = signal('');
+  private errorSignal = signal('');
+  private highlightedSignal = signal('');
+  private isMobileSignal = signal(false);
+
+  connectedCallback() {
+    // @ts-ignore: super has connectedCallback from mixin
+    if (super.connectedCallback) super.connectedCallback();
+
+    // Initialize code signal with prop value
+    this.codeSignal.set(this.code);
+
+    // Responsive layout
+    effect(() => {
+      this.isMobileSignal.set(MediaQuery.isMobile());
+    });
+
+    // Update highlighting when code changes
+    effect(() => {
+      const code = this.codeSignal();
+      this.highlightedSignal.set(this.highlight(code));
+    });
+
+    // Run code when it changes
+    effect(() => {
+      const code = this.codeSignal();
+      this.runCode(code);
+    });
+  }
 
   private highlight(code: string): string {
     // Escape HTML first
@@ -90,221 +115,33 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
     });
   }
 
-  connectedCallback() {
-    // @ts-ignore: super has connectedCallback from mixin
-    if (super.connectedCallback) super.connectedCallback();
-
-    // Scrollbar Styles
-    const style = document.createElement('style');
-    style.textContent = `
-      live-demo textarea::-webkit-scrollbar,
-      live-demo pre::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
-      }
-      live-demo textarea::-webkit-scrollbar-track,
-      live-demo pre::-webkit-scrollbar-track {
-        background: ${theme.colors.codeBg};
-      }
-      live-demo textarea::-webkit-scrollbar-thumb,
-      live-demo pre::-webkit-scrollbar-thumb {
-        background: ${theme.colors.border};
-        border-radius: 4px;
-        border: 2px solid ${theme.colors.codeBg};
-      }
-      live-demo textarea::-webkit-scrollbar-thumb:hover,
-      live-demo pre::-webkit-scrollbar-thumb:hover {
-        background: ${theme.colors.comment};
-      }
-      live-demo textarea::-webkit-scrollbar-corner,
-      live-demo pre::-webkit-scrollbar-corner {
-        background: ${theme.colors.codeBg};
-      }
-    `;
-    this.appendChild(style);
-
-    // Layout
-    this.style.display = 'grid';
-    this.style.gap = '0'; // Gap handled by border
-    this.style.backgroundColor = theme.colors.secondaryBg;
-    this.style.border = `1px solid ${theme.colors.border}`;
-    this.style.borderRadius = '1rem';
-    this.style.overflow = 'hidden';
-    this.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
-
-    // Editor Column
-    const editorCol = document.createElement('div');
-    editorCol.style.display = 'flex';
-    editorCol.style.flexDirection = 'column';
-    editorCol.style.minHeight = '400px'; // Reduced minHeight for mobile friendliness
-
-    // Editor Wrapper
-    const editorWrapper = document.createElement('div');
-    editorWrapper.style.position = 'relative';
-    editorWrapper.style.flex = '1';
-    editorWrapper.style.backgroundColor = theme.colors.codeBg;
-    editorWrapper.style.overflow = 'hidden';
-
-    const commonStyles = `
-      margin: 0;
-      padding: 1rem;
-      font-family: Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-      font-size: 0.9rem;
-      line-height: 1.5;
-      border: none;
-      width: 100%;
-      height: 100%;
-      box-sizing: border-box;
-      white-space: pre;
-      overflow: auto;
-    `;
-
-    // Pre (Highlighting)
-    this.pre = document.createElement('pre');
-    this.pre.style.cssText = commonStyles;
-    this.pre.style.position = 'absolute';
-    this.pre.style.top = '0';
-    this.pre.style.left = '0';
-    this.pre.style.pointerEvents = 'none';
-    this.pre.style.color = theme.colors.text;
-    this.pre.style.zIndex = '0';
-
-    // Textarea (Input)
-    this.textarea = document.createElement('textarea');
-    this.textarea.value = this.code;
-    this.textarea.style.cssText = commonStyles;
-    this.textarea.style.position = 'absolute';
-    this.textarea.style.top = '0';
-    this.textarea.style.left = '0';
-    this.textarea.style.zIndex = '1';
-    this.textarea.style.color = 'transparent';
-    this.textarea.style.background = 'transparent';
-    this.textarea.style.caretColor = theme.colors.text;
-    this.textarea.style.outline = 'none';
-    this.textarea.style.resize = 'none';
-    this.textarea.spellcheck = false;
-
-    // Sync scroll
-    this.textarea.addEventListener('scroll', () => {
-      this.pre.scrollTop = this.textarea.scrollTop;
-      this.pre.scrollLeft = this.textarea.scrollLeft;
-    });
-
-    // Simple auto-indent
-    this.textarea.addEventListener('keydown', (e) => {
-      if (e.key === 'Tab') {
-        e.preventDefault();
-        const start = this.textarea.selectionStart;
-        const end = this.textarea.selectionEnd;
-        this.textarea.value = this.textarea.value.substring(0, start) + '  ' + this.textarea.value.substring(end);
-        this.textarea.selectionStart = this.textarea.selectionEnd = start + 2;
-        this.updateHighlight();
-        this.runCode();
-      }
-    });
-
-    this.textarea.addEventListener('input', () => {
-      this.updateHighlight();
-      this.runCode();
-    });
-
-    editorWrapper.appendChild(this.pre);
-    editorWrapper.appendChild(this.textarea);
-    editorCol.appendChild(editorWrapper);
-
-    // Error area
-    this.errorContainer = document.createElement('div');
-    this.errorContainer.style.padding = '0.5rem 1rem';
-    this.errorContainer.style.backgroundColor = 'rgba(220, 38, 38, 0.1)';
-    this.errorContainer.style.color = '#f87171';
-    this.errorContainer.style.fontSize = '0.8rem';
-    this.errorContainer.style.borderTop = '1px solid rgba(220, 38, 38, 0.2)';
-    this.errorContainer.style.display = 'none';
-    editorCol.appendChild(this.errorContainer);
-
-    // Preview Column
-    const previewCol = document.createElement('div');
-    previewCol.style.display = 'flex';
-    previewCol.style.flexDirection = 'column';
-    previewCol.style.backgroundColor = theme.colors.secondaryBg;
-    previewCol.style.backgroundImage = `radial-gradient(${theme.colors.border} 1px, transparent 1px)`;
-    previewCol.style.backgroundSize = '20px 20px';
-    previewCol.style.transition = 'background-color 0.3s';
-
-    const previewContentWrapper = document.createElement('div');
-    previewContentWrapper.style.flex = '1';
-    previewContentWrapper.style.display = 'flex';
-    previewContentWrapper.style.alignItems = 'center';
-    previewContentWrapper.style.justifyContent = 'center';
-    previewContentWrapper.style.padding = '2rem';
-
-    this.previewContainer = document.createElement('div');
-    this.previewContainer.style.background = theme.colors.bg;
-    this.previewContainer.style.padding = '2rem';
-    this.previewContainer.style.borderRadius = '0.5rem';
-    this.previewContainer.style.border = `1px solid ${theme.colors.border}`;
-    this.previewContainer.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
-    this.previewContainer.style.minWidth = '300px';
-
-    previewContentWrapper.appendChild(this.previewContainer);
-    previewCol.appendChild(previewContentWrapper);
-
-    this.appendChild(editorCol);
-    this.appendChild(previewCol);
-
-    // Responsive Layout Effect
-    this._disposeEffect = effect(() => {
-      const isMobile = MediaQuery.isMobile();
-      if (isMobile) {
-        this.style.gridTemplateColumns = '1fr';
-        this.style.gridTemplateRows = 'auto auto';
-        editorCol.style.borderRight = 'none';
-        editorCol.style.borderBottom = `1px solid ${theme.colors.border}`;
-        editorCol.style.height = '400px';
-      } else {
-        this.style.gridTemplateColumns = '1fr 1fr';
-        this.style.gridTemplateRows = 'auto';
-        editorCol.style.borderRight = `1px solid ${theme.colors.border}`;
-        editorCol.style.borderBottom = 'none';
-        editorCol.style.height = 'auto';
-        editorCol.style.minHeight = '962px';
-      }
-    });
-
-    // Initial run
-    this.updateHighlight();
-    this.runCode();
+  private handleCodeInput(e: Event) {
+    const textarea = e.target as HTMLTextAreaElement;
+    this.codeSignal.set(textarea.value);
   }
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    if (this._disposeEffect) {
-      this._disposeEffect();
-      this._disposeEffect = null;
+  private handleKeyDown(e: KeyboardEvent) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const textarea = e.target as HTMLTextAreaElement;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newCode = textarea.value.substring(0, start) + '  ' + textarea.value.substring(end);
+      this.codeSignal.set(newCode);
+      textarea.value = newCode;
+      textarea.selectionStart = textarea.selectionEnd = start + 2;
     }
   }
 
-  updateHighlight() {
-    const code = this.textarea.value;
-    // Add a trailing space to ensure the last line is rendered if it's empty
-    this.pre.innerHTML = this.highlight(code) + '<br>';
-  }
-
-  runCode() {
-    const code = this.textarea.value;
-    this.errorContainer.style.display = 'none';
-    this.errorContainer.textContent = '';
+  private runCode(code: string) {
+    this.errorSignal.set('');
 
     try {
-      // 1. Strip imports
       const cleanCode = code.replace(/import\s+.*?from\s+['"].*?['"];?/g, '');
-
-      // 2. Find class name (use the last one defined, assuming it's the main app)
       const classMatches = [...cleanCode.matchAll(/class\s+(\w+)/g)];
       if (classMatches.length === 0) throw new Error('No class definition found');
       const className = classMatches[classMatches.length - 1][1];
 
-      // 3. Replace ALL define calls with unique tags to avoid registry collisions
       const codeWithUniqueTags = cleanCode.replace(
         /\.define\s*\(\s*(['"`])(.*?)\1/g,
         (_match, quote, tagName) => {
@@ -313,7 +150,6 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
         },
       );
 
-      // 4. Execute
       const context = {
         ...Core,
         ...BuiltIns,
@@ -334,15 +170,154 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
       );
 
       const ComponentClass = func(...values);
-
       if (ComponentClass) {
         const instance = new ComponentClass();
-        this.previewContainer.replaceChildren(instance);
+        const preview = this.querySelector('[data-preview]');
+        if (preview) {
+          preview.replaceChildren(instance);
+        }
       }
     } catch (e: any) {
-      this.errorContainer.style.display = 'block';
-      this.errorContainer.textContent = e.message;
+      this.errorSignal.set(e.message);
     }
+  }
+
+  render() {
+    const isMobile = this.isMobileSignal();
+    const hasError = this.errorSignal() !== '';
+
+    return new Div({
+      style: {
+        display: 'grid',
+        gap: '0',
+        backgroundColor: theme.colors.secondaryBg,
+        border: `1px solid ${theme.colors.border}`,
+        borderRadius: '1rem',
+        overflow: 'hidden',
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+        gridTemplateRows: isMobile ? 'auto auto' : 'auto',
+      },
+      content: [
+        // Editor Column
+        new Div({
+          style: {
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: isMobile ? '400px' : 'auto',
+            borderRight: isMobile ? 'none' : `1px solid ${theme.colors.border}`,
+            borderBottom: isMobile ? `1px solid ${theme.colors.border}` : 'none',
+          },
+          content: [
+            // Editor wrapper - scrollable container
+            new Div({
+              style: {
+                flex: '1',
+                backgroundColor: theme.colors.codeBg,
+                overflow: 'auto',
+                maxHeight: '965px',
+              },
+              content: [
+                // Grid container - pre and textarea overlay
+                new Div({
+                  style: {
+                    display: 'grid',
+                    minHeight: '100%',
+                  },
+                  content: [
+                    // Pre (highlighted code)
+                    new Div({
+                      innerHTML: this.highlightedSignal() + '<br>',
+                      style: {
+                        gridArea: '1/1',
+                        margin: '0',
+                        padding: '1rem',
+                        fontFamily: 'Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                        fontSize: '0.9rem',
+                        lineHeight: '1.5',
+                        color: theme.colors.text,
+                        pointerEvents: 'none',
+                        boxSizing: 'border-box',
+                        whiteSpace: 'pre',
+                      },
+                    }),
+                    // Textarea (input)
+                    new BuiltIns.Textarea({
+                      value: this.codeSignal(),
+                      oninput: (e: Event) => this.handleCodeInput(e),
+                      onkeydown: (e: KeyboardEvent) => this.handleKeyDown(e),
+                      style: {
+                        gridArea: '1/1',
+                        margin: '0',
+                        padding: '1rem',
+                        fontFamily: 'Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                        fontSize: '0.9rem',
+                        lineHeight: '1.5',
+                        border: 'none',
+                        boxSizing: 'border-box',
+                        whiteSpace: 'pre',
+                        color: 'transparent',
+                        background: 'transparent',
+                        caretColor: theme.colors.text,
+                        outline: 'none',
+                        resize: 'none',
+                      },
+                    }),
+                  ],
+                }),
+              ],
+            }),
+            // Error display
+            hasError
+              ? new Div({
+                textContent: this.errorSignal(),
+                style: {
+                  padding: '0.5rem 1rem',
+                  backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                  color: '#f87171',
+                  fontSize: '0.8rem',
+                  borderTop: '1px solid rgba(220, 38, 38, 0.2)',
+                },
+              })
+              : null,
+          ],
+        }),
+        // Preview Column
+        new Div({
+          style: {
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: theme.colors.secondaryBg,
+            backgroundImage: `radial-gradient(${theme.colors.border} 1px, transparent 1px)`,
+            backgroundSize: '20px 20px',
+          },
+          content: [
+            new Div({
+              style: {
+                flex: '1',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '2rem',
+              },
+              content: [
+                new Div({
+                  dataset: { preview: '' },
+                  style: {
+                    background: theme.colors.bg,
+                    padding: '2rem',
+                    borderRadius: '0.5rem',
+                    border: `1px solid ${theme.colors.border}`,
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    minWidth: '300px',
+                  },
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    });
   }
 }
 

@@ -49,9 +49,6 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
     });
 
     this.loadData();
-
-    // Trigger initial update to bind signals since render() doesn't access them
-    this.requestUpdate();
   }
 
   private parseRoute(route: string) {
@@ -285,78 +282,6 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
         }),
       ],
     });
-  }
-
-  // Optimized update strategy
-  update() {
-    // Track dependencies
-    const route = this.route;
-    const version = this.selectedVersion();
-    const items = this.sidebarItems();
-    const versions = this.versions();
-    const showMobile = this.showMobileSidebar();
-    const error = this.error();
-
-    const { page } = this.parseRoute(route);
-    const activePage = page || (items.length > 0 ? items[0].file.replace('.md', '') : '');
-
-    // Update Sidebars
-    const sidebarItemsData = items.map((item) => {
-      const name = item.file.replace('.md', '');
-      return {
-        label: item.label,
-        href: `/docs/${version}/${name}`,
-        active: name === activePage,
-      };
-    });
-
-    if (this.desktopSidebarRef.current) {
-      this.desktopSidebarRef.current.items = sidebarItemsData;
-    }
-    if (this.mobileSidebarRef.current) {
-      this.mobileSidebarRef.current.items = sidebarItemsData;
-    }
-
-    // Update Viewers
-    const updateViewer = (viewer: MarkdownViewer) => {
-      if (error) {
-        viewer.style.display = 'none';
-      } else {
-        viewer.style.display = 'block';
-        viewer.src = activePage;
-        viewer.version = version;
-      }
-    };
-
-    if (this.desktopViewerRef.current) updateViewer(this.desktopViewerRef.current);
-    if (this.mobileViewerRef.current) updateViewer(this.mobileViewerRef.current);
-
-    // Update Mobile Menu Visibility
-    if (this.mobileMenuRef.current) {
-      this.mobileMenuRef.current.style.display = showMobile ? 'block' : 'none';
-    }
-
-    // Update Version FAB Visibility
-    if (this.versionFabRef.current) {
-      this.versionFabRef.current.style.display = versions.length > 0 ? 'block' : 'none';
-    }
-
-    // Update Version Select
-    if (this.selectRef.current) {
-      this.selectRef.current.replaceChildren(
-        ...versions.map((v) =>
-          new Option({
-            value: v.ref,
-            textContent: v.label,
-            selected: v.ref === version,
-            style: {
-              backgroundColor: theme.colors.secondaryBg,
-              color: theme.colors.text,
-            },
-          })
-        ),
-      );
-    }
   }
 }
 

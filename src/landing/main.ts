@@ -1,1 +1,2 @@
-import './App.ts';
+// import './App.ts';
+import './TodoApp.ts';

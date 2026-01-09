@@ -6,7 +6,6 @@ import {
   type Prop,
   prop,
 } from '@html-props/core';
-import { effect } from '@html-props/signals';
 
 const config: {
   padding: Prop<string>;
@@ -25,21 +24,8 @@ const PaddingBase:
   & Pick<typeof HTMLElement, keyof typeof HTMLElement> = HTMLPropsMixin(HTMLElement, config);
 
 export class Padding extends PaddingBase {
-  private _dispose: (() => void) | null = null;
-
-  connectedCallback() {
-    super.connectedCallback();
-    this._dispose = effect(() => {
-      this.style.padding = this.padding;
-    });
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    if (this._dispose) {
-      this._dispose();
-      this._dispose = null;
-    }
+  render() {
+    this.style.padding = this.padding;
   }
 }
 Padding.define('layout-padding');

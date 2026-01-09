@@ -3,7 +3,8 @@
   "version": "1.0.0-beta.5",
   "exports": "./mod.ts",
   "imports": {
-    "@html-props/signals": "jsr:@html-props/signals@^1.0.0-beta.1"
+    "@html-props/signals": "jsr:@html-props/signals@^1.0.0-beta.1",
+    "@phlex/morphlex": "jsr:@phlex/morphlex@^1.0.5"
   },
   "compilerOptions": {
     "lib": ["dom", "deno.ns"],

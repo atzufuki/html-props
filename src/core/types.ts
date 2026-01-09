@@ -1,3 +1,23 @@
+// Minimal interface for DOM elements to avoid type errors if lib.dom is missing
+export interface HTMLElementLike {
+  connectedCallback?(): void;
+  disconnectedCallback?(): void;
+  attributeChangedCallback?(name: string, oldVal: string | null, newVal: string | null): void;
+  getAttribute(name: string): string | null;
+  setAttribute(name: string, value: string): void;
+  removeAttribute(name: string): void;
+  hasAttribute(name: string): boolean;
+  dispatchEvent(event: any): boolean;
+  addEventListener(type: string, listener: any, options?: any): void;
+  replaceChildren(...nodes: any[]): void;
+  style: any;
+  dataset: any;
+  textContent: string | null;
+  shadowRoot: any;
+}
+
+export type Constructor<T = HTMLElementLike> = new (...args: any[]) => T;
+
 export type PropType =
   | StringConstructor
   | NumberConstructor
