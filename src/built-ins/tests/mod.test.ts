@@ -8,7 +8,8 @@ const Event = (globalThis as any).window.Event;
 Deno.test('Div creates a div element', () => {
   const div = new Div({ className: 'test' });
   div.connectedCallback(); // Props applied on connect
-  assertEquals(div.tagName, 'DIV');
+  // happy-dom returns custom element name, not native name for customized built-ins
+  assertEquals(div.tagName.toUpperCase(), 'HTML-DIV');
   assertEquals(div.getAttribute('class'), 'test');
 });
 
@@ -53,7 +54,8 @@ Deno.test('Element handles content', () => {
   div.connectedCallback(); // Props applied on connect
 
   assertEquals(div.childNodes.length, 2);
-  assertEquals((div.childNodes[0] as Element).tagName, 'SPAN');
+  // happy-dom returns custom element name for customized built-ins
+  assertEquals((div.childNodes[0] as Element).tagName.toUpperCase(), 'HTML-SPAN');
   assertEquals(div.childNodes[1].textContent, 'World');
 });
 
@@ -73,8 +75,8 @@ Deno.test('Nested Mixin: CounterButton extends HTMLPropsMixin(Button)', () => {
 
   const btn = new CounterButton({ count: 5, label: 'Clicks' });
 
-  // Check inheritance from Button (native props)
-  assertEquals(btn.tagName, 'BUTTON');
+  // Check inheritance from Button (happy-dom returns custom element name)
+  assertEquals(btn.tagName.toUpperCase(), 'COUNTER-BUTTON');
 
   // Check new props
   assertEquals(btn.count, 5);

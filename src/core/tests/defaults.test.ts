@@ -1,24 +1,21 @@
 import { assertEquals } from 'jsr:@std/assert';
 import { HTMLPropsMixin } from '../mixin.ts';
 import { prop } from '../prop.ts';
-import { parseHTML } from 'linkedom';
+import { Window } from 'happy-dom';
 
-// Setup environment
+// Setup environment with happy-dom
 if (!globalThis.document) {
-  const {
-    window,
-    document,
-    customElements,
-    HTMLElement,
-    Node,
-  } = parseHTML('<!DOCTYPE html><html><body></body></html>');
+  const happyWindow = new Window();
+
+  // deno-lint-ignore no-explicit-any
+  const w = happyWindow as any;
 
   Object.assign(globalThis, {
-    window,
-    document,
-    customElements,
-    HTMLElement,
-    Node,
+    window: happyWindow,
+    document: w.document,
+    customElements: w.customElements,
+    HTMLElement: w.HTMLElement,
+    Node: w.Node,
   });
 }
 

@@ -1,5 +1,5 @@
 import { assertEquals } from 'jsr:@std/assert';
-import { parseHTML } from 'npm:linkedom';
+import { Window } from 'happy-dom';
 
 let Row: any;
 let Column: any;
@@ -12,17 +12,12 @@ let LayoutBuilder: any;
 
 // @ts-ignore: Deno.test.beforeAll is available in Deno 2+
 Deno.test.beforeAll(async () => {
-  // Setup environment
+  // Setup environment with happy-dom
   if (!globalThis.document) {
-    const {
-      window,
-      document,
-      customElements,
-      HTMLElement,
-      Node,
-      CustomEvent,
-      MutationObserver,
-    } = parseHTML('<!DOCTYPE html><html><body></body></html>');
+    const happyWindow = new Window();
+
+    // deno-lint-ignore no-explicit-any
+    const w = happyWindow as any;
 
     // Mock ResizeObserver
     class ResizeObserver {
@@ -39,13 +34,13 @@ Deno.test.beforeAll(async () => {
     }
 
     Object.assign(globalThis, {
-      window,
-      document,
-      customElements,
-      HTMLElement,
-      Node,
-      CustomEvent,
-      MutationObserver,
+      window: happyWindow,
+      document: w.document,
+      customElements: w.customElements,
+      HTMLElement: w.HTMLElement,
+      Node: w.Node,
+      CustomEvent: w.CustomEvent,
+      MutationObserver: w.MutationObserver,
       ResizeObserver,
     });
 
@@ -60,8 +55,8 @@ Deno.test.beforeAll(async () => {
     };
 
     // Ensure innerWidth/Height are writable for tests
-    Object.defineProperty(window, 'innerWidth', { value: 1024, writable: true });
-    Object.defineProperty(window, 'innerHeight', { value: 768, writable: true });
+    Object.defineProperty(happyWindow, 'innerWidth', { value: 1024, writable: true });
+    Object.defineProperty(happyWindow, 'innerHeight', { value: 768, writable: true });
   }
 
   const mod = await import('../mod.ts');

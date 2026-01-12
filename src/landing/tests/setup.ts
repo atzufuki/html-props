@@ -1,7 +1,7 @@
-import { parseHTML } from 'linkedom';
+import { Window } from 'happy-dom';
 
 let originalGlobals: Record<string, any> = {};
-let cachedDom: any = null;
+let cachedWindow: any = null;
 
 const keysToPolyfill = [
   'window',
@@ -78,18 +78,14 @@ const keysToPolyfill = [
   'HTMLTemplateElement',
 ];
 
-function getDom() {
-  if (cachedDom) return cachedDom;
+function getWindow() {
+  if (cachedWindow) return cachedWindow;
 
-  const dom = parseHTML('<!DOCTYPE html><html><body></body></html>');
-  const { window } = dom;
+  const happyWindow = new Window();
+  // deno-lint-ignore no-explicit-any
+  const w = happyWindow as any;
 
-  // Manually mock missing elements in linkedom
-  if (!(window as any).HTMLTableSectionElement) {
-    (window as any).HTMLTableSectionElement = class HTMLTableSectionElement extends (dom.HTMLElement as any) {};
-  }
-
-  // Mock other missing elements
+  // Mock missing elements
   const missingElements = [
     'HTMLHRElement',
     'HTMLQuoteElement',
@@ -129,43 +125,32 @@ function getDom() {
   ];
 
   missingElements.forEach((name) => {
-    if (!(window as any)[name]) {
-      (window as any)[name] = class extends (dom.HTMLElement as any) {};
+    if (!w[name]) {
+      w[name] = class extends w.HTMLElement {};
     }
   });
 
-  // Mock window.location
-  if (!(window as any).location) {
-    (window as any).location = {
-      hash: '',
-      href: 'http://localhost/',
-      pathname: '/',
-      search: '',
-      origin: 'http://localhost',
-      hostname: 'localhost',
-      reload: () => {},
-      replace: () => {},
-      assign: () => {},
-    };
+  // Mock window.scrollTo if not present
+  if (!w.scrollTo) {
+    w.scrollTo = () => {};
   }
 
-  // Mock window.scrollTo
-  (window as any).scrollTo = () => {};
+  // Mock window.matchMedia if not present
+  if (!w.matchMedia) {
+    w.matchMedia = (query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    });
+  }
 
-  // Mock window.matchMedia
-  (window as any).matchMedia = (query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: () => {}, // deprecated
-    removeListener: () => {}, // deprecated
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    dispatchEvent: () => false,
-  });
-
-  cachedDom = dom;
-  return dom;
+  cachedWindow = happyWindow;
+  return happyWindow;
 }
 
 export function setup() {
@@ -178,53 +163,42 @@ export function setup() {
     }
   }
 
-  const dom = getDom();
-  const {
-    window,
-    document,
-    customElements,
-    HTMLElement,
-    Node,
-    MutationObserver,
-    Text,
-    Event,
-    CustomEvent,
-  } = dom;
+  const happyWindow = getWindow();
+  // deno-lint-ignore no-explicit-any
+  const w = happyWindow as any;
 
   // Assign basic globals
   Object.assign(globalThis, {
-    window,
-    document,
-    customElements,
-    HTMLElement,
-    Node,
-    MutationObserver,
-    Text,
-    Event,
-    CustomEvent,
+    window: happyWindow,
+    document: w.document,
+    customElements: w.customElements,
+    HTMLElement: w.HTMLElement,
+    Node: w.Node,
+    MutationObserver: w.MutationObserver,
+    Text: w.Text,
+    Event: w.Event,
+    CustomEvent: w.CustomEvent,
   });
 
   // Assign globals from window based on keysToPolyfill
   for (const key of keysToPolyfill) {
-    if ((dom as any)[key]) {
-      (globalThis as any)[key] = (dom as any)[key];
-    } else if ((window as any)[key]) {
-      (globalThis as any)[key] = (window as any)[key];
+    if (w[key]) {
+      (globalThis as any)[key] = w[key];
     }
   }
 
   // Ensure globalThis.location is also set
   if (!(globalThis as any).location) {
     Object.defineProperty(globalThis, 'location', {
-      get: () => (window as any).location,
+      get: () => w.location,
       set: (v) => {
-        (window as any).location = v;
+        w.location = v;
       },
       configurable: true,
     });
   }
 
-  (globalThis as any).scrollTo = (window as any).scrollTo;
+  (globalThis as any).scrollTo = w.scrollTo;
 
   // Mock requestAnimationFrame
   (globalThis as any).requestAnimationFrame = (callback: FrameRequestCallback) => {

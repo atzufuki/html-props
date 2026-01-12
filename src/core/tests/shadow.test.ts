@@ -505,7 +505,7 @@ Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - children should NOT reco
   });
 
   document.body.appendChild(container);
-  // Note: LinkedOM automatically calls connectedCallback on appendChild,
+  // Note: happy-dom automatically calls connectedCallback on appendChild,
   // so we don't need to manually call it here
 
   assertEquals(childConnectCount, 1, 'Child should connect once');
@@ -513,7 +513,7 @@ Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - children should NOT reco
   assertEquals(child.label, 'test');
 
   document.body.removeChild(container);
-  // LinkedOM also handles disconnectedCallback automatically
+  // happy-dom also handles disconnectedCallback automatically
   assertEquals(childDisconnectCount, 1, 'Child should disconnect once on removal');
 });
 
@@ -597,7 +597,7 @@ Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - effect cleanup preserved
   assertEquals(child.textContent, 'updated');
 
   document.body.removeChild(container);
-  // LinkedOM handles disconnectedCallback automatically
+  // happy-dom handles disconnectedCallback automatically
 });
 
 Deno.test('HTMLPropsMixin w/ shadow: allows defining update for custom rendering', () => {

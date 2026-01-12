@@ -3,41 +3,31 @@ import { HTMLPropsMixin } from '../mixin.ts';
 import { prop } from '../prop.ts';
 import type { PropsConfig } from '../types.ts';
 
-import { parseHTML } from 'linkedom';
+import { Window } from 'happy-dom';
 import { effect } from '@html-props/signals';
 import { ref } from '@html-props/core';
 
-// Setup environment
+// Setup environment with happy-dom
 if (!globalThis.document) {
-  const {
-    window,
-    document,
-    customElements,
-    HTMLElement,
-    HTMLButtonElement,
-    Node,
-    CustomEvent,
-    Event,
-    MutationObserver,
-  } = parseHTML('<!DOCTYPE html><html><body></body></html>');
+  const happyWindow = new Window();
 
-  const HTMLTableSectionElementPolyfill =
-    (parseHTML('<!DOCTYPE html><html><body></body></html>') as any).HTMLTableSectionElement ||
-    class HTMLTableSectionElement extends HTMLElement {};
+  // deno-lint-ignore no-explicit-any
+  const w = happyWindow as any;
 
   Object.assign(globalThis, {
-    window,
-    document,
-    customElements,
-    HTMLElement,
-    HTMLButtonElement,
-    HTMLTableSectionElement: HTMLTableSectionElementPolyfill,
-    Node,
-    CustomEvent,
-    MutationObserver,
+    window: happyWindow,
+    document: w.document,
+    customElements: w.customElements,
+    HTMLElement: w.HTMLElement,
+    HTMLButtonElement: w.HTMLButtonElement || w.HTMLElement,
+    HTMLTableSectionElement: w.HTMLTableSectionElement || w.HTMLElement,
+    Node: w.Node,
+    CustomEvent: w.CustomEvent,
+    MutationObserver: w.MutationObserver,
   });
 }
 
+// deno-lint-ignore no-explicit-any
 const Event = (globalThis as any).window.Event;
 
 // --- Basic Functionality ---
