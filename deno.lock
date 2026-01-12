@@ -45,6 +45,7 @@
     "npm:esbuild@0.25": "0.25.10",
     "npm:esbuild@0.27": "0.27.0",
     "npm:eslint@^9.39.1": "9.39.1",
+    "npm:happy-dom@^20.1.0": "20.1.0",
     "npm:linkedom@*": "0.18.12",
     "npm:linkedom@~0.18.6": "0.18.12",
     "npm:marked@*": "17.0.1",
@@ -609,7 +610,7 @@
     "@happy-dom/global-registrator@12.10.3": {
       "integrity": "sha512-miSMqJS1B1Je9/z9ClgJafGX1ioM/rvxWFWqjOy8I82RSoa2/k4//iPfI+dOxT2d9f5KEaHZycw+3FH9TzjmSQ==",
       "dependencies": [
-        "happy-dom"
+        "happy-dom@12.10.3"
       ]
     },
     "@humanfs/core@0.19.1": {
@@ -670,6 +671,12 @@
     "@types/mocha@10.0.10": {
       "integrity": "sha512-xPyYSz1cMPnJQhl0CLMH68j3gprKZaTjG3s5Vi+fDgx+uhG9NOXwbVt52eFS8ECyXhyKcjDLCBEqBExKuiZb7Q=="
     },
+    "@types/node@20.19.28": {
+      "integrity": "sha512-VyKBr25BuFDzBFCK5sUM6ZXiWfqgCTwTAOK8qzGV/m9FCirXYDlmczJ+d5dXBAQALGCdRRdbteKYfJ84NGEusw==",
+      "dependencies": [
+        "undici-types"
+      ]
+    },
     "@types/node@22.19.1": {
       "integrity": "sha512-LCCV0HdSZZZb34qifBsyWlUmok6W7ouER+oQIGBScS8EsZsQbrtFTUrDX4hOl+CS6p7cnNC4td+qrSVGSCTUfQ==",
       "dependencies": [
@@ -678,6 +685,15 @@
     },
     "@types/vscode@1.106.1": {
       "integrity": "sha512-R/HV8u2h8CAddSbX8cjpdd7B8/GnE4UjgjpuGuHcbp1xV6yh4OeqU4L1pKjlwujCrSFS0MOpwJAIs/NexMB1fQ=="
+    },
+    "@types/whatwg-mimetype@3.0.2": {
+      "integrity": "sha512-c2AKvDT8ToxLIOUlN51gTiHXflsfIFisS4pO7pDPoKouJCESkhZnEy623gwP9laCy5lnLDAw1vAzu2vM2YLOrA=="
+    },
+    "@types/ws@8.18.1": {
+      "integrity": "sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==",
+      "dependencies": [
+        "@types/node@22.19.1"
+      ]
     },
     "@typescript-eslint/eslint-plugin@8.48.0_@typescript-eslint+parser@8.48.0__eslint@9.39.1__typescript@5.9.3_eslint@9.39.1_typescript@5.9.3": {
       "integrity": "sha512-XxXP5tL1txl13YFtrECECQYeZjBZad4fyd3cFV4a19LkAY/bIp9fev3US4S5fDVV2JaYFiKAZ/GRTOLer+mbyQ==",
@@ -1652,6 +1668,16 @@
         "webidl-conversions",
         "whatwg-encoding",
         "whatwg-mimetype"
+      ]
+    },
+    "happy-dom@20.1.0": {
+      "integrity": "sha512-ebvqjBqzenBk2LjzNEAzoj7yhw7rW/R2/wVevMu6Mrq3MXtcI/RUz4+ozpcOcqVLEWPqLfg2v9EAU7fFXZUUJw==",
+      "dependencies": [
+        "@types/node@20.19.28",
+        "@types/whatwg-mimetype",
+        "@types/ws",
+        "whatwg-mimetype",
+        "ws"
       ]
     },
     "has-bigints@1.1.0": {
@@ -2816,7 +2842,8 @@
       "integrity": "sha512-p41ogyeMUrw3jWclHWTQg1k05DSVXPLcVxRTYsXUk+ZooOCZLcoYgPZ/HL/D/N+uQPOtcp1me1WhBEaX02mhWg==",
       "dependencies": [
         "iconv-lite"
-      ]
+      ],
+      "deprecated": true
     },
     "whatwg-mimetype@3.0.0": {
       "integrity": "sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q=="
@@ -2906,6 +2933,9 @@
         "strip-ansi@7.1.2"
       ]
     },
+    "ws@8.19.0": {
+      "integrity": "sha512-blAT2mjOEIi0ZzruJfIhb3nps74PRWTCz1IjglWEEpQl5XS/UNama6u2/rjFkDDouqr4L67ry+1aGIALViWjDg=="
+    },
     "y18n@5.0.8": {
       "integrity": "sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA=="
     },
@@ -2989,6 +3019,7 @@
       "jsr:@luca/esbuild-deno-loader@~0.11.1",
       "jsr:@std/assert@^1.0.11",
       "npm:esbuild@0.25",
+      "npm:happy-dom@^20.1.0",
       "npm:linkedom@~0.18.6"
     ],
     "members": {

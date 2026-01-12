@@ -58,6 +58,7 @@ Deno.test('jsx: creates instance with children as content', () => {
   customElements.define('jsx-test-3', TestElement);
 
   const result = <TestElement>Hello</TestElement>;
+  (result as any).connectedCallback(); // Props applied on connect
   assert(result instanceof TestElement);
   assertEquals(result.textContent, 'Hello');
 });
@@ -72,9 +73,12 @@ Deno.test('jsx: flattens array children', () => {
       <Div>World</Div>
     </TestElement>
   );
+  (result as any).connectedCallback(); // Props applied on connect
+  ((result as any).children[0] as any).connectedCallback();
+  ((result as any).children[1] as any).connectedCallback();
   assert(result instanceof TestElement);
-  assertEquals(result.children.length, 2);
-  assertEquals(result.children[0].textContent, 'Hello');
+  assertEquals((result as any).children.length, 2);
+  assertEquals((result as any).children[0].textContent, 'Hello');
 });
 
 Deno.test('jsx: handles children and other props together', () => {
@@ -89,6 +93,7 @@ Deno.test('jsx: handles children and other props together', () => {
       Content
     </TestElement>
   );
+  (result as any).connectedCallback(); // Props applied on connect
   assert(result instanceof TestElement);
   assertEquals(result.customClass, 'test-class');
   assertEquals(result.customId, 'test-id');
@@ -156,6 +161,7 @@ Deno.test('jsx: creates custom element with children and props', () => {
       <MyButton label='Inner' />
     </MyContainer>
   );
+  (result as any).connectedCallback(); // Props applied on connect
 
   assert(result instanceof MyContainer);
   assertEquals(result.myTitle, 'My Title');
@@ -205,6 +211,7 @@ Deno.test('jsx: handles multiple children in array', () => {
       More Text
     </Container>
   );
+  (result as any).connectedCallback(); // Props applied on connect
   assert(result instanceof Container);
   assertEquals(result.childNodes.length, 3);
 });
@@ -250,6 +257,7 @@ Deno.test('jsx: elements with text content', () => {
   customElements.define('jsx-text-content', TestElement);
 
   const result = <TestElement>Hello World</TestElement>;
+  (result as any).connectedCallback(); // Props applied on connect
   assert(result instanceof TestElement);
   assertEquals(result.textContent, 'Hello World');
 });
@@ -263,6 +271,7 @@ Deno.test('jsx: nested elements', () => {
       <Div />
     </Outer>
   );
+  (result as any).connectedCallback(); // Props applied on connect
   assert(result instanceof Outer);
   assert(result.firstElementChild instanceof Div);
 });
@@ -288,6 +297,7 @@ Deno.test('jsx: expression children', () => {
 
   const name = 'World';
   const result = <TestElement>Hello {name}</TestElement>;
+  (result as any).connectedCallback(); // Props applied on connect
   assert(result instanceof TestElement);
   // content will be array ["Hello ", "World"]
   assertEquals(result.textContent, 'Hello World');

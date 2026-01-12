@@ -59,7 +59,9 @@ export class PropsController {
 
     for (const [key, value] of Object.entries(propsConfig)) {
       if (this.isCustomProp(key)) {
-        this.customProps[key] = signal(value.default ?? undefined);
+        // Use 'in' check to preserve null as valid default
+        const defaultValue = 'default' in value ? value.default : undefined;
+        this.customProps[key] = signal(defaultValue);
         Object.defineProperty(host, key, {
           get: () => this.customProps[key](),
           set: (v) => {
@@ -76,6 +78,13 @@ export class PropsController {
         });
       } else {
         this.defaultProps[key] = value;
+      }
+    }
+
+    // Apply constructor props to custom props (safe without DOM manipulation)
+    for (const [key, value] of Object.entries(props)) {
+      if (this.isCustomProp(key) && this.customProps[key]) {
+        this.customProps[key].set(value);
       }
     }
   }
@@ -139,7 +148,10 @@ export class PropsController {
       this.props,
     );
 
-    this.applyProps(target, rest as Props);
+    // Event handlers (onclick, etc.) must be applied to host, not shadowRoot
+    // Other props (ref, style, dataset) are applied to the render target
+    this.applyProps(this.host, rest as Props, { eventsOnly: true });
+    this.applyProps(target, rest as Props, { skipEvents: true });
 
     const hostWithRender = this.host as HTMLElementLike & { render?(): Node | Node[] | null };
     this.currentRender = hostWithRender.render?.() ?? null;
@@ -151,12 +163,22 @@ export class PropsController {
     }
   }
 
-  applyProps(target: HTMLElementLike, props: Props) {
+  private isEventHandler(key: string): boolean {
+    return key.startsWith('on') && key.length > 2;
+  }
+
+  applyProps(target: HTMLElementLike, props: Props, options?: { eventsOnly?: boolean; skipEvents?: boolean }) {
     const { ref, style, dataset, innerHTML, textContent, children, content, ...rest } = props;
 
     for (const [key, value] of Object.entries(rest)) {
+      const isEvent = this.isEventHandler(key);
+      if (options?.eventsOnly && !isEvent) continue;
+      if (options?.skipEvents && isEvent) continue;
       (target as unknown as Record<string, unknown>)[key] = value;
     }
+
+    // Skip non-event props if eventsOnly is set
+    if (options?.eventsOnly) return;
 
     if (ref) {
       // Store ref for cleanup on disconnect
@@ -215,16 +237,19 @@ export class PropsController {
   defaultUpdate() {
     const hostWithRender = this.host as HTMLElementLike & { render?(): Node | Node[] | null };
     if (hostWithRender.render) {
+      // Use shadowRoot if available, otherwise host element
+      const target = (this.host.shadowRoot ?? this.host) as HTMLElementLike;
+
       if (this.currentRender === null) {
-        this.applyContent(this.host);
-        this.currentRender = Array.from(this.host.childNodes);
+        this.applyContent(target);
+        this.currentRender = Array.from(target.childNodes);
       } else {
         const nextRender = hostWithRender.render();
         if (nextRender) {
-          const prevChildren = Array.from(this.host.childNodes);
+          const prevChildren = Array.from(target.childNodes);
           const nextChildren = this.normalizeChildren(Array.isArray(nextRender) ? nextRender : [nextRender]);
-          this.reconcile(prevChildren, nextChildren, this.host);
-          this.currentRender = Array.from(this.host.childNodes);
+          this.reconcile(prevChildren, nextChildren, target);
+          this.currentRender = Array.from(target.childNodes);
         }
       }
     }

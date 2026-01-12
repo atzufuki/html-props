@@ -134,10 +134,34 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
   }
 
   if (config && typeof config === 'object') {
-    (HTMLPropsElement as any).__propsConfig = {
-      ...((Base as any).__propsConfig || {}),
-      ...config,
-    };
+    const parentConfig = (Base as any).__propsConfig || {};
+    const mergedConfig: Record<string, any> = { ...parentConfig };
+
+    // Smart merge: if parent has a PropConfig object and child provides a plain value,
+    // treat it as overriding just the default, not the entire config
+    for (const [key, value] of Object.entries(config)) {
+      const parentValue = parentConfig[key];
+      const isParentPropConfig = parentValue && typeof parentValue === 'object' && (
+        typeof parentValue.type === 'function' ||
+        'default' in parentValue ||
+        'attribute' in parentValue
+      );
+      const isChildPropConfig = value && typeof value === 'object' && (
+        typeof (value as any).type === 'function' ||
+        'default' in (value as any) ||
+        'attribute' in (value as any)
+      );
+
+      if (isParentPropConfig && !isChildPropConfig) {
+        // Child provides a plain value -> override just the default
+        mergedConfig[key] = { ...parentValue, default: value };
+      } else {
+        // Child provides a full PropConfig or parent doesn't have one
+        mergedConfig[key] = value;
+      }
+    }
+
+    (HTMLPropsElement as any).__propsConfig = mergedConfig;
   }
 
   return HTMLPropsElement as any;

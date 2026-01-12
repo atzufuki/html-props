@@ -7,6 +7,7 @@ const Event = (globalThis as any).window.Event;
 
 Deno.test('Div creates a div element', () => {
   const div = new Div({ className: 'test' });
+  div.connectedCallback(); // Props applied on connect
   assertEquals(div.tagName, 'DIV');
   assertEquals(div.getAttribute('class'), 'test');
 });
@@ -16,6 +17,7 @@ Deno.test('Button handles onclick', () => {
   const btn = new Button({
     onclick: () => clicked = true,
   });
+  btn.connectedCallback(); // Props applied on connect
 
   btn.dispatchEvent(new Event('click'));
   assertEquals(clicked, true);
@@ -25,6 +27,7 @@ Deno.test('Element handles style object', () => {
   const span = new Span({
     style: { color: 'red', fontSize: '12px' },
   });
+  span.connectedCallback(); // Props applied on connect
 
   assertEquals(span.style.color, 'red');
   assertEquals(span.style.fontSize, '12px');
@@ -47,6 +50,7 @@ Deno.test('Element handles content', () => {
       'World',
     ],
   });
+  div.connectedCallback(); // Props applied on connect
 
   assertEquals(div.childNodes.length, 2);
   assertEquals((div.childNodes[0] as Element).tagName, 'SPAN');

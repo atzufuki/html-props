@@ -87,6 +87,7 @@ Deno.test('HTMLPropsMixin: direct defaults override in constructor', () => {
     tabIndex: 1,
     style: { color: 'blue' },
   });
+  el.connectedCallback(); // Props applied on connect
 
   assertEquals(el.tabIndex, 1);
   assertEquals(el.style.color, 'blue');

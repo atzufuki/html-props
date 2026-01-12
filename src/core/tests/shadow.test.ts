@@ -3,41 +3,31 @@ import { HTMLPropsMixin } from '../mixin.ts';
 import { prop } from '../prop.ts';
 import type { PropsConfig } from '../types.ts';
 
-import { parseHTML } from 'linkedom';
+import { Window } from 'happy-dom';
 import { effect } from '@html-props/signals';
 import { ref } from '@html-props/core';
 
-// Setup environment
+// Setup environment with happy-dom
 if (!globalThis.document) {
-  const {
-    window,
-    document,
-    customElements,
-    HTMLElement,
-    HTMLButtonElement,
-    Node,
-    CustomEvent,
-    Event,
-    MutationObserver,
-  } = parseHTML('<!DOCTYPE html><html><body></body></html>');
+  const happyWindow = new Window();
 
-  const HTMLTableSectionElementPolyfill =
-    (parseHTML('<!DOCTYPE html><html><body></body></html>') as any).HTMLTableSectionElement ||
-    class HTMLTableSectionElement extends HTMLElement {};
+  // deno-lint-ignore no-explicit-any
+  const w = happyWindow as any;
 
   Object.assign(globalThis, {
-    window,
-    document,
-    customElements,
-    HTMLElement,
-    HTMLButtonElement,
-    HTMLTableSectionElement: HTMLTableSectionElementPolyfill,
-    Node,
-    CustomEvent,
-    MutationObserver,
+    window: happyWindow,
+    document: w.document,
+    customElements: w.customElements,
+    HTMLElement: w.HTMLElement,
+    HTMLButtonElement: w.HTMLButtonElement,
+    HTMLTableSectionElement: w.HTMLTableSectionElement || w.HTMLElement,
+    Node: w.Node,
+    CustomEvent: w.CustomEvent,
+    MutationObserver: w.MutationObserver,
   });
 }
 
+// deno-lint-ignore no-explicit-any
 const Event = (globalThis as any).window.Event;
 
 // --- Shadow DOM Helpers ---
@@ -196,15 +186,7 @@ Deno.test('HTMLPropsMixin w/ shadow: inheritance', () => {
   }) {}
 
   class MyElementFromInheritance extends HTMLPropsMixin(MyElement, {
-    // text is already defined in MyElement.
-    // If we want to override the default, we should use direct value now?
-    // Or if we want to redefine the prop config?
-    // MyElement has 'text' property (string).
-    // So 'text' in config must be string (direct value).
-    // But here we are passing PropConfig.
-    // This is what the user wanted to ban!
-    // So this test is now invalid according to new rules.
-    // We should change it to use direct default override.
+    // Override just the default value - prop is already defined in parent
     text: 'Default text from inheritance',
   }) {}
 
@@ -346,7 +328,10 @@ Deno.test('HTMLPropsMixin w/ shadow: signal support with click handler', () => {
 
   element.click();
 
+  // text prop updates, but textContent doesn't auto-update without effect
   assertEquals(element.text, 'New text');
+  // textContent still has old value since it's set only in connectedCallback
+  assertEquals(element.textContent, 'Original text');
 });
 
 Deno.test('HTMLPropsMixin w/ shadow: signal support with effect', () => {
@@ -520,14 +505,15 @@ Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - children should NOT reco
   });
 
   document.body.appendChild(container);
-  child.connectedCallback();
+  // Note: LinkedOM automatically calls connectedCallback on appendChild,
+  // so we don't need to manually call it here
 
   assertEquals(childConnectCount, 1, 'Child should connect once');
   assertEquals(childDisconnectCount, 0, 'Child should NOT disconnect during parent connection');
   assertEquals(child.label, 'test');
 
   document.body.removeChild(container);
-  child.disconnectedCallback();
+  // LinkedOM also handles disconnectedCallback automatically
   assertEquals(childDisconnectCount, 1, 'Child should disconnect once on removal');
 });
 
@@ -598,7 +584,7 @@ Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - effect cleanup preserved
   });
 
   document.body.appendChild(container);
-  child.connectedCallback();
+  // Note: LinkedOM automatically calls connectedCallback on appendChild
 
   // Effect should run once when child connects
   assertEquals(effectRunCount, 1, 'Effect should run once on connect');
@@ -611,7 +597,7 @@ Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - effect cleanup preserved
   assertEquals(child.textContent, 'updated');
 
   document.body.removeChild(container);
-  child.disconnectedCallback();
+  // LinkedOM handles disconnectedCallback automatically
 });
 
 Deno.test('HTMLPropsMixin w/ shadow: allows defining update for custom rendering', () => {
@@ -743,9 +729,10 @@ Deno.test('HTMLPropsMixin w/ shadow: filters null/undefined/boolean from content
   const el = new TestContentElement({
     content: ['Hello', null, undefined, false, true, 'World', 0],
   });
+  el.connectedCallback();
 
-  assertEquals(el.childNodes.length, 3);
-  assertEquals(el.textContent, 'HelloWorld0');
+  assertEquals(el.shadowRoot!.childNodes.length, 3);
+  assertEquals(el.shadowRoot!.textContent, 'HelloWorld0');
 });
 
 Deno.test('HTMLPropsMixin w/ shadow: filters null/undefined/boolean from render', () => {
