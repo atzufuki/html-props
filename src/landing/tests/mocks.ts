@@ -1,8 +1,14 @@
-import { stub } from 'jsr:@std/testing/mock';
-
+/**
+ * Mock fetch for testing. Uses direct assignment instead of stub
+ * because setup.ts already patches globalThis.fetch.
+ */
 export function mockFetch(responses: Record<string, string | object>) {
-  const fetchStub = stub(globalThis, 'fetch', async (input: string | URL | Request, init?: RequestInit) => {
+  const originalFetch = globalThis.fetch;
+  const calls: { args: [string | URL | Request, RequestInit?] }[] = [];
+
+  const mockFn = async (input: string | URL | Request, init?: RequestInit) => {
     const url = input.toString();
+    calls.push({ args: [input, init] });
 
     // Find matching response
     for (const [key, value] of Object.entries(responses)) {
@@ -16,10 +22,14 @@ export function mockFetch(responses: Record<string, string | object>) {
     }
 
     return new Response('Not Found', { status: 404 });
-  });
+  };
+
+  globalThis.fetch = mockFn;
 
   return {
-    restore: () => fetchStub.restore(),
-    stub: fetchStub,
+    restore: () => {
+      globalThis.fetch = originalFetch;
+    },
+    stub: { calls },
   };
 }

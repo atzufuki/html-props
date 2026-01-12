@@ -37,6 +37,16 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
   private tokens = signal<any[]>([]);
 
   async mountedCallback() {
+    // If markdown prop is provided, use it instead of fetching
+    if (this.markdown) {
+      const tokens = this.service.parse(this.markdown);
+      this.tokens.set(tokens);
+      return;
+    }
+
+    // Only fetch if src is provided
+    if (!this.src) return;
+
     await this.service.fetchDoc(this.src, this.version);
     const doc = this.service.getDocSync(this.src, this.version);
     batch(() => {

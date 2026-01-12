@@ -188,15 +188,16 @@ export function setup() {
   }
 
   // Ensure globalThis.location is also set
-  if (!(globalThis as any).location) {
-    Object.defineProperty(globalThis, 'location', {
-      get: () => w.location,
-      set: (v) => {
-        w.location = v;
-      },
-      configurable: true,
-    });
-  }
+  Object.defineProperty(globalThis, 'location', {
+    get: () => w.location,
+    set: (v) => {
+      w.location = v;
+    },
+    configurable: true,
+  });
+
+  // Set location to localhost for tests
+  w.location.href = 'http://localhost:8000/';
 
   (globalThis as any).scrollTo = w.scrollTo;
 
