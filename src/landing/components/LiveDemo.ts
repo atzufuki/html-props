@@ -5,43 +5,12 @@ import * as Layout from '@html-props/layout';
 import { theme } from '../theme.ts';
 
 const { HTMLPropsMixin, prop } = Core;
-const { signal, effect } = Signals;
 const { MediaQuery } = Layout;
 const { Div } = BuiltIns;
 
 export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
   code: prop(''),
 }) {
-  private codeSignal = signal('');
-  private errorSignal = signal('');
-  private highlightedSignal = signal('');
-  private isMobileSignal = signal(false);
-
-  connectedCallback() {
-    // @ts-ignore: super has connectedCallback from mixin
-    if (super.connectedCallback) super.connectedCallback();
-
-    // Initialize code signal with prop value
-    this.codeSignal.set(this.code);
-
-    // Responsive layout
-    effect(() => {
-      this.isMobileSignal.set(MediaQuery.isMobile());
-    });
-
-    // Update highlighting when code changes
-    effect(() => {
-      const code = this.codeSignal();
-      this.highlightedSignal.set(this.highlight(code));
-    });
-
-    // Run code when it changes
-    effect(() => {
-      const code = this.codeSignal();
-      this.runCode(code);
-    });
-  }
-
   private highlight(code: string): string {
     // Escape HTML first
     const escaped = code
@@ -117,7 +86,7 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
 
   private handleCodeInput(e: Event) {
     const textarea = e.target as HTMLTextAreaElement;
-    this.codeSignal.set(textarea.value);
+    this.code = textarea.value;
   }
 
   private handleKeyDown(e: KeyboardEvent) {
@@ -127,15 +96,13 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
       const newCode = textarea.value.substring(0, start) + '  ' + textarea.value.substring(end);
-      this.codeSignal.set(newCode);
+      this.code = newCode;
       textarea.value = newCode;
       textarea.selectionStart = textarea.selectionEnd = start + 2;
     }
   }
 
-  private runCode(code: string) {
-    this.errorSignal.set('');
-
+  private runCode(code: string): [HTMLElement | null, string | null] {
     try {
       const cleanCode = code.replace(/import\s+.*?from\s+['"].*?['"];?/g, '');
       const classMatches = [...cleanCode.matchAll(/class\s+(\w+)/g)];
@@ -171,20 +138,17 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
 
       const ComponentClass = func(...values);
       if (ComponentClass) {
-        const instance = new ComponentClass();
-        const preview = this.querySelector('[data-preview]');
-        if (preview) {
-          preview.replaceChildren(instance);
-        }
+        return [new ComponentClass(), null];
       }
+      return [null, null];
     } catch (e: any) {
-      this.errorSignal.set(e.message);
+      return [null, e.message];
     }
   }
 
   render() {
-    const isMobile = this.isMobileSignal();
-    const hasError = this.errorSignal() !== '';
+    const isMobile = MediaQuery.isMobile();
+    const [result, error] = this.runCode(this.code);
 
     return new Div({
       style: {
@@ -227,7 +191,7 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
                   content: [
                     // Pre (highlighted code)
                     new Div({
-                      innerHTML: this.highlightedSignal() + '<br>',
+                      innerHTML: this.highlight(this.code) + '<br>',
                       style: {
                         gridArea: '1/1',
                         margin: '0',
@@ -243,7 +207,7 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
                     }),
                     // Textarea (input)
                     new BuiltIns.Textarea({
-                      value: this.codeSignal(),
+                      defaultValue: this.code,
                       oninput: (e: Event) => this.handleCodeInput(e),
                       onkeydown: (e: KeyboardEvent) => this.handleKeyDown(e),
                       style: {
@@ -268,9 +232,9 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
               ],
             }),
             // Error display
-            hasError
+            error
               ? new Div({
-                textContent: this.errorSignal(),
+                textContent: error,
                 style: {
                   padding: '0.5rem 1rem',
                   backgroundColor: 'rgba(220, 38, 38, 0.1)',
@@ -311,6 +275,7 @@ export class LiveDemo extends HTMLPropsMixin(HTMLElement, {
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                     minWidth: '300px',
                   },
+                  content: result,
                 }),
               ],
             }),

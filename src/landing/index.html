@@ -12,11 +12,10 @@
     <script src="//unpkg.com/@ungap/custom-elements"></script>
     <script>
       try {
-        var saved = localStorage.getItem("theme-preference");
-        var isDark =
-          saved === "dark" ||
-          (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches);
-        if (isDark) document.documentElement.classList.add("dark");
+        var saved = localStorage.getItem('theme-preference');
+        var isDark = saved === 'dark' ||
+          (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (isDark) document.documentElement.classList.add('dark');
       } catch (e) {}
     </script>
     <link rel="stylesheet" href="/styles.css" />

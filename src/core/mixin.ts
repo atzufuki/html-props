@@ -14,6 +14,8 @@ export interface HTMLPropsElementConstructor<T extends Constructor, P = {}, IP =
   ): InstanceType<T> & IP & {
     connectedCallback(): void;
     disconnectedCallback(): void;
+    mountedCallback?(): void;
+    unmountedCallback?(): void;
     update?(): void;
     defaultUpdate(): void;
     forceUpdate(): void;
@@ -68,7 +70,7 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       }
 
       // Create controller with props config
-      const propsConfig = (this.constructor as any).__propsConfig as PropsConfig || null;
+      const propsConfig = (this.constructor as any).__propsConfig as PropsConfig || {};
       const props = args[0] ?? {};
       this[PROPS_CONTROLLER] = new PropsController(this, propsConfig, props);
     }
@@ -76,13 +78,27 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
     override connectedCallback() {
       // @ts-ignore
       if (super.connectedCallback) super.connectedCallback();
+
+      if ((this as any).__html_props_phantom) return;
+
       this[PROPS_CONTROLLER].onConnected();
+
+      if ((this as any).mountedCallback) {
+        (this as any).mountedCallback();
+      }
     }
 
     override disconnectedCallback() {
       // @ts-ignore
       if (super.disconnectedCallback) super.disconnectedCallback();
+
+      if ((this as any).__html_props_phantom) return;
+
       this[PROPS_CONTROLLER].onDisconnected();
+
+      if ((this as any).unmountedCallback) {
+        (this as any).unmountedCallback();
+      }
     }
 
     override attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null) {

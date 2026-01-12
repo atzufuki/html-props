@@ -3,7 +3,6 @@ import { Button, Div, Heading1, Input, ListItem, Span, UnorderedList } from '@ht
 import { Column, Container, Row } from '@html-props/layout';
 import { signal } from '@html-props/signals';
 import { theme } from './theme.ts';
-// import { morph } from '@phlex/morphlex';
 
 interface Todo {
   id: number;
@@ -103,8 +102,6 @@ export class App extends HTMLPropsMixin(HTMLElement) {
           new UnorderedList({
             style: { listStyle: 'none', padding: '0', margin: '0' },
             content: this.todos().map((todo) => {
-              // console.log(todo.completed);
-
               return new ListItem({
                 id: `todo-${todo.id}`,
                 style: {
@@ -118,7 +115,7 @@ export class App extends HTMLPropsMixin(HTMLElement) {
                 content: [
                   new Row({
                     gap: '12px',
-                    style: { flex: '1', alignItems: 'center' },
+                    crossAxisAlignment: 'center',
                     content: [
                       new Input({
                         type: 'checkbox',
