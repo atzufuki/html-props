@@ -103,7 +103,8 @@ export class App extends HTMLPropsMixin(HTMLElement) {
             style: { listStyle: 'none', padding: '0', margin: '0' },
             content: this.todos().map((todo) => {
               return new ListItem({
-                id: `todo-${todo.id}`,
+                // dataset: { key: todo.id.toString() },
+                // id: `todo-${todo.id}`,
                 style: {
                   display: 'flex',
                   alignItems: 'center',

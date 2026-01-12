@@ -765,6 +765,9 @@ Deno.test('HTMLPropsMixin: filters null/undefined/boolean from content', () => {
     content: ['Hello', null, undefined, false, true, 'World', 0],
   });
 
+  // Must call connectedCallback to trigger content rendering (spec: no DOM in constructor)
+  el.connectedCallback();
+
   assertEquals(el.childNodes.length, 3);
   assertEquals(el.textContent, 'HelloWorld0');
 });

@@ -104,25 +104,32 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
     override attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null) {
       // @ts-ignore
       if (super.attributeChangedCallback) super.attributeChangedCallback(name, oldVal, newVal);
-      this[PROPS_CONTROLLER].onAttributeChanged(name, oldVal, newVal);
+      // Controller may not exist yet during parent constructor execution
+      this[PROPS_CONTROLLER]?.onAttributeChanged(name, oldVal, newVal);
     }
 
     requestUpdate() {
+      // If parent has requestUpdate (e.g., Lit), delegate to it and skip our logic
       // @ts-ignore
-      if (super.requestUpdate) super.requestUpdate();
-      this[PROPS_CONTROLLER].requestUpdate();
+      if (super.requestUpdate) {
+        // @ts-ignore
+        super.requestUpdate();
+        return;
+      }
+      // Controller may not exist yet during parent constructor execution
+      this[PROPS_CONTROLLER]?.requestUpdate();
     }
 
     defaultUpdate() {
       // @ts-ignore
       if (super.defaultUpdate) super.defaultUpdate();
-      this[PROPS_CONTROLLER].defaultUpdate();
+      this[PROPS_CONTROLLER]?.defaultUpdate();
     }
 
     forceUpdate() {
       // @ts-ignore
       if (super.forceUpdate) super.forceUpdate();
-      this[PROPS_CONTROLLER].forceUpdate();
+      this[PROPS_CONTROLLER]?.forceUpdate();
     }
   }
 

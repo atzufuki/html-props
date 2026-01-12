@@ -24,7 +24,7 @@ import {
 import { CodeBlock } from './CodeBlock.ts';
 import { MarkdownService } from '../services/MarkdownService.ts';
 import { theme } from '../theme.ts';
-import { batch, effect, signal, untracked } from '@html-props/signals';
+import { batch, signal } from '@html-props/signals';
 
 export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
   src: prop(''),
@@ -34,133 +34,28 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
   private service = MarkdownService.getInstance();
   private loading = false;
   private error: string | null = null;
-  // private tokens: any[] = [];
   private tokens = signal<any[]>([]);
-  private _lastSrc = '';
-  private _lastVersion = '';
-  private _lastMarkdown = ''; // Track markdown changes
-  private _disposeEffect: (() => void) | null = null;
-
-  // connectedCallback() {
-  //   // Pre-load content if available to prevent flash of empty state
-  //   if (this.markdown) {
-  //     this.tokens = this.service.parse(this.markdown);
-  //     this._lastMarkdown = this.markdown;
-  //   } else if (this.src) {
-  //     const cached = this.service.getDocSync(this.src, this.version);
-  //     if (cached) {
-  //       this.tokens = cached.tokens;
-  //       this._lastSrc = this.src;
-  //       this._lastVersion = this.version;
-  //     } else {
-  //       // Do not set loading=true here, let loadDoc handle it to avoid race conditions
-  //       // or just rely on loadDoc being called by effect
-  //     }
-  //   }
-
-  //   super.connectedCallback();
-
-  //   this._disposeEffect = effect(() => {
-  //     const markdown = this.markdown;
-  //     const src = this.src;
-  //     const version = this.version;
-
-  //     if (markdown) {
-  //       // Avoid infinite loops if parseMarkdown triggers update which triggers effect?
-  //       // parseMarkdown calls requestUpdate, which triggers render effect, not this effect.
-  //       // But we should check if value actually changed to avoid redundant work if effect runs for other reasons.
-  //       if (markdown !== this._lastMarkdown) {
-  //         this.parseMarkdown(markdown);
-  //       }
-  //     } else if (src) {
-  //       if (src !== this._lastSrc || version !== this._lastVersion) {
-  //         this.loadDoc();
-  //       }
-  //     }
-  //   });
-  // }
 
   async mountedCallback() {
     await this.service.fetchDoc(this.src, this.version);
     const doc = this.service.getDocSync(this.src, this.version);
-    // this.tokens = doc ? doc.tokens : [];
-    // this.forceUpdate();
-
-    // console.log(1111, doc ? doc.tokens : []);
-
     batch(() => {
       this.tokens.set(doc ? doc.tokens : []);
     });
-
-    // try {
-    //   const content = await this.service.fetchDoc(this.src, this.version);
-
-    //   this.tokens = content.tokens;
-    // } catch (e: any) {
-    //   this.error = e.message;
-    // } finally {
-    //   this.loading = false;
-    //   this.requestUpdate();
-    // }
   }
 
-  // disconnectedCallback() {
-  //   super.disconnectedCallback();
-  //   if (this._disposeEffect) {
-  //     this._disposeEffect();
-  //     this._disposeEffect = null;
-  //   }
-  // }
-
-  // async loadDoc() {
-  //   if (this.loading) return;
-  //   this._lastSrc = this.src;
-  //   this._lastVersion = this.version;
-
-  //   const isCached = this.service.hasDoc(this.src, this.version);
-
-  //   if (!isCached) {
-  //     this.loading = true;
-  //     this.tokens = [];
-  //     this.requestUpdate();
-  //   }
-
-  //   this.error = null;
-
-  //   try {
-  //     const content = await this.service.fetchDoc(this.src, this.version);
-  //     this.tokens = content.tokens;
-  //   } catch (e: any) {
-  //     this.error = e.message;
-  //   } finally {
-  //     this.loading = false;
-  //     this.requestUpdate();
-  //   }
-  // }
-
-  // // Helper to parse direct markdown
-  // private parseMarkdown(content: string) {
-  //   this._lastMarkdown = content;
-  //   this.tokens = this.service.parse(content);
-  //   this.requestUpdate();
-  // }
-
   render() {
-    // const tokens = untracked(this.tokens);
     const tokens = this.tokens();
 
-    console.log(this, tokens.length);
+    if (this.loading) {
+      return this.renderSkeleton();
+    }
 
-    // if (this.loading) {
-    //   return this.renderSkeleton();
-    // }
-
-    // if (this.error) {
-    //   return new Div({ textContent: `Error: ${this.error}`, style: { color: 'red', padding: '2rem' } });
-    // }
-
-    if (!tokens.length) {
-      return new Div({ textContent: 'No content found.', style: { padding: '2rem', color: theme.colors.text } });
+    if (this.error) {
+      return new Div({
+        textContent: `Error: ${this.error}`,
+        style: { color: 'red', padding: '2rem' },
+      });
     }
 
     return new Div({

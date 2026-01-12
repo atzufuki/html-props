@@ -7,13 +7,28 @@ export interface HTMLElementLike {
   setAttribute(name: string, value: string): void;
   removeAttribute(name: string): void;
   hasAttribute(name: string): boolean;
-  dispatchEvent(event: any): boolean;
-  addEventListener(type: string, listener: any, options?: any): void;
-  replaceChildren(...nodes: any[]): void;
-  style: any;
-  dataset: any;
+  dispatchEvent(event: Event): boolean;
+  addEventListener(type: string, listener: EventListener, options?: boolean | AddEventListenerOptions): void;
+  replaceChildren(...nodes: (Node | string)[]): void;
+  style: CSSStyleDeclaration;
+  dataset: DOMStringMap;
   textContent: string | null;
-  shadowRoot: any;
+  shadowRoot: ShadowRoot | null;
+  childNodes: NodeListOf<ChildNode>;
+  firstChild: ChildNode | null;
+  insertBefore<T extends Node>(node: T, child: Node | null): T;
+  hasChildNodes(): boolean;
+  readonly nodeType: number;
+  readonly localName: string;
+  readonly id: string;
+  readonly attributes: NamedNodeMap;
+  querySelectorAll(selectors: string): NodeListOf<Element>;
+  readonly parentNode: ParentNode | null;
+  remove(): void;
+  readonly nextSibling: ChildNode | null;
+  isEqualNode(otherNode: Node | null): boolean;
+  nodeValue: string | null;
+  innerHTML: string;
 }
 
 export type Constructor<T = HTMLElementLike> = new (...args: any[]) => T;

@@ -138,11 +138,13 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
         new Container({
           padding: '0 2rem',
           style: { flex: '1', width: '100%', minWidth: '0' },
-          content: new MarkdownViewer({
-            src: activePage,
-            version: version || 'main',
-            style: { display: error ? 'none' : 'block' },
-          }),
+          content: activePage
+            ? new MarkdownViewer({
+              src: activePage,
+              version: version || 'main',
+              style: { display: error ? 'none' : 'block' },
+            })
+            : null,
         }),
       ],
     });
@@ -183,11 +185,13 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
         new Container({
           padding: '1rem',
           style: { flex: '1', width: '100%', display: isOpen ? 'none' : 'block' },
-          content: new MarkdownViewer({
-            src: activePage,
-            version: version || 'main',
-            style: { display: error ? 'none' : 'block' },
-          }),
+          content: activePage
+            ? new MarkdownViewer({
+              src: activePage,
+              version: version || 'main',
+              style: { display: error ? 'none' : 'block' },
+            })
+            : null,
         }),
       ],
     });
