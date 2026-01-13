@@ -377,7 +377,8 @@ export class PropsController {
   private getIdSet(node: ManagedNode): Set<string> {
     const ids = new Set<string>();
     if (node.querySelectorAll) {
-      for (const el of node.querySelectorAll('[id]')) {
+      const elements = Array.from(node.querySelectorAll('[id]'));
+      for (const el of elements) {
         if (el.id) ids.add(el.id);
       }
     }
@@ -390,7 +391,8 @@ export class PropsController {
   private getIdArray(node: ManagedNode): string[] {
     const ids: string[] = [];
     if (node.querySelectorAll) {
-      for (const el of node.querySelectorAll('[id]')) {
+      const elements = Array.from(node.querySelectorAll('[id]'));
+      for (const el of elements) {
         if (el.id) ids.push(el.id);
       }
     }
