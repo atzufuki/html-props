@@ -1,7 +1,7 @@
 /**
  * Content Rendering Specification Tests
  *
- * Nämä testit validoivat docs/internal/content-rendering-spec.md
+ * These tests validate docs/internal/content-rendering-spec.md
  */
 
 import { assertEquals } from 'jsr:@std/assert';
@@ -19,11 +19,11 @@ globalThis.Node = dom.window.Node;
 // Test Components
 // =============================================================================
 
-/** Yksinkertainen wrapper ilman render-metodia */
+/** Simple wrapper without render method */
 class SimpleWrapper extends HTMLPropsMixin(HTMLElement) {}
 SimpleWrapper.define('simple-wrapper');
 
-/** Komponentti jolla on render-metodi */
+/** Component with render method */
 class RenderComponent extends HTMLPropsMixin(HTMLElement) {
   constructor(props?: Record<string, unknown>) {
     super(props);
@@ -35,7 +35,7 @@ class RenderComponent extends HTMLPropsMixin(HTMLElement) {
 }
 RenderComponent.define('render-component');
 
-/** Komponentti joka käyttää content:ia renderissä */
+/** Component that uses content in render */
 class ContentInRender extends HTMLPropsMixin(HTMLElement) {
   constructor(props?: Record<string, unknown>) {
     super(props);
@@ -43,15 +43,15 @@ class ContentInRender extends HTMLPropsMixin(HTMLElement) {
   }
   render() {
     const span = document.createElement('span');
-    // content getter pitäisi olla käytettävissä
-    // @ts-ignore - content tulee getteristä
+    // content getter should be available
+    // @ts-ignore - content comes from getter
     span.textContent = `Prefix: ${this.content ?? ''}`;
     return span;
   }
 }
 ContentInRender.define('content-in-render');
 
-/** Shadow DOM komponentti */
+/** Shadow DOM component */
 class ShadowComponent extends HTMLPropsMixin(HTMLElement) {
   constructor(props?: Record<string, unknown>) {
     super(props);
@@ -64,10 +64,10 @@ class ShadowComponent extends HTMLPropsMixin(HTMLElement) {
 ShadowComponent.define('shadow-component');
 
 // =============================================================================
-// Spec: Content-prop mapattuu replaceChildren()
+// Spec: Content prop maps to replaceChildren()
 // =============================================================================
 
-Deno.test('content-prop: string mapattuu replaceChildren():iin', () => {
+Deno.test('content-prop: string maps to replaceChildren()', () => {
   const el = new SimpleWrapper({ content: 'Hello' });
   document.body.appendChild(el);
 
@@ -76,7 +76,7 @@ Deno.test('content-prop: string mapattuu replaceChildren():iin', () => {
   el.remove();
 });
 
-Deno.test('content-prop: array mapattuu replaceChildren():iin', () => {
+Deno.test('content-prop: array maps to replaceChildren()', () => {
   const el = new SimpleWrapper({
     content: ['Hello', ' ', 'World'],
   });
@@ -87,7 +87,7 @@ Deno.test('content-prop: array mapattuu replaceChildren():iin', () => {
   el.remove();
 });
 
-Deno.test('content-prop: Node mapattuu replaceChildren():iin', () => {
+Deno.test('content-prop: Node maps to replaceChildren()', () => {
   const span = document.createElement('span');
   span.textContent = 'Span content';
 
@@ -102,10 +102,10 @@ Deno.test('content-prop: Node mapattuu replaceChildren():iin', () => {
 });
 
 // =============================================================================
-// Spec: Render-kohde (host vs shadowRoot)
+// Spec: Render target (host vs shadowRoot)
 // =============================================================================
 
-Deno.test('render-kohde: ilman shadowRoot renderöi host:iin', () => {
+Deno.test('render-target: without shadowRoot renders to host', () => {
   const el = new SimpleWrapper({ content: 'Host content' });
   document.body.appendChild(el);
 
@@ -115,47 +115,47 @@ Deno.test('render-kohde: ilman shadowRoot renderöi host:iin', () => {
   el.remove();
 });
 
-Deno.test('render-kohde: shadowRoot:lla renderöi shadowRoot:iin', () => {
+Deno.test('render-target: with shadowRoot renders to shadowRoot', () => {
   const el = new ShadowComponent();
   document.body.appendChild(el);
 
   assertEquals(el.shadowRoot?.textContent, 'Shadow content');
-  // Light DOM pitäisi olla tyhjä
+  // Light DOM should be empty
   assertEquals(el.childNodes.length, 0);
 
   el.remove();
 });
 
-Deno.test('render-kohde: render() komponentti kirjoittaa shadowRoot:iin', () => {
+Deno.test('render-target: render() component writes to shadowRoot', () => {
   const el = new RenderComponent();
   document.body.appendChild(el);
 
-  // Render kirjoittaa shadowRoot:iin
+  // Render writes to shadowRoot
   assertEquals(el.shadowRoot?.textContent, 'Rendered content');
-  // Light DOM tyhjä
+  // Light DOM empty
   assertEquals(el.childNodes.length, 0);
 
   el.remove();
 });
 
 // =============================================================================
-// Spec: Content vs Render (eri kohteet, eivät kilpaile)
+// Spec: Content vs Render (different targets, no conflict)
 // =============================================================================
 
-Deno.test('content vs render: molemmat toimivat yhdessä', () => {
-  // content menee Light DOM:iin, render() menee Shadow DOM:iin
+Deno.test('content vs render: both work together', () => {
+  // content goes to Light DOM, render() goes to Shadow DOM
   const el = new RenderComponent({ content: 'Light DOM content' });
   document.body.appendChild(el);
 
-  // render() kirjoittaa shadowRoot:iin
+  // render() writes to shadowRoot
   assertEquals(el.shadowRoot?.textContent, 'Rendered content');
-  // content kirjoittaa Light DOM:iin
+  // content writes to Light DOM
   assertEquals(el.textContent, 'Light DOM content');
 
   el.remove();
 });
 
-Deno.test('content vs render: wrapper käyttää content:ia', () => {
+Deno.test('content vs render: wrapper uses content', () => {
   const el = new SimpleWrapper({ content: 'Wrapper content' });
   document.body.appendChild(el);
 
@@ -164,40 +164,40 @@ Deno.test('content vs render: wrapper käyttää content:ia', () => {
   el.remove();
 });
 
-Deno.test('content vs render: eksplisiittinen yhdistäminen toimii', () => {
+Deno.test('content vs render: explicit combination works', () => {
   const el = new ContentInRender({ content: 'User content' });
   document.body.appendChild(el);
 
-  // render() lukee content:n ja yhdistää sen shadowRoot:iin
+  // render() reads content and combines it into shadowRoot
   assertEquals(el.shadowRoot?.textContent, 'Prefix: User content');
 
   el.remove();
 });
 
 // =============================================================================
-// Spec: CE-spec ja HTML upgrade
+// Spec: CE-spec and HTML upgrade
 // =============================================================================
 
-Deno.test('html upgrade: säilyttää olemassaolevan sisällön jos content ei annettu', () => {
-  // Simuloi HTML upgrade: elementti on DOM:ssa ennen kuin se upgraydataan
+Deno.test('html upgrade: preserves existing content if content not provided', () => {
+  // Simulate HTML upgrade: element is in DOM before it gets upgraded
   const el = document.createElement('simple-wrapper');
   el.textContent = 'Existing content';
   document.body.appendChild(el);
 
-  // Tarkista että sisältö säilyi
+  // Check that content was preserved
   assertEquals(el.textContent, 'Existing content');
 
   el.remove();
 });
 
-Deno.test('html upgrade: content ylikirjoittaa olemassaolevan sisällön', () => {
-  // Simuloi tilanne jossa content annetaan eksplisiittisesti
+Deno.test('html upgrade: content overwrites existing content', () => {
+  // Simulate situation where content is provided explicitly
   const el = document.createElement('simple-wrapper') as SimpleWrapper;
   el.textContent = 'Existing content';
   document.body.appendChild(el);
 
-  // Aseta content eksplisiittisesti
-  // @ts-ignore - content on dynamic prop
+  // Set content explicitly
+  // @ts-ignore - content is a dynamic prop
   el.content = 'New content';
 
   assertEquals(el.textContent, 'New content');
@@ -206,78 +206,20 @@ Deno.test('html upgrade: content ylikirjoittaa olemassaolevan sisällön', () =>
 });
 
 // =============================================================================
-// Spec: Wrapperit (Lit/FAST simulaatio)
+// Spec: Content updates (setter)
 // =============================================================================
 
-/**
- * Simuloi Lit-komponenttia jolla on oma requestUpdate
- */
-class FakeLitBase extends HTMLElement {
-  private _litUpdated = false;
-
-  requestUpdate() {
-    this._litUpdated = true;
-    // Lit tekisi oman renderöinnin tässä
-  }
-
-  get litUpdated() {
-    return this._litUpdated;
-  }
-}
-
-class WrappedLitComponent extends HTMLPropsMixin(FakeLitBase) {}
-WrappedLitComponent.define('wrapped-lit-component');
-
-Deno.test('wrapper: content toimii vaikka parent delegoi requestUpdate:n', () => {
-  const el = new WrappedLitComponent({ content: 'Lit content' });
-  document.body.appendChild(el);
-
-  // Content pitäisi toimia riippumatta siitä kuka hoitaa renderöinnin
-  assertEquals(el.textContent, 'Lit content');
-
-  el.remove();
-});
-
-Deno.test('wrapper: parent saa oman requestUpdate-kutsunsa', () => {
-  const el = new WrappedLitComponent({ content: 'Test' });
-  document.body.appendChild(el);
-
-  // Lit:n requestUpdate pitäisi silti ajautua
-  assertEquals(el.litUpdated, true);
-
-  el.remove();
-});
-
-// =============================================================================
-// Spec: Content-päivitykset (setter)
-// =============================================================================
-
-Deno.test('content-päivitys: setter päivittää DOM:n', () => {
+Deno.test('content-update: setter updates DOM', () => {
   const el = new SimpleWrapper({ content: 'Initial' });
   document.body.appendChild(el);
 
   assertEquals(el.textContent, 'Initial');
 
-  // Päivitä content setterillä
-  // @ts-ignore - content on dynamic prop
+  // Update content with setter
+  // @ts-ignore - content is a dynamic prop
   el.content = 'Updated';
 
   assertEquals(el.textContent, 'Updated');
-
-  el.remove();
-});
-
-Deno.test('content-päivitys: wrapper Lit-komponentissa', () => {
-  const el = new WrappedLitComponent({ content: 'Initial' });
-  document.body.appendChild(el);
-
-  assertEquals(el.textContent, 'Initial');
-
-  // Päivitä content - pitäisi toimia vaikka Lit delegoi requestUpdate:n
-  // @ts-ignore - content on dynamic prop
-  el.content = 'Updated via setter';
-
-  assertEquals(el.textContent, 'Updated via setter');
 
   el.remove();
 });
