@@ -122,8 +122,8 @@ Deno.test({
   name: 'HTMLPropsMixin: wraps WiredButton without props config',
 
   fn: async () => {
-    // Dynamic import to ensure DOM is ready before Lit loads
-    const { WiredButton } = await import('https://esm.sh/wired-elements@3.0.0-rc.6?target=es2022');
+    // Dynamic import to ensure DOM polyfills are ready before Lit loads
+    const { WiredButton } = await import('wired-button');
 
     // Wrap without config - should use simple wrapper mode
     const Wrapped = HTMLPropsMixin(WiredButton);
@@ -159,8 +159,8 @@ Deno.test({
   name: 'HTMLPropsMixin: wraps WiredButton with props API',
 
   fn: async () => {
-    // Dynamic import to ensure DOM is ready before Lit loads
-    const { WiredButton } = await import('https://esm.sh/wired-elements@3.0.0-rc.6?target=es2022');
+    // Dynamic import to ensure DOM polyfills are ready before Lit loads
+    const { WiredButton } = await import('wired-button');
 
     // Import prop config for custom props
     const { prop } = await import('../prop.ts');
