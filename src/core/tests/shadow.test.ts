@@ -731,8 +731,9 @@ Deno.test('HTMLPropsMixin w/ shadow: filters null/undefined/boolean from content
   });
   el.connectedCallback();
 
-  assertEquals(el.shadowRoot!.childNodes.length, 3);
-  assertEquals(el.shadowRoot!.textContent, 'HelloWorld0');
+  // Content goes to Light DOM, not shadowRoot (spec: content -> Light DOM, render -> Shadow DOM)
+  assertEquals(el.childNodes.length, 3);
+  assertEquals(el.textContent, 'HelloWorld0');
 });
 
 Deno.test('HTMLPropsMixin w/ shadow: filters null/undefined/boolean from render', () => {

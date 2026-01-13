@@ -76,11 +76,19 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
     }
 
     override connectedCallback() {
+      if ((this as any).__html_props_phantom) return;
+
+      // 1. Apply Light DOM content FIRST so slots see it (for Lit/FAST wrappers)
+      this[PROPS_CONTROLLER].applyLightDomContent(this);
+
+      // 2. Call super.connectedCallback (Lit/FAST will initialize and render)
       // @ts-ignore
       if (super.connectedCallback) super.connectedCallback();
 
-      if ((this as any).__html_props_phantom) return;
+      // 3. Apply ref now that element is fully connected
+      this[PROPS_CONTROLLER].applyRef(this, this[PROPS_CONTROLLER].props.ref);
 
+      // 4. Set up effects AFTER super (so Lit/FAST is initialized)
       this[PROPS_CONTROLLER].onConnected();
 
       if ((this as any).mountedCallback) {
@@ -105,7 +113,7 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       // @ts-ignore
       if (super.attributeChangedCallback) super.attributeChangedCallback(name, oldVal, newVal);
       // Controller may not exist yet during parent constructor execution
-      this[PROPS_CONTROLLER]?.onAttributeChanged(name, oldVal, newVal);
+      this[PROPS_CONTROLLER]?.attributeChangedCallback(name, oldVal, newVal);
     }
 
     requestUpdate() {
@@ -130,6 +138,17 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       // @ts-ignore
       if (super.forceUpdate) super.forceUpdate();
       this[PROPS_CONTROLLER]?.forceUpdate();
+    }
+
+    get content() {
+      return this[PROPS_CONTROLLER]?.props?.content;
+    }
+
+    set content(value: any) {
+      if (this[PROPS_CONTROLLER]) {
+        this[PROPS_CONTROLLER].props.content = value;
+        this[PROPS_CONTROLLER].updateContent(this);
+      }
     }
   }
 

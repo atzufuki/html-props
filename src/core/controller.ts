@@ -42,6 +42,7 @@ interface Props {
  */
 export class PropsController {
   private firstRenderDone = false;
+  private lightDomApplied = false;
   private cleanup: (() => void) | null = null;
   private ref: Props['ref'] | null = null;
   private host: HTMLElementLike;
@@ -87,6 +88,10 @@ export class PropsController {
         this.customProps[key].set(value);
       }
     }
+
+    // Merge defaultProps with constructor props and apply
+    const mergedProps = this.merge(this.defaultProps, props) as Props;
+    this.applyProps(host, mergedProps);
   }
 
   merge(...objects: (Record<string, unknown> | undefined | null)[]): Record<string, unknown> {
@@ -126,7 +131,7 @@ export class PropsController {
   /**
    * Normalize children array: filter out null/undefined/boolean and convert strings/numbers to text nodes.
    */
-  private normalizeChildren(items: unknown[]): Node[] {
+  normalizeChildren(items: unknown[]): Node[] {
     const result: Node[] = [];
     for (const item of items) {
       if (item === null || item === undefined || item === true || item === false) {
@@ -142,73 +147,152 @@ export class PropsController {
     return result;
   }
 
-  applyContent(target: HTMLElementLike) {
-    const { children, content, ...rest } = this.merge(
-      this.defaultProps,
-      this.props,
-    );
+  // ============================================
+  // PUBLIC API: Two main methods
+  // ============================================
 
-    // Event handlers (onclick, etc.) must be applied to host, not shadowRoot
-    // Other props (ref, style, dataset) are applied to the render target
-    this.applyProps(this.host, rest as Props, { eventsOnly: true });
-    this.applyProps(target, rest as Props, { skipEvents: true });
-
-    const hostWithRender = this.host as HTMLElementLike & { render?(): Node | Node[] | null };
-    this.currentRender = hostWithRender.render?.() ?? null;
-
-    const result = content || children || this.currentRender;
-    if (result != undefined) {
-      const nodes = this.normalizeChildren(Array.isArray(result) ? result : [result]);
-      target.replaceChildren(...nodes);
-    }
+  /**
+   * Apply props to target element (style, dataset, event handlers, rest props).
+   * Does NOT manipulate DOM children - safe to call in constructor.
+   *
+   * @param target - Element to apply props to
+   * @param props - Props object (defaults to this.props)
+   */
+  applyProps(target: HTMLElementLike, props: Props = this.props) {
+    this.applyStyle(target, props.style);
+    this.applyDataset(target, props.dataset);
+    this.applyEventHandlers(target, props);
+    this.applyRestProps(target, props);
   }
+
+  /**
+   * Apply content to target element.
+   *
+   * Handles:
+   * 1. Props-based content: innerHTML, textContent, content, children
+   * 2. render() method output (if component has one)
+   *
+   * For wrappers (Lit/FAST): Call BEFORE super.connectedCallback() so slots see content.
+   * For custom components: Called by requestUpdate/forceUpdate.
+   *
+   * @param target - Element to apply content to (defaults to this.host)
+   */
+  applyContent(target: HTMLElementLike = this.host) {
+    const { content, children, innerHTML, textContent } = this.props;
+
+    // 1. Check if component has render() method
+    const hostWithRender = this.host as HTMLElementLike & { render?(): Node | Node[] | null };
+    if (hostWithRender.render) {
+      const renderResult = hostWithRender.render();
+
+      // Only use render() result if it returns actual Node(s), not Lit/FAST template results
+      const isTemplateResult = renderResult && typeof renderResult === 'object' && (
+        '_$litType$' in renderResult || // Lit template result
+        'create' in renderResult || // FAST template result
+        'strings' in renderResult // Tagged template result
+      );
+
+      if (!isTemplateResult && renderResult != null) {
+        this.currentRender = renderResult;
+        const nodes = this.normalizeChildren(
+          Array.isArray(renderResult) ? renderResult : [renderResult],
+        );
+        target.replaceChildren(...nodes);
+        return;
+      }
+    }
+
+    // 2. Props-based content (for wrappers without own render())
+    // Skip if Light DOM content was already applied in connectedCallback
+    if (this.lightDomApplied) return;
+
+    // innerHTML takes priority
+    if (innerHTML !== undefined) {
+      target.innerHTML = innerHTML;
+      return;
+    }
+
+    // textContent next
+    if (textContent !== undefined) {
+      target.textContent = textContent;
+      return;
+    }
+
+    // content/children for Node-based content
+    const nodeContent = content ?? children;
+    if (nodeContent === undefined) return; // Preserve existing (HTML upgrade)
+
+    const nodes = this.normalizeChildren(Array.isArray(nodeContent) ? nodeContent : [nodeContent]);
+    target.replaceChildren(...nodes);
+  }
+
+  // ============================================
+  // PRIVATE: Helper methods for applyProps
+  // ============================================
 
   private isEventHandler(key: string): boolean {
     return key.startsWith('on') && key.length > 2;
   }
 
-  applyProps(target: HTMLElementLike, props: Props, options?: { eventsOnly?: boolean; skipEvents?: boolean }) {
-    const { ref, style, dataset, innerHTML, textContent, children, content, ...rest } = props;
-
-    for (const [key, value] of Object.entries(rest)) {
-      const isEvent = this.isEventHandler(key);
-      if (options?.eventsOnly && !isEvent) continue;
-      if (options?.skipEvents && isEvent) continue;
-      (target as unknown as Record<string, unknown>)[key] = value;
-    }
-
-    // Skip non-event props if eventsOnly is set
-    if (options?.eventsOnly) return;
-
-    if (ref) {
-      // Store ref for cleanup on disconnect
-      this.ref = ref;
-      if (typeof ref === 'function') {
-        ref(target);
-      } else if (typeof ref === 'object' && 'current' in ref) {
-        ref.current = target;
-      }
-    }
-
-    if (style) {
-      if (typeof style === 'object') Object.assign(target.style, style);
-      else target.setAttribute('style', String(style));
-    }
-
-    if (dataset) {
-      Object.assign(target.dataset, dataset);
-    }
-
-    if (innerHTML) {
-      target.innerHTML = innerHTML;
-      return;
-    }
-
-    if (textContent) {
-      target.textContent = textContent;
-      return;
+  private applyStyle(target: HTMLElementLike, style: Props['style']) {
+    if (!style) return;
+    if (!target.style) return;
+    if (typeof style === 'object') {
+      Object.assign(target.style, style);
+    } else {
+      target.setAttribute('style', String(style));
     }
   }
+
+  private applyDataset(target: HTMLElementLike, dataset: Props['dataset']) {
+    if (!dataset) return;
+    if (!target.dataset) return;
+    Object.assign(target.dataset, dataset);
+  }
+
+  applyRef(target: HTMLElementLike, ref: Props['ref']) {
+    if (!ref) return;
+    this.ref = ref;
+    if (typeof ref === 'function') {
+      ref(target);
+    } else if (typeof ref === 'object' && 'current' in ref) {
+      ref.current = target;
+    }
+  }
+
+  private applyEventHandlers(target: HTMLElementLike, props: Props) {
+    for (const [key, value] of Object.entries(props)) {
+      if (this.isEventHandler(key)) {
+        (target as unknown as Record<string, unknown>)[key] = value;
+      }
+    }
+  }
+
+  private applyRestProps(target: HTMLElementLike, props: Props) {
+    const reserved = new Set(['ref', 'style', 'dataset', 'innerHTML', 'textContent', 'children', 'content']);
+    for (const [key, value] of Object.entries(props)) {
+      if (reserved.has(key)) continue;
+      if (this.isEventHandler(key)) continue;
+      if (this.isCustomProp(key)) continue;
+      (target as unknown as Record<string, unknown>)[key] = value;
+    }
+  }
+
+  /**
+   * Apply custom props from new props object.
+   * Used during morphing to update signal-backed props.
+   */
+  applyCustomProps(props: Props) {
+    for (const [key, value] of Object.entries(props)) {
+      if (this.isCustomProp(key) && this.customProps[key]) {
+        this.customProps[key].set(value);
+      }
+    }
+  }
+
+  // ============================================
+  // RENDER & UPDATE: Lifecycle methods
+  // ============================================
 
   requestUpdate() {
     // Prevent recursive updates
@@ -216,7 +300,11 @@ export class PropsController {
     this.updateScheduled = true;
 
     try {
-      const hostWithMethods = this.host as HTMLElementLike & { update?(): void; render?(): Node | Node[] | null };
+      const hostWithMethods = this.host as HTMLElementLike & {
+        update?(): void;
+        render?(): Node | Node[] | null;
+      };
+
       if (this.firstRenderDone) {
         if (hostWithMethods.update) {
           hostWithMethods.update();
@@ -241,6 +329,7 @@ export class PropsController {
       const target = (this.host.shadowRoot ?? this.host) as HTMLElementLike;
 
       if (this.currentRender === null) {
+        // First render
         this.applyContent(target);
         this.currentRender = Array.from(target.childNodes);
       } else {
@@ -316,14 +405,13 @@ export class PropsController {
     // Same object reference
     if (from === to) return 'equal';
 
-    // isEqualNode - completely identical
-    if (from.isEqualNode(to as unknown as Node)) return 'equal';
-
     // Must be same node type
     if (from.nodeType !== to.nodeType) return 'none';
 
     // Text nodes - can morph by updating nodeValue
     if (from.nodeType === PropsController.TEXT_NODE) {
+      // If content is same, it's equal
+      if (from.nodeValue === to.nodeValue) return 'equal';
       return 'same';
     }
 
@@ -335,6 +423,15 @@ export class PropsController {
       if (from.localName === 'input' && from.type !== to.type) {
         return 'none';
       }
+
+      // If either has PROPS_CONTROLLER, always return 'same' to trigger morphNode
+      // This ensures props-based content updates work correctly
+      if (from[PROPS_CONTROLLER] || to[PROPS_CONTROLLER]) {
+        return 'same';
+      }
+
+      // For standard DOM elements, use isEqualNode
+      if (from.isEqualNode(to as unknown as Node)) return 'equal';
 
       return 'same';
     }
@@ -458,15 +555,28 @@ export class PropsController {
     }
 
     // ===== PHASE 3: Match by isEqualNode =====
+    // Skip this phase for nodes with PROPS_CONTROLLER - they need morphing even if DOM looks equal
     for (let toIdx = 0; toIdx < toChildren.length; toIdx++) {
       if (matches[toIdx] !== undefined) continue;
 
       const toNode = toChildren[toIdx];
 
+      // Guard: skip null/undefined nodes
+      if (!toNode) continue;
+
+      // Skip isEqualNode check for props-controlled nodes - their content is in props, not DOM
+      if (toNode[PROPS_CONTROLLER]) continue;
+
       for (const fromIdx of unmatchedFrom) {
         const fromNode = fromChildren[fromIdx];
 
-        if (fromNode?.isEqualNode?.(toNode as unknown as Node)) {
+        // Guard: skip null/undefined nodes
+        if (!fromNode) continue;
+
+        // Skip if from node has props controller
+        if (fromNode[PROPS_CONTROLLER]) continue;
+
+        if (fromNode.isEqualNode?.(toNode as unknown as Node)) {
           matches[toIdx] = fromIdx;
           operations[toIdx] = 'equal';
           unmatchedFrom.delete(fromIdx);
@@ -570,16 +680,30 @@ export class PropsController {
       const toController = to[PROPS_CONTROLLER];
       if (fromController && toController) {
         const props = toController.props;
-        this.applyProps(from as unknown as HTMLElementLike, props);
+        const target = from as unknown as HTMLElementLike;
 
-        // Recurse children
+        // Use the target's controller to apply props (correct propsConfig context)
+        fromController.applyProps(target, props);
+        // Apply custom props (signal-backed) to trigger reactive updates
+        fromController.applyCustomProps(props);
+        // Apply ref using target controller's context
+        fromController.applyRef(target, props.ref);
+
+        // Handle direct content props (innerHTML, textContent) - these replace all children
+        if (this.applyDirectContent(target, props)) {
+          return; // Direct content applied, no need to recurse
+        }
+
+        // Recurse children - normalize to ensure all are Node objects
         const nextContent = props.content || props.children;
         if (nextContent) {
           const prevChildren = Array.from(from.childNodes);
-          const nextChildren = Array.isArray(nextContent) ? nextContent : [nextContent];
-          this.reconcile(
+          const nextChildren = fromController.normalizeChildren(
+            Array.isArray(nextContent) ? nextContent : [nextContent],
+          );
+          fromController.reconcile(
             prevChildren,
-            nextChildren.filter((n): n is Node => n != null),
+            nextChildren,
             from as unknown as HTMLElementLike,
           );
         }
@@ -595,6 +719,27 @@ export class PropsController {
         }
       }
     }
+  }
+
+  /**
+   * Apply direct content props (innerHTML, textContent) to target element.
+   * These props replace all children, so no recursion is needed after applying.
+   * @returns true if direct content was applied, false otherwise
+   */
+  private applyDirectContent(target: HTMLElementLike, props: Props): boolean {
+    // innerHTML takes priority (same as applyLightDomContentDirect)
+    if ('innerHTML' in props && props.innerHTML !== undefined) {
+      target.innerHTML = String(props.innerHTML);
+      return true;
+    }
+
+    // textContent next
+    if ('textContent' in props && props.textContent !== undefined) {
+      target.textContent = String(props.textContent);
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -623,8 +768,8 @@ export class PropsController {
   }
 
   forceUpdate() {
-    const target = this.host.shadowRoot ?? this.host;
-    this.applyContent(target as HTMLElementLike);
+    const target = (this.host.shadowRoot ?? this.host) as HTMLElementLike;
+    this.applyContent(target);
   }
 
   reflectAttributes() {
@@ -672,6 +817,10 @@ export class PropsController {
     });
   }
 
+  /**
+   * Called AFTER super.connectedCallback().
+   * Sets up effects for reactive updates.
+   */
   onConnected() {
     // Prevent duplicate connections
     if (this.connected) return;
@@ -693,15 +842,64 @@ export class PropsController {
     };
   }
 
+  /**
+   * Update content dynamically (called by content setter).
+   * This applies content directly to Light DOM, bypassing the guard.
+   */
+  updateContent(target: HTMLElementLike) {
+    this.applyLightDomContentDirect(target);
+  }
+
+  /**
+   * Apply Light DOM content from props (innerHTML, textContent, content, children).
+   * Does NOT call render() - this is for wrapper components that don't have render().
+   * Has a guard to prevent duplicate application during initial connection.
+   */
+  applyLightDomContent(target: HTMLElementLike) {
+    // Only apply once per connection (prevents duplicate from forceUpdate)
+    if (this.lightDomApplied) return;
+    this.lightDomApplied = true;
+
+    this.applyLightDomContentDirect(target);
+  }
+
+  /**
+   * Direct Light DOM content application (no guard).
+   * Called by both applyLightDomContent and updateContent.
+   */
+  private applyLightDomContentDirect(target: HTMLElementLike) {
+    const { content, children, innerHTML, textContent } = this.props;
+
+    // innerHTML takes priority
+    if (innerHTML !== undefined) {
+      target.innerHTML = innerHTML;
+      return;
+    }
+
+    // textContent next
+    if (textContent !== undefined) {
+      target.textContent = textContent;
+      return;
+    }
+
+    // content/children for Node-based content
+    const nodeContent = content ?? children;
+    if (nodeContent === undefined) return; // Preserve existing (HTML upgrade)
+
+    const nodes = this.normalizeChildren(Array.isArray(nodeContent) ? nodeContent : [nodeContent]);
+    target.replaceChildren(...nodes);
+  }
+
   onDisconnected() {
     this.connected = false;
+    this.lightDomApplied = false; // Reset for reconnection
     if (this.cleanup) {
       this.cleanup();
       this.cleanup = null;
     }
   }
 
-  onAttributeChanged(name: string, oldVal: string | null, newVal: string | null) {
+  attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null) {
     if (oldVal === newVal) return;
 
     const props = this.propsConfig;

@@ -776,3 +776,162 @@ Deno.test('HTMLPropsMixin: filters null/undefined/boolean from render', () => {
   assertEquals(el.childNodes.length, 3);
   assertEquals(el.textContent, 'HelloWorld0');
 });
+
+Deno.test('HTMLPropsMixin: signal update triggers content re-render with nested content', async () => {
+  const { signal } = await import('@html-props/signals');
+
+  // Create wrapper Div class for this test
+  class WrapperDiv extends HTMLPropsMixin(HTMLElement) {}
+  WrapperDiv.define('wrapper-div-test');
+
+  // Simulate MarkdownViewer pattern - internal signal for tokens/content
+  class ContentViewer extends HTMLPropsMixin(HTMLElement, {
+    src: prop(''),
+  }) {
+    // Internal signal for async-loaded content
+    private items = signal<string[]>([]);
+
+    // Simulate async load
+    loadContent(newItems: string[]) {
+      this.items.set(newItems);
+    }
+
+    render() {
+      const items = this.items();
+
+      // Create a wrapper Div with content prop (like MarkdownViewer does)
+      return new WrapperDiv({
+        className: 'content-wrapper',
+        content: items.map((item) => {
+          const span = document.createElement('span');
+          span.textContent = item;
+          return span;
+        }),
+      });
+    }
+  }
+  ContentViewer.define('content-viewer-test');
+
+  const el = new ContentViewer({ src: 'test.md' });
+  document.body.appendChild(el);
+
+  // Initial render - empty items
+  assertEquals(el.childNodes.length, 1);
+  const wrapper = el.firstChild as HTMLElement;
+  assertEquals(wrapper.tagName.toLowerCase(), 'wrapper-div-test');
+  assertEquals(wrapper.childNodes.length, 0); // No items yet
+
+  // Simulate async content load
+  el.loadContent(['Item 1', 'Item 2', 'Item 3']);
+
+  // After signal update, content should be rendered
+  assertEquals(wrapper.childNodes.length, 3);
+  assertEquals((wrapper.childNodes[0] as HTMLElement).textContent, 'Item 1');
+  assertEquals((wrapper.childNodes[1] as HTMLElement).textContent, 'Item 2');
+  assertEquals((wrapper.childNodes[2] as HTMLElement).textContent, 'Item 3');
+});
+
+// Test that mimics CounterApp Increment button - internal signal change via onclick
+Deno.test('HTMLPropsMixin: increment button pattern - internal signal change triggers re-render', () => {
+  let renderCount = 0;
+
+  class CounterButton extends HTMLPropsMixin(HTMLElement, {
+    count: prop(0),
+  }) {
+    render() {
+      renderCount++;
+      const button = document.createElement('button');
+      button.textContent = `Count: ${this.count}`;
+      button.onclick = () => {
+        this.count++; // Internal increment - THIS is what Increment button does
+      };
+      return [button];
+    }
+  }
+
+  customElements.define('counter-button-test', CounterButton);
+  const el = new CounterButton();
+  el.connectedCallback();
+
+  assertEquals(renderCount, 1, 'Initial render');
+  const button = el.querySelector('button');
+  assert(button, 'Button should exist');
+  assertEquals(button.textContent, 'Count: 0');
+
+  // Simulate button click
+  button.click();
+
+  assertEquals(renderCount, 2, 'Should re-render after click');
+  // After re-render, need to get the NEW button
+  const newButton = el.querySelector('button');
+  assert(newButton, 'New button should exist');
+  assertEquals(newButton.textContent, 'Count: 1', 'Button text should update to 1');
+
+  // Click again
+  newButton.click();
+
+  assertEquals(renderCount, 3, 'Should re-render again');
+  const finalButton = el.querySelector('button');
+  assertEquals(finalButton?.textContent, 'Count: 2', 'Button text should update to 2');
+
+  el.disconnectedCallback();
+});
+
+// Test nested component scenario - parent renders child, child has reactive props
+Deno.test('HTMLPropsMixin: nested component - child mounted via parent render() has working reactivity', () => {
+  let childRenderCount = 0;
+
+  // Child component with internal signal
+  class NestedCounter extends HTMLPropsMixin(HTMLElement, {
+    count: prop(0),
+  }) {
+    render() {
+      childRenderCount++;
+      const button = document.createElement('button');
+      button.textContent = `Nested: ${this.count}`;
+      button.onclick = () => {
+        this.count++;
+      };
+      return [button];
+    }
+  }
+  customElements.define('nested-counter-test', NestedCounter);
+
+  // Parent component that renders child
+  class ParentWrapper extends HTMLPropsMixin(HTMLElement, {}) {
+    render() {
+      return [new NestedCounter()];
+    }
+  }
+  customElements.define('parent-wrapper-test', ParentWrapper);
+
+  // Mount parent to DOM
+  const parent = new ParentWrapper();
+  document.body.appendChild(parent);
+  parent.connectedCallback();
+
+  // Find the nested child
+  const child = parent.querySelector('nested-counter-test') as InstanceType<typeof NestedCounter>;
+  assert(child, 'Child should exist');
+
+  // Child needs connectedCallback to be called when mounted via parent
+  // In real browser this happens automatically, in happy-dom we must check
+  child.connectedCallback();
+
+  assertEquals(childRenderCount, 1, 'Child initial render');
+  const button = child.querySelector('button');
+  assert(button, 'Button should exist');
+  assertEquals(button.textContent, 'Nested: 0');
+
+  // Click button - internal signal change
+  button.click();
+
+  assertEquals(childRenderCount, 2, 'Child should re-render after internal signal change');
+  const newButton = child.querySelector('button');
+  assertEquals(newButton?.textContent, 'Nested: 1', 'Button text should update');
+
+  // Cleanup
+  child.disconnectedCallback();
+  parent.disconnectedCallback();
+  document.body.removeChild(parent);
+});

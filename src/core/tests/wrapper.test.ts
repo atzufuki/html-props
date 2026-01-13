@@ -120,7 +120,7 @@ if (!globalThis.document) {
 
 Deno.test({
   name: 'HTMLPropsMixin: wraps WiredButton without props config',
-  ignore: true, // TODO: Lit timing issues - elevation is reset by Lit's update cycle
+
   fn: async () => {
     // Dynamic import to ensure DOM is ready before Lit loads
     const { WiredButton } = await import('https://esm.sh/wired-elements@3.0.0-rc.6?target=es2022');
@@ -157,7 +157,7 @@ Deno.test({
 
 Deno.test({
   name: 'HTMLPropsMixin: wraps WiredButton with props API',
-  ignore: true, // TODO: Lit timing issues - elevation is reset by Lit's update cycle
+
   fn: async () => {
     // Dynamic import to ensure DOM is ready before Lit loads
     const { WiredButton } = await import('https://esm.sh/wired-elements@3.0.0-rc.6?target=es2022');
@@ -200,5 +200,73 @@ Deno.test({
     // Update native prop
     el.elevation = 4;
     assertEquals(el.elevation, 4);
+  },
+});
+
+Deno.test({
+  name: 'HTMLPropsMixin: handles elements with null/undefined style property',
+
+  fn: () => {
+    // Simulate a Lit element where style might be null/undefined before first render
+    class ElementWithNullStyle extends HTMLElement {
+      _style: CSSStyleDeclaration | null = null;
+
+      get style(): CSSStyleDeclaration {
+        // Return null to simulate Lit element before updateComplete
+        return this._style as unknown as CSSStyleDeclaration;
+      }
+
+      set style(value: string | CSSStyleDeclaration) {
+        // Ignore for this test
+      }
+    }
+
+    customElements.define('element-with-null-style', ElementWithNullStyle);
+
+    // This should not throw even when style is null
+    const Wrapped = HTMLPropsMixin(ElementWithNullStyle);
+    Wrapped.define('wrapped-null-style');
+
+    // Should not throw when passing style prop
+    const el = new Wrapped({
+      style: { backgroundColor: 'red', padding: '10px' },
+    });
+
+    document.body.appendChild(el);
+
+    // Should survive without crashing
+    assert(el instanceof ElementWithNullStyle);
+
+    document.body.removeChild(el);
+  },
+});
+
+Deno.test({
+  name: 'HTMLPropsMixin: handles elements with undefined dataset property',
+
+  fn: () => {
+    // Simulate element where dataset might be undefined
+    class ElementWithNoDataset extends HTMLElement {
+      // Override dataset to return undefined
+      get dataset(): DOMStringMap {
+        return undefined as unknown as DOMStringMap;
+      }
+    }
+
+    customElements.define('element-with-no-dataset', ElementWithNoDataset);
+
+    const Wrapped = HTMLPropsMixin(ElementWithNoDataset);
+    Wrapped.define('wrapped-no-dataset');
+
+    // Should not throw when passing dataset prop
+    const el = new Wrapped({
+      dataset: { key: 'value' },
+    });
+
+    document.body.appendChild(el);
+
+    assert(el instanceof ElementWithNoDataset);
+
+    document.body.removeChild(el);
   },
 });
