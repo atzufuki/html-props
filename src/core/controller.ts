@@ -51,6 +51,7 @@ export class PropsController {
   private defaultProps: Record<string, unknown> = {};
   private updateScheduled = false;
   private connected = false;
+  private eventListeners: Map<string, EventListener> = new Map();
   props: Props = {};
 
   constructor(host: HTMLElementLike, propsConfig: PropsConfig = {}, props: Props = {}) {
@@ -69,7 +70,8 @@ export class PropsController {
             const oldValue = this.customProps[key]();
             if (oldValue !== v) {
               this.customProps[key].set(v);
-              if (value.event) {
+              // Dispatch event when non-function value changes
+              if (value.event && typeof v !== 'function') {
                 host.dispatchEvent(new CustomEvent(value.event, { detail: v }));
               }
             }
@@ -818,6 +820,41 @@ export class PropsController {
   }
 
   /**
+   * Setup event listeners for props with 'event' config.
+   * Creates wrapper handlers that call the current prop value.
+   */
+  private setupEventListeners() {
+    const props = this.propsConfig;
+    if (!props) return;
+
+    for (const [key, config] of Object.entries(props)) {
+      if (config && typeof config === 'object' && config.event) {
+        const eventName = config.event;
+        // Create wrapper handler that calls current prop value
+        const handler: EventListener = (e: Event) => {
+          const fn = this.customProps[key]?.();
+          if (typeof fn === 'function') {
+            fn.call(this.host, e);
+          }
+        };
+        this.eventListeners.set(eventName, handler);
+        this.host.addEventListener(eventName, handler);
+      }
+    }
+  }
+
+  /**
+   * Remove all event listeners created by setupEventListeners.
+   */
+  private cleanupEventListeners() {
+    const host = this.host as HTMLElement;
+    for (const [eventName, handler] of this.eventListeners) {
+      host.removeEventListener(eventName, handler);
+    }
+    this.eventListeners.clear();
+  }
+
+  /**
    * Called AFTER super.connectedCallback().
    * Sets up effects for reactive updates.
    */
@@ -825,6 +862,9 @@ export class PropsController {
     // Prevent duplicate connections
     if (this.connected) return;
     this.connected = true;
+
+    // Setup event listeners for props with 'event' config
+    this.setupEventListeners();
 
     const renderDispose = effect(() => this.requestUpdate());
     const reflectDispose = effect(() => this.reflectAttributes());
@@ -839,6 +879,7 @@ export class PropsController {
       }
       renderDispose();
       reflectDispose();
+      this.cleanupEventListeners();
     };
   }
 

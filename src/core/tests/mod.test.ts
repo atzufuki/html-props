@@ -143,6 +143,123 @@ Deno.test('HTMLPropsMixin: dispatches events', () => {
   assertEquals(eventDetail, 5);
 });
 
+Deno.test('HTMLPropsMixin: event listener via prop with event config', () => {
+  class TestElement extends HTMLPropsMixin(HTMLElement, {
+    // deno-lint-ignore no-explicit-any
+    onCustomEvent: prop<((e: Event) => void) | undefined>(undefined, { event: 'custom-event' }),
+  }) {
+    render() {
+      return [];
+    }
+  }
+
+  customElements.define('test-event-listener', TestElement);
+
+  let eventReceived = false;
+  let eventTarget: EventTarget | null = null;
+
+  const el = new TestElement({
+    onCustomEvent: (e: Event) => {
+      eventReceived = true;
+      eventTarget = e.target;
+    },
+  });
+
+  document.body.appendChild(el);
+
+  // Dispatch custom event
+  el.dispatchEvent(new Event('custom-event'));
+
+  assertEquals(eventReceived, true);
+  assertEquals(eventTarget, el);
+
+  document.body.removeChild(el);
+});
+
+Deno.test('HTMLPropsMixin: event listener updates when prop changes', () => {
+  class TestElement extends HTMLPropsMixin(HTMLElement, {
+    // deno-lint-ignore no-explicit-any
+    onCustomEvent: prop<((e: Event) => void) | undefined>(undefined, { event: 'custom-event' }),
+  }) {
+    render() {
+      return [];
+    }
+  }
+
+  customElements.define('test-event-listener-update', TestElement);
+
+  let callCount1 = 0;
+  let callCount2 = 0;
+
+  const el = new TestElement({
+    onCustomEvent: () => {
+      callCount1++;
+    },
+  });
+
+  document.body.appendChild(el);
+
+  // First handler should be called
+  el.dispatchEvent(new Event('custom-event'));
+  assertEquals(callCount1, 1);
+  assertEquals(callCount2, 0);
+
+  // Update handler
+  el.onCustomEvent = () => {
+    callCount2++;
+  };
+
+  // Second handler should be called now
+  el.dispatchEvent(new Event('custom-event'));
+  assertEquals(callCount1, 1);
+  assertEquals(callCount2, 1);
+
+  document.body.removeChild(el);
+});
+
+Deno.test('HTMLPropsMixin: event listener cleanup on disconnect', () => {
+  class TestElement extends HTMLPropsMixin(HTMLElement, {
+    // deno-lint-ignore no-explicit-any
+    onCustomEvent: prop<((e: Event) => void) | undefined>(undefined, { event: 'custom-event' }),
+  }) {
+    render() {
+      return [];
+    }
+  }
+
+  customElements.define('test-event-listener-cleanup', TestElement);
+
+  let callCount = 0;
+
+  const el = new TestElement({
+    onCustomEvent: () => {
+      callCount++;
+    },
+  });
+
+  document.body.appendChild(el);
+
+  // Handler should be called when connected
+  el.dispatchEvent(new Event('custom-event'));
+  assertEquals(callCount, 1);
+
+  // Disconnect
+  document.body.removeChild(el);
+
+  // Handler should NOT be called when disconnected
+  el.dispatchEvent(new Event('custom-event'));
+  assertEquals(callCount, 1);
+
+  // Reconnect
+  document.body.appendChild(el);
+
+  // Handler should be called again
+  el.dispatchEvent(new Event('custom-event'));
+  assertEquals(callCount, 2);
+
+  document.body.removeChild(el);
+});
+
 Deno.test('HTMLPropsMixin: define static method', () => {
   class TestElement extends HTMLPropsMixin(HTMLElement) {}
 
