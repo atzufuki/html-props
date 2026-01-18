@@ -129,7 +129,7 @@ export class DocsPage extends HTMLPropsMixin(HTMLElement, {
   private renderDesktop(navItems: any[], activePage: string, version: string | null, error: string | null) {
     return new Row({
       crossAxisAlignment: 'start',
-      style: { maxWidth: '1400px', margin: '0 auto' },
+      style: { maxWidth: '1400px' },
       content: [
         new Sidebar({
           ref: this.desktopSidebarRef,

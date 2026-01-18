@@ -1,4 +1,4 @@
-import { effect, type Signal, signal } from '@html-props/signals';
+import { batch, effect, type Signal, signal } from '@html-props/signals';
 import type { HTMLElementLike, PropsConfig } from './types.ts';
 
 // Unique symbols to avoid any property name conflicts
@@ -285,11 +285,16 @@ export class PropsController {
    * Used during morphing to update signal-backed props.
    */
   applyCustomProps(props: Props) {
-    for (const [key, value] of Object.entries(props)) {
-      if (this.isCustomProp(key) && this.customProps[key]) {
-        this.customProps[key].set(value);
+    // Batch all signal updates to prevent multiple effect triggers.
+    // Without batching, each signal.set() triggers effects immediately,
+    // which can cause render() to be called with partially updated state.
+    batch(() => {
+      for (const [key, value] of Object.entries(props)) {
+        if (this.isCustomProp(key) && this.customProps[key]) {
+          this.customProps[key].set(value);
+        }
       }
-    }
+    });
   }
 
   // ============================================
