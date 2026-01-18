@@ -24,19 +24,28 @@ import {
 import { CodeBlock } from './CodeBlock.ts';
 import { MarkdownService } from '../services/MarkdownService.ts';
 import { theme } from '../theme.ts';
-import { batch, signal } from '@html-props/signals';
+import { effect, signal } from '@html-props/signals';
 
 export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
   src: prop(''),
   version: prop('local'),
   markdown: prop(''), // Add markdown prop
 }) {
+  private aborter = new AbortController();
   private service = MarkdownService.getInstance();
   private loading = false;
   private error: string | null = null;
   private tokens = signal<any[]>([]);
 
-  async mountedCallback() {
+  mountedCallback(): void {
+    effect(this.fetch.bind(this), { signal: this.aborter.signal });
+  }
+
+  unmountedCallback(): void {
+    this.aborter.abort();
+  }
+
+  async fetch(): Promise<void> {
     // If markdown prop is provided, use it instead of fetching
     if (this.markdown) {
       const tokens = this.service.parse(this.markdown);
@@ -49,9 +58,7 @@ export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
 
     await this.service.fetchDoc(this.src, this.version);
     const doc = this.service.getDocSync(this.src, this.version);
-    batch(() => {
-      this.tokens.set(doc ? doc.tokens : []);
-    });
+    this.tokens.set(doc ? doc.tokens : []);
   }
 
   render() {

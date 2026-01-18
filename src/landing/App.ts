@@ -36,10 +36,6 @@ export class App extends HTMLPropsMixin(HTMLElement, {
     });
   }
 
-  update(): void {
-    this.forceUpdate();
-  }
-
   render(): Node | Node[] | null {
     if (this.route.startsWith('/docs')) {
       return new DocsPage({ route: this.route });
