@@ -4,10 +4,11 @@
   "exports": "./mod.ts",
   "imports": {
     "@html-props/signals": "jsr:@html-props/signals@^1.0.0-beta.1",
-    "@phlex/morphlex": "jsr:@phlex/morphlex@^1.0.5"
+    "@phlex/morphlex": "jsr:@phlex/morphlex@^1.0.5",
+    "happy-dom": "npm:happy-dom@^20.3.4"
   },
   "compilerOptions": {
-    "lib": ["dom", "deno.ns"],
+    "lib": ["deno.ns", "deno.window", "dom", "dom.iterable", "esnext"],
     "noImplicitOverride": false
   }
 }

@@ -1,6 +1,6 @@
-import { assert, assertEquals } from 'jsr:@std/assert';
-import { HTMLPropsMixin } from '../mixin.ts';
-import { Window } from 'happy-dom';
+import { assert, assertEquals } from "jsr:@std/assert";
+import { HTMLPropsMixin } from "../mixin.ts";
+import { Window } from "happy-dom";
 
 if (!globalThis.document) {
   const happyWindow = new Window();
@@ -10,41 +10,41 @@ if (!globalThis.document) {
 
   // Polyfill missing elements that happy-dom might not have
   const missingElements = [
-    'HTMLHRElement',
-    'HTMLQuoteElement',
-    'HTMLDListElement',
-    'HTMLDataElement',
-    'HTMLTimeElement',
-    'HTMLBRElement',
-    'HTMLAudioElement',
-    'HTMLVideoElement',
-    'HTMLSourceElement',
-    'HTMLTrackElement',
-    'HTMLMapElement',
-    'HTMLAreaElement',
-    'HTMLIFrameElement',
-    'HTMLEmbedElement',
-    'HTMLObjectElement',
-    'HTMLParamElement',
-    'HTMLPictureElement',
-    'HTMLCanvasElement',
-    'HTMLScriptElement',
-    'HTMLModElement',
-    'HTMLTableCaptionElement',
-    'HTMLTableColElement',
-    'HTMLDataListElement',
-    'HTMLFieldSetElement',
-    'HTMLLegendElement',
-    'HTMLMeterElement',
-    'HTMLOptGroupElement',
-    'HTMLOutputElement',
-    'HTMLProgressElement',
-    'HTMLTextAreaElement',
-    'HTMLDetailsElement',
-    'HTMLDialogElement',
-    'HTMLMenuElement',
-    'HTMLSlotElement',
-    'HTMLTemplateElement',
+    "HTMLHRElement",
+    "HTMLQuoteElement",
+    "HTMLDListElement",
+    "HTMLDataElement",
+    "HTMLTimeElement",
+    "HTMLBRElement",
+    "HTMLAudioElement",
+    "HTMLVideoElement",
+    "HTMLSourceElement",
+    "HTMLTrackElement",
+    "HTMLMapElement",
+    "HTMLAreaElement",
+    "HTMLIFrameElement",
+    "HTMLEmbedElement",
+    "HTMLObjectElement",
+    "HTMLParamElement",
+    "HTMLPictureElement",
+    "HTMLCanvasElement",
+    "HTMLScriptElement",
+    "HTMLModElement",
+    "HTMLTableCaptionElement",
+    "HTMLTableColElement",
+    "HTMLDataListElement",
+    "HTMLFieldSetElement",
+    "HTMLLegendElement",
+    "HTMLMeterElement",
+    "HTMLOptGroupElement",
+    "HTMLOutputElement",
+    "HTMLProgressElement",
+    "HTMLTextAreaElement",
+    "HTMLDetailsElement",
+    "HTMLDialogElement",
+    "HTMLMenuElement",
+    "HTMLSlotElement",
+    "HTMLTemplateElement",
   ];
 
   const polyfills: Record<string, unknown> = {};
@@ -97,38 +97,39 @@ if (!globalThis.document) {
 
   // Mock Canvas getContext for WiredElements/RoughJS
   if ((globalThis as any).HTMLCanvasElement) {
-    (globalThis as any).HTMLCanvasElement.prototype.getContext = ((contextId: string) => {
-      return {
-        beginPath: () => {},
-        moveTo: () => {},
-        lineTo: () => {},
-        stroke: () => {},
-        fill: () => {},
-        clearRect: () => {},
-        fillRect: () => {},
-        save: () => {},
-        restore: () => {},
-        translate: () => {},
-        rotate: () => {},
-        scale: () => {},
-        arc: () => {},
-        bezierCurveTo: () => {},
-      };
-    }) as any;
+    (globalThis as any).HTMLCanvasElement.prototype.getContext =
+      ((contextId: string) => {
+        return {
+          beginPath: () => {},
+          moveTo: () => {},
+          lineTo: () => {},
+          stroke: () => {},
+          fill: () => {},
+          clearRect: () => {},
+          fillRect: () => {},
+          save: () => {},
+          restore: () => {},
+          translate: () => {},
+          rotate: () => {},
+          scale: () => {},
+          arc: () => {},
+          bezierCurveTo: () => {},
+        };
+      }) as any;
   }
 }
 
 Deno.test({
-  name: 'HTMLPropsMixin: wraps WiredButton without props config',
+  name: "HTMLPropsMixin: wraps WiredButton without props config",
 
   fn: async () => {
     // Dynamic import to ensure DOM polyfills are ready before Lit loads
-    const { WiredButton } = await import('wired-button');
+    const { WiredButton } = await import("wired-button");
 
     // Wrap without config - should use simple wrapper mode
     const Wrapped = HTMLPropsMixin(WiredButton);
 
-    const tagName = 'wrapped-wired-button-1';
+    const tagName = "wrapped-wired-button-1";
     if (!customElements.get(tagName)) {
       Wrapped.define(tagName);
     }
@@ -156,22 +157,22 @@ Deno.test({
 });
 
 Deno.test({
-  name: 'HTMLPropsMixin: wraps WiredButton with props API',
+  name: "HTMLPropsMixin: wraps WiredButton with props API",
 
   fn: async () => {
     // Dynamic import to ensure DOM polyfills are ready before Lit loads
-    const { WiredButton } = await import('wired-button');
+    const { WiredButton } = await import("wired-button");
 
     // Import prop config for custom props
-    const { prop } = await import('../prop.ts');
+    const { prop } = await import("../prop.ts");
 
     // Wrap WITH custom props - add custom reactive props alongside native ones
     const Wrapped = HTMLPropsMixin(WiredButton, {
-      label: prop('Click me'),
+      label: prop("Click me"),
       count: prop(0),
     });
 
-    const tagName = 'wrapped-wired-button-2';
+    const tagName = "wrapped-wired-button-2";
     if (!customElements.get(tagName)) {
       Wrapped.define(tagName);
     }
@@ -180,7 +181,7 @@ Deno.test({
     const el = new Wrapped({
       elevation: 2,
       disabled: false,
-      label: 'Submit Form',
+      label: "Submit Form",
       count: 5,
     });
     document.body.appendChild(el);
@@ -190,7 +191,7 @@ Deno.test({
     assertEquals(el.disabled, false);
 
     // Verify custom props were set
-    assertEquals(el.label, 'Submit Form');
+    assertEquals(el.label, "Submit Form");
     assertEquals(el.count, 5);
 
     // Update custom prop via property setter
@@ -204,7 +205,7 @@ Deno.test({
 });
 
 Deno.test({
-  name: 'HTMLPropsMixin: handles elements with null/undefined style property',
+  name: "HTMLPropsMixin: handles elements with null/undefined style property",
 
   fn: () => {
     // Simulate a Lit element where style might be null/undefined before first render
@@ -221,15 +222,15 @@ Deno.test({
       }
     }
 
-    customElements.define('element-with-null-style', ElementWithNullStyle);
+    customElements.define("element-with-null-style", ElementWithNullStyle);
 
     // This should not throw even when style is null
     const Wrapped = HTMLPropsMixin(ElementWithNullStyle);
-    Wrapped.define('wrapped-null-style');
+    Wrapped.define("wrapped-null-style");
 
     // Should not throw when passing style prop
     const el = new Wrapped({
-      style: { backgroundColor: 'red', padding: '10px' },
+      style: { backgroundColor: "red", padding: "10px" },
     });
 
     document.body.appendChild(el);
@@ -242,7 +243,7 @@ Deno.test({
 });
 
 Deno.test({
-  name: 'HTMLPropsMixin: handles elements with undefined dataset property',
+  name: "HTMLPropsMixin: handles elements with undefined dataset property",
 
   fn: () => {
     // Simulate element where dataset might be undefined
@@ -253,14 +254,14 @@ Deno.test({
       }
     }
 
-    customElements.define('element-with-no-dataset', ElementWithNoDataset);
+    customElements.define("element-with-no-dataset", ElementWithNoDataset);
 
     const Wrapped = HTMLPropsMixin(ElementWithNoDataset);
-    Wrapped.define('wrapped-no-dataset');
+    Wrapped.define("wrapped-no-dataset");
 
     // Should not throw when passing dataset prop
     const el = new Wrapped({
-      dataset: { key: 'value' },
+      dataset: { key: "value" },
     });
 
     document.body.appendChild(el);

@@ -2,13 +2,21 @@
 export interface HTMLElementLike {
   connectedCallback?(): void;
   disconnectedCallback?(): void;
-  attributeChangedCallback?(name: string, oldVal: string | null, newVal: string | null): void;
+  attributeChangedCallback?(
+    name: string,
+    oldVal: string | null,
+    newVal: string | null,
+  ): void;
   getAttribute(name: string): string | null;
   setAttribute(name: string, value: string): void;
   removeAttribute(name: string): void;
   hasAttribute(name: string): boolean;
   dispatchEvent(event: Event): boolean;
-  addEventListener(type: string, listener: EventListener, options?: boolean | AddEventListenerOptions): void;
+  addEventListener(
+    type: string,
+    listener: EventListener,
+    options?: boolean | AddEventListenerOptions,
+  ): void;
   replaceChildren(...nodes: (Node | string)[]): void;
   style: CSSStyleDeclaration;
   dataset: DOMStringMap;
@@ -84,8 +92,8 @@ type HasDefault<T> = T extends { default: any } ? true : false;
 
 // Helper to infer type from PropConfig, respecting specific type of default value if present
 type GetPropType<P> = P extends { type: infer T }
-  ? (P extends { default: infer D }
-    ? (unknown extends D ? ConstructorType<T> : (D extends null ? ConstructorType<T> | null : D))
+  ? (P extends { default: infer D } ? (unknown extends D ? ConstructorType<T>
+      : (D extends null ? ConstructorType<T> | null : D))
     : ConstructorType<T>)
   : P extends { default: infer D } ? D
   : any;
@@ -99,18 +107,28 @@ export type InferProps<C extends PropsConfig> = {
 type RawInferConstructorProps<C extends PropsConfig> =
   & {
     // Required: PropConfig without default
-    [K in keyof C as IsPropConfig<C[K]> extends true ? (HasDefault<C[K]> extends true ? never : K) : never]:
-      GetPropType<C[K]>;
+    [
+      K in keyof C as IsPropConfig<C[K]> extends true
+        ? (HasDefault<C[K]> extends true ? never : K)
+        : never
+    ]: GetPropType<C[K]>;
   }
   & {
     // Optional: PropConfig with default OR Direct Value
-    [K in keyof C as IsPropConfig<C[K]> extends true ? (HasDefault<C[K]> extends true ? K : never) : K]?:
-      IsPropConfig<C[K]> extends true ? GetPropType<C[K]> : C[K];
+    [
+      K in keyof C as IsPropConfig<C[K]> extends true
+        ? (HasDefault<C[K]> extends true ? K : never)
+        : K
+    ]?: IsPropConfig<C[K]> extends true ? GetPropType<C[K]> : C[K];
   };
 
-export type InferConstructorProps<C extends PropsConfig> = Omit<RawInferConstructorProps<C>, 'style'>;
+export type InferConstructorProps<C extends PropsConfig> = Omit<
+  RawInferConstructorProps<C>,
+  "style"
+>;
 
-export interface TypedPropConfig<T> extends Omit<PropConfig, 'type' | 'default'> {
+export interface TypedPropConfig<T>
+  extends Omit<PropConfig, "type" | "default"> {
   type: InferPropType<T>;
   default?: T;
 }
@@ -121,7 +139,8 @@ export interface HTMLPropsInterface {
 
 // Helper to get the expected type for a native property
 // We allow Partial<CSSStyleDeclaration> | string for style
-export type NativePropertyType<T, K extends keyof T> = K extends 'style' ? Partial<CSSStyleDeclaration> | string
+export type NativePropertyType<T, K extends keyof T> = K extends "style"
+  ? Partial<CSSStyleDeclaration> | string
   : T[K];
 
 // Validator type to enforce:
@@ -132,6 +151,8 @@ export type PropsConfigValidator<T, C> = {
     : PropConfig;
 };
 
-export type HTMLProps<T> = Omit<Partial<T>, 'style'> & { style?: Partial<CSSStyleDeclaration> | string } & {
+export type HTMLProps<T> = Omit<Partial<T>, "style"> & {
+  style?: Partial<CSSStyleDeclaration> | string;
+} & {
   [key: string]: any;
 };

@@ -1,10 +1,10 @@
-import { assertEquals } from 'jsr:@std/assert';
-import { HTMLPropsMixin } from '../mixin.ts';
-import { prop } from '../prop.ts';
-import { batch, effect, signal } from '@html-props/signals';
-import { PROPS_CONTROLLER } from '../controller.ts';
+import { assertEquals } from "jsr:@std/assert";
+import { HTMLPropsMixin } from "../mixin.ts";
+import { prop } from "../prop.ts";
+import { batch, effect, signal } from "@html-props/signals";
+import { PROPS_CONTROLLER } from "../controller.ts";
 
-import { Window } from 'happy-dom';
+import { Window } from "happy-dom";
 
 // Setup environment with happy-dom
 if (!globalThis.document) {
@@ -29,13 +29,13 @@ if (!globalThis.document) {
 // BATCHING BUG TESTS
 // ============================================
 
-Deno.test('BATCHING BUG: render() is called multiple times when multiple signal props are updated via applyCustomProps', () => {
+Deno.test("BATCHING BUG: render() is called multiple times when multiple signal props are updated via applyCustomProps", () => {
   let renderCount = 0;
   let renderSnapshots: { variant: string; label: string; value: number }[] = [];
 
   class MultiPropElement extends HTMLPropsMixin(HTMLElement, {
-    variant: prop<string>('default'),
-    label: prop<string>(''),
+    variant: prop<string>("default"),
+    label: prop<string>(""),
     value: prop<number>(0),
   }) {
     render() {
@@ -50,11 +50,11 @@ Deno.test('BATCHING BUG: render() is called multiple times when multiple signal 
     }
   }
 
-  customElements.define('multi-prop-element', MultiPropElement);
+  customElements.define("multi-prop-element", MultiPropElement);
 
   const el = new MultiPropElement({
-    variant: 'initial',
-    label: 'Initial Label',
+    variant: "initial",
+    label: "Initial Label",
     value: 100,
   });
   document.body.appendChild(el);
@@ -65,8 +65,8 @@ Deno.test('BATCHING BUG: render() is called multiple times when multiple signal 
 
   // Create a new element with updated props - this simulates morphNode scenario
   const newEl = new MultiPropElement({
-    variant: 'updated',
-    label: 'Updated Label',
+    variant: "updated",
+    label: "Updated Label",
     value: 200,
   });
 
@@ -80,25 +80,25 @@ Deno.test('BATCHING BUG: render() is called multiple times when multiple signal 
   // BUG: Without batching, render() is called 3 times (once per prop)
   // EXPECTED: render() should only be called ONCE after all props are set
   console.log(`Render count after applyCustomProps: ${renderCount}`);
-  console.log('Render snapshots:', JSON.stringify(renderSnapshots, null, 2));
+  console.log("Render snapshots:", JSON.stringify(renderSnapshots, null, 2));
 
   // This assertion will FAIL if the bug exists (renderCount will be > 1)
   assertEquals(
     renderCount,
     1,
-    'render() should only be called once when multiple props are updated via applyCustomProps',
+    "render() should only be called once when multiple props are updated via applyCustomProps",
   );
 
   // Also verify the final state has all updated values
-  assertEquals(el.variant, 'updated');
-  assertEquals(el.label, 'Updated Label');
+  assertEquals(el.variant, "updated");
+  assertEquals(el.label, "Updated Label");
   assertEquals(el.value, 200);
 
   // Cleanup
   document.body.removeChild(el);
 });
 
-Deno.test('BATCHING BUG: effects see partially updated state during applyCustomProps', () => {
+Deno.test("BATCHING BUG: effects see partially updated state during applyCustomProps", () => {
   let effectRunCount = 0;
   let effectSnapshots: { a: number; b: number; c: number }[] = [];
 
@@ -112,7 +112,7 @@ Deno.test('BATCHING BUG: effects see partially updated state during applyCustomP
     }
   }
 
-  customElements.define('effect-test-element', EffectTestElement);
+  customElements.define("effect-test-element", EffectTestElement);
 
   const el = new EffectTestElement({ a: 1, b: 2, c: 3 });
   document.body.appendChild(el);
@@ -137,24 +137,32 @@ Deno.test('BATCHING BUG: effects see partially updated state during applyCustomP
   controller.applyCustomProps({ a: 10, b: 20, c: 30 });
 
   console.log(`Effect run count: ${effectRunCount}`);
-  console.log('Effect snapshots:', JSON.stringify(effectSnapshots, null, 2));
+  console.log("Effect snapshots:", JSON.stringify(effectSnapshots, null, 2));
 
   // BUG: Without batching, the effect runs multiple times with partial state
   // e.g., { a: 10, b: 2, c: 3 }, { a: 10, b: 20, c: 3 }, { a: 10, b: 20, c: 30 }
   // EXPECTED: Effect should only run ONCE with final state { a: 10, b: 20, c: 30 }
-  assertEquals(effectRunCount, 1, 'Effect should only run once when multiple props are updated');
+  assertEquals(
+    effectRunCount,
+    1,
+    "Effect should only run once when multiple props are updated",
+  );
 
   // Verify the snapshot has the complete final state
   if (effectSnapshots.length > 0) {
     const lastSnapshot = effectSnapshots[effectSnapshots.length - 1];
-    assertEquals(lastSnapshot, { a: 10, b: 20, c: 30 }, 'Effect should see complete updated state');
+    assertEquals(
+      lastSnapshot,
+      { a: 10, b: 20, c: 30 },
+      "Effect should see complete updated state",
+    );
   }
 
   // Cleanup
   document.body.removeChild(el);
 });
 
-Deno.test('BATCHING BUG: render sees inconsistent state when props are updated sequentially', () => {
+Deno.test("BATCHING BUG: render sees inconsistent state when props are updated sequentially", () => {
   // This test demonstrates that without batching, render() can be called
   // with some props updated and others still having old values
   let renderCount = 0;
@@ -171,7 +179,7 @@ Deno.test('BATCHING BUG: render sees inconsistent state when props are updated s
     }
   }
 
-  customElements.define('two-props-element', TwoPropsElement);
+  customElements.define("two-props-element", TwoPropsElement);
 
   // Start with x=1, y=1
   const el = new TwoPropsElement({ x: 1, y: 1 });
@@ -187,21 +195,21 @@ Deno.test('BATCHING BUG: render sees inconsistent state when props are updated s
   controller.applyCustomProps({ x: 10, y: 10 });
 
   console.log(`Render count: ${renderCount}`);
-  console.log('State at each render:', JSON.stringify(stateAtEachRender));
+  console.log("State at each render:", JSON.stringify(stateAtEachRender));
 
   // BUG: Without batching, we might see:
   //   render #1: { x: 10, y: 1 }  <- INCONSISTENT! y is still old value
   //   render #2: { x: 10, y: 10 } <- final state
   // EXPECTED: Only one render with { x: 10, y: 10 }
 
-  assertEquals(renderCount, 1, 'Should only render once');
+  assertEquals(renderCount, 1, "Should only render once");
 
   // The single render should see both values updated
   if (stateAtEachRender.length > 0) {
     assertEquals(
       stateAtEachRender[0],
       { x: 10, y: 10 },
-      'Render should see both props updated, not partial state',
+      "Render should see both props updated, not partial state",
     );
   }
 
@@ -209,7 +217,7 @@ Deno.test('BATCHING BUG: render sees inconsistent state when props are updated s
   document.body.removeChild(el);
 });
 
-Deno.test('BATCHING: verify batch() from signals package works correctly', () => {
+Deno.test("BATCHING: verify batch() from signals package works correctly", () => {
   // This test verifies that the batch() function from signals works as expected
   // If this passes but the above tests fail, the fix is to use batch() in applyCustomProps
 
@@ -236,9 +244,13 @@ Deno.test('BATCHING: verify batch() from signals package works correctly', () =>
     c.set(30);
   });
 
-  assertEquals(effectRuns, 1, 'Effect should only run once with batch()');
-  assertEquals(snapshots.length, 1, 'Should only have one snapshot');
-  assertEquals(snapshots[0], { a: 10, b: 20, c: 30 }, 'Snapshot should have all updated values');
+  assertEquals(effectRuns, 1, "Effect should only run once with batch()");
+  assertEquals(snapshots.length, 1, "Should only have one snapshot");
+  assertEquals(
+    snapshots[0],
+    { a: 10, b: 20, c: 30 },
+    "Snapshot should have all updated values",
+  );
 
   // Cleanup
   dispose();

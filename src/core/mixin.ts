@@ -1,10 +1,24 @@
-import { HTML_PROPS_MIXIN, PROPS_CONTROLLER, PropsController } from './controller.ts';
-import type { RefObject } from './ref.ts';
-import type { Constructor, InferConstructorProps, InferProps, PropsConfig, PropsConfigValidator } from './types.ts';
+import {
+  HTML_PROPS_MIXIN,
+  PROPS_CONTROLLER,
+  PropsController,
+} from "./controller.ts";
+import type { RefObject } from "./ref.ts";
+import type {
+  Constructor,
+  InferConstructorProps,
+  InferProps,
+  PropsConfig,
+  PropsConfigValidator,
+} from "./types.ts";
 
-export interface HTMLPropsElementConstructor<T extends Constructor, P = {}, IP = P> {
+export interface HTMLPropsElementConstructor<
+  T extends Constructor,
+  P = {},
+  IP = P,
+> {
   new (
-    props?: Omit<Partial<InstanceType<T>>, 'style' | 'children'> & {
+    props?: Omit<Partial<InstanceType<T>>, "style" | "children"> & {
       style?: Partial<CSSStyleDeclaration> | string;
       ref?: RefObject<any> | ((el: InstanceType<T>) => void);
       children?: any;
@@ -22,13 +36,21 @@ export interface HTMLPropsElementConstructor<T extends Constructor, P = {}, IP =
     requestUpdate(): void;
     render(): any;
   };
-  define(tagName: string, options?: any): HTMLPropsElementConstructor<T, P, IP> & Pick<T, keyof T>;
+  define(
+    tagName: string,
+    options?: any,
+  ): HTMLPropsElementConstructor<T, P, IP> & Pick<T, keyof T>;
 }
 
-export function HTMLPropsMixin<T extends Constructor, C extends PropsConfig<InstanceType<T>>>(
+export function HTMLPropsMixin<
+  T extends Constructor,
+  C extends PropsConfig<InstanceType<T>>,
+>(
   Base: T,
   config: C & PropsConfigValidator<InstanceType<T>, C>,
-): HTMLPropsElementConstructor<T, InferConstructorProps<C>, InferProps<C>> & Pick<T, keyof T>;
+):
+  & HTMLPropsElementConstructor<T, InferConstructorProps<C>, InferProps<C>>
+  & Pick<T, keyof T>;
 
 export function HTMLPropsMixin<T extends Constructor, P = {}>(
   Base: T,
@@ -56,21 +78,22 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       return Object.entries(propsConfig)
         .filter(([_, cfg]) => cfg.attribute)
         .map(([key, cfg]) => {
-          if (typeof cfg.attribute === 'string') return cfg.attribute;
+          if (typeof cfg.attribute === "string") return cfg.attribute;
           return key.toLowerCase();
         });
     }
 
     constructor(...args: any[]) {
       // @ts-ignore
-      if ('props' in Base) {
+      if ("props" in Base) {
         super(...args);
       } else {
         super();
       }
 
       // Create controller with props config
-      const propsConfig = (this.constructor as any).__propsConfig as PropsConfig || {};
+      const propsConfig =
+        (this.constructor as any).__propsConfig as PropsConfig || {};
       const props = args[0] ?? {};
       this[PROPS_CONTROLLER] = new PropsController(this, propsConfig, props);
     }
@@ -92,7 +115,12 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       this[PROPS_CONTROLLER].onConnected();
 
       if ((this as any).mountedCallback) {
-        (this as any).mountedCallback();
+        // Call mountedCallback in microtask to ensure full DOM tree is ready.
+        // This allows parent components to finish their forceUpdate/render cycle
+        // before children try to update parent props.
+        queueMicrotask(() => {
+          (this as any).mountedCallback();
+        });
       }
     }
 
@@ -109,9 +137,15 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       }
     }
 
-    override attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null) {
+    override attributeChangedCallback(
+      name: string,
+      oldVal: string | null,
+      newVal: string | null,
+    ) {
       // @ts-ignore
-      if (super.attributeChangedCallback) super.attributeChangedCallback(name, oldVal, newVal);
+      if (super.attributeChangedCallback) {
+        super.attributeChangedCallback(name, oldVal, newVal);
+      }
       // Controller may not exist yet during parent constructor execution
       this[PROPS_CONTROLLER]?.attributeChangedCallback(name, oldVal, newVal);
     }
@@ -152,7 +186,7 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
     }
   }
 
-  if (config && typeof config === 'object') {
+  if (config && typeof config === "object") {
     const parentConfig = (Base as any).__propsConfig || {};
     const mergedConfig: Record<string, any> = { ...parentConfig };
 
@@ -160,15 +194,16 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
     // treat it as overriding just the default, not the entire config
     for (const [key, value] of Object.entries(config)) {
       const parentValue = parentConfig[key];
-      const isParentPropConfig = parentValue && typeof parentValue === 'object' && (
-        typeof parentValue.type === 'function' ||
-        'default' in parentValue ||
-        'attribute' in parentValue
-      );
-      const isChildPropConfig = value && typeof value === 'object' && (
-        typeof (value as any).type === 'function' ||
-        'default' in (value as any) ||
-        'attribute' in (value as any)
+      const isParentPropConfig = parentValue &&
+        typeof parentValue === "object" && (
+          typeof parentValue.type === "function" ||
+          "default" in parentValue ||
+          "attribute" in parentValue
+        );
+      const isChildPropConfig = value && typeof value === "object" && (
+        typeof (value as any).type === "function" ||
+        "default" in (value as any) ||
+        "attribute" in (value as any)
       );
 
       if (isParentPropConfig && !isChildPropConfig) {

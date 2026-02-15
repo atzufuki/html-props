@@ -1,11 +1,11 @@
-import { assert, assertEquals } from 'jsr:@std/assert';
-import { HTMLPropsMixin } from '../mixin.ts';
-import { prop } from '../prop.ts';
-import type { PropsConfig } from '../types.ts';
+import { assert, assertEquals } from "jsr:@std/assert";
+import { HTMLPropsMixin } from "../mixin.ts";
+import { prop } from "../prop.ts";
+import type { PropsConfig } from "../types.ts";
 
-import { Window } from 'happy-dom';
-import { effect } from '@html-props/signals';
-import { ref } from '@html-props/core';
+import { Window } from "happy-dom";
+import { effect } from "@html-props/signals";
+import { ref } from "@html-props/core";
 
 // Setup environment with happy-dom
 if (!globalThis.document) {
@@ -35,16 +35,16 @@ const Event = (globalThis as any).window.Event;
 class ShadowHTMLElement extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: "open" });
   }
 }
 
 // --- Basic Functionality ---
 
-Deno.test('HTMLPropsMixin w/ shadow: initializes props', () => {
+Deno.test("HTMLPropsMixin w/ shadow: initializes props", () => {
   class TestElement extends HTMLPropsMixin(ShadowHTMLElement, {
     count: prop(10),
-    label: prop('hello'),
+    label: prop("hello"),
     active: prop(true),
   }) {
     render() {
@@ -52,14 +52,14 @@ Deno.test('HTMLPropsMixin w/ shadow: initializes props', () => {
     }
   }
 
-  customElements.define('test-init', TestElement);
+  customElements.define("test-init", TestElement);
   const el = new TestElement();
   assertEquals(el.count, 10);
-  assertEquals(el.label, 'hello');
+  assertEquals(el.label, "hello");
   assertEquals(el.active, true);
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: updates props and renders', () => {
+Deno.test("HTMLPropsMixin w/ shadow: updates props and renders", () => {
   let renderCount = 0;
   class TestElement extends HTMLPropsMixin(ShadowHTMLElement, {
     count: prop(0),
@@ -70,21 +70,21 @@ Deno.test('HTMLPropsMixin w/ shadow: updates props and renders', () => {
     }
   }
 
-  customElements.define('test-render', TestElement);
+  customElements.define("test-render", TestElement);
   const el = new TestElement();
   el.connectedCallback(); // Mount
 
   assertEquals(renderCount, 1); // Initial render
-  assertEquals(el.shadowRoot!.innerHTML, 'Count: 0');
+  assertEquals(el.shadowRoot!.innerHTML, "Count: 0");
 
   el.count = 5;
   assertEquals(renderCount, 2);
-  assertEquals(el.shadowRoot!.innerHTML, 'Count: 5');
+  assertEquals(el.shadowRoot!.innerHTML, "Count: 5");
 
   el.disconnectedCallback();
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: reflects props to attributes', () => {
+Deno.test("HTMLPropsMixin w/ shadow: reflects props to attributes", () => {
   class TestElement extends HTMLPropsMixin(ShadowHTMLElement, {
     count: prop(0, { attribute: true }),
     active: prop(false, { attribute: true }),
@@ -94,56 +94,56 @@ Deno.test('HTMLPropsMixin w/ shadow: reflects props to attributes', () => {
     }
   }
 
-  customElements.define('test-reflect', TestElement);
+  customElements.define("test-reflect", TestElement);
   const el = new TestElement();
   el.connectedCallback();
 
   el.count = 5;
-  assertEquals(el.getAttribute('count'), '5');
+  assertEquals(el.getAttribute("count"), "5");
 
   el.active = true;
-  assertEquals(el.hasAttribute('active'), true);
-  assertEquals(el.getAttribute('active'), '');
+  assertEquals(el.hasAttribute("active"), true);
+  assertEquals(el.getAttribute("active"), "");
 
   el.active = false;
-  assertEquals(el.hasAttribute('active'), false);
+  assertEquals(el.hasAttribute("active"), false);
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: updates props from attributes', () => {
+Deno.test("HTMLPropsMixin w/ shadow: updates props from attributes", () => {
   class TestElement extends HTMLPropsMixin(ShadowHTMLElement, {
     count: prop(0, { attribute: true }),
-    label: prop('', { attribute: true }),
+    label: prop("", { attribute: true }),
   }) {
     render() {
       return [];
     }
   }
 
-  customElements.define('test-attr-update', TestElement);
+  customElements.define("test-attr-update", TestElement);
   const el = new TestElement();
   el.connectedCallback();
 
-  el.setAttribute('count', '10');
+  el.setAttribute("count", "10");
   assertEquals(el.count, 10);
 
-  el.setAttribute('label', 'test');
-  assertEquals(el.label, 'test');
+  el.setAttribute("label", "test");
+  assertEquals(el.label, "test");
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: dispatches events', () => {
+Deno.test("HTMLPropsMixin w/ shadow: dispatches events", () => {
   class TestElement extends HTMLPropsMixin(ShadowHTMLElement, {
-    count: prop(0, { event: 'change' }),
+    count: prop(0, { event: "change" }),
   }) {
     render() {
       return [];
     }
   }
 
-  customElements.define('test-events', TestElement);
+  customElements.define("test-events", TestElement);
   const el = new TestElement();
 
   let eventDetail: any = null;
-  el.addEventListener('change', (e: any) => {
+  el.addEventListener("change", (e: any) => {
     eventDetail = e.detail;
   });
 
@@ -152,27 +152,27 @@ Deno.test('HTMLPropsMixin w/ shadow: dispatches events', () => {
   assertEquals(eventDetail, 5);
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: define static method', () => {
+Deno.test("HTMLPropsMixin w/ shadow: define static method", () => {
   class TestElement extends HTMLPropsMixin(ShadowHTMLElement) {}
 
-  const Result = TestElement.define('test-define', { extends: 'div' });
+  const Result = TestElement.define("test-define", { extends: "div" });
 
   assertEquals(Result, TestElement);
-  assertEquals(customElements.get('test-define'), TestElement);
+  assertEquals(customElements.get("test-define"), TestElement);
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: typed props', () => {
+Deno.test("HTMLPropsMixin w/ shadow: typed props", () => {
   const Base = HTMLPropsMixin(ShadowHTMLElement, {
     count: prop(0),
-    label: prop('test'),
+    label: prop("test"),
   });
 
   class TestEl extends Base {}
 
-  customElements.define('test-typed', TestEl);
+  customElements.define("test-typed", TestEl);
   const el = new TestEl();
   assertEquals(el.count, 0);
-  assertEquals(el.label, 'test');
+  assertEquals(el.label, "test");
 
   el.count = 10;
   assertEquals(el.count, 10);
@@ -180,43 +180,45 @@ Deno.test('HTMLPropsMixin w/ shadow: typed props', () => {
 
 // --- Inheritance & Composition ---
 
-Deno.test('HTMLPropsMixin w/ shadow: inheritance', () => {
+Deno.test("HTMLPropsMixin w/ shadow: inheritance", () => {
   class MyElement extends HTMLPropsMixin(ShadowHTMLElement, {
-    text: prop('Default text'),
+    text: prop("Default text"),
   }) {}
 
   class MyElementFromInheritance extends HTMLPropsMixin(MyElement, {
     // Override just the default value - prop is already defined in parent
-    text: 'Default text from inheritance',
+    text: "Default text from inheritance",
   }) {}
 
-  customElements.define('my-element-legacy', MyElement);
-  customElements.define('my-element-inheritance', MyElementFromInheritance);
+  customElements.define("my-element-legacy", MyElement);
+  customElements.define("my-element-inheritance", MyElementFromInheritance);
 
-  const element = new MyElement({ text: 'Hello, World!' });
-  const elementFromInheritance = new MyElementFromInheritance({ text: 'Hello, Inheritance!' });
+  const element = new MyElement({ text: "Hello, World!" });
+  const elementFromInheritance = new MyElementFromInheritance({
+    text: "Hello, Inheritance!",
+  });
 
   document.body.appendChild(element);
   document.body.appendChild(elementFromInheritance);
 
   assert(element instanceof HTMLElement);
   assert(element instanceof MyElement);
-  assertEquals(element.text, 'Hello, World!');
+  assertEquals(element.text, "Hello, World!");
 
   assert(elementFromInheritance instanceof HTMLElement);
   assert(elementFromInheritance instanceof MyElementFromInheritance);
-  assertEquals(elementFromInheritance.text, 'Hello, Inheritance!');
+  assertEquals(elementFromInheritance.text, "Hello, Inheritance!");
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: nested inheritance', () => {
+Deno.test("HTMLPropsMixin w/ shadow: nested inheritance", () => {
   class ParentElement extends HTMLPropsMixin(ShadowHTMLElement, {
-    foo: { type: String, default: '' },
+    foo: { type: String, default: "" },
   }) {}
 
-  customElements.define('parent-element', ParentElement);
+  customElements.define("parent-element", ParentElement);
 
   class ChildElement extends HTMLPropsMixin(ParentElement, {
-    bar: { type: String, default: '' },
+    bar: { type: String, default: "" },
   }) {
     connectedCallback(): void {
       super.connectedCallback?.();
@@ -224,48 +226,48 @@ Deno.test('HTMLPropsMixin w/ shadow: nested inheritance', () => {
     }
   }
 
-  customElements.define('child-element', ChildElement);
+  customElements.define("child-element", ChildElement);
 
-  const element = new ChildElement({ foo: 'Name', bar: 'Alice' });
+  const element = new ChildElement({ foo: "Name", bar: "Alice" });
   document.body.appendChild(element);
 
-  assertEquals(element.bar, 'Alice');
-  assertEquals(element.foo, 'Name');
-  assertEquals(element.textContent, 'Alice');
+  assertEquals(element.bar, "Alice");
+  assertEquals(element.foo, "Name");
+  assertEquals(element.textContent, "Alice");
   assert(element instanceof HTMLElement);
   assert(element instanceof ParentElement);
   assert(element instanceof ChildElement);
 
   // Check defaults inheritance
   const defaultElement = new ChildElement();
-  assertEquals(defaultElement.foo, '');
-  assertEquals(defaultElement.bar, '');
+  assertEquals(defaultElement.foo, "");
+  assertEquals(defaultElement.bar, "");
 });
 
 // --- Built-ins ---
 
-Deno.test('HTMLPropsMixin w/ shadow: extends built-in element (direct)', () => {
+Deno.test("HTMLPropsMixin w/ shadow: extends built-in element (direct)", () => {
   const MyButton = HTMLPropsMixin(HTMLButtonElement);
 
-  customElements.define('my-direct-button', MyButton, { extends: 'button' });
+  customElements.define("my-direct-button", MyButton, { extends: "button" });
 
-  const element = new MyButton({ textContent: 'Click me!' });
+  const element = new MyButton({ textContent: "Click me!" });
 
   document.body.appendChild(element);
 
   assert(element instanceof HTMLElement);
   assert(element instanceof HTMLButtonElement);
   assert(element instanceof MyButton);
-  assertEquals(element.textContent, 'Click me!');
+  assertEquals(element.textContent, "Click me!");
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: extends built-in element (class)', () => {
+Deno.test("HTMLPropsMixin w/ shadow: extends built-in element (class)", () => {
   class MyButton extends HTMLPropsMixin(HTMLButtonElement) {}
 
-  customElements.define('my-custom-button', MyButton, { extends: 'button' });
+  customElements.define("my-custom-button", MyButton, { extends: "button" });
 
   const element = new MyButton({
-    textContent: 'Click me!',
+    textContent: "Click me!",
   });
 
   document.body.appendChild(element);
@@ -274,14 +276,14 @@ Deno.test('HTMLPropsMixin w/ shadow: extends built-in element (class)', () => {
   assert(element instanceof HTMLButtonElement);
   assert(element instanceof MyButton);
 
-  assertEquals(element.textContent, 'Click me!');
+  assertEquals(element.textContent, "Click me!");
 });
 
 // --- Signals & Reactivity ---
 
-Deno.test('HTMLPropsMixin w/ shadow: signal support in props mapping', () => {
+Deno.test("HTMLPropsMixin w/ shadow: signal support in props mapping", () => {
   class MyElement extends HTMLPropsMixin(ShadowHTMLElement, {
-    text: { type: String, default: '' },
+    text: { type: String, default: "" },
   }) {
     connectedCallback(): void {
       super.connectedCallback?.();
@@ -289,21 +291,21 @@ Deno.test('HTMLPropsMixin w/ shadow: signal support in props mapping', () => {
     }
   }
 
-  customElements.define('my-signal-element', MyElement);
+  customElements.define("my-signal-element", MyElement);
 
-  const element = new MyElement({ text: 'Original text' });
+  const element = new MyElement({ text: "Original text" });
   document.body.appendChild(element);
 
-  assertEquals(element.text, 'Original text');
-  assertEquals(element.textContent, 'Original text');
+  assertEquals(element.text, "Original text");
+  assertEquals(element.textContent, "Original text");
 
-  element.text = 'New text';
-  assertEquals(element.text, 'New text');
+  element.text = "New text";
+  assertEquals(element.text, "New text");
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: signal support with click handler', () => {
+Deno.test("HTMLPropsMixin w/ shadow: signal support with click handler", () => {
   class MyElement extends HTMLPropsMixin(ShadowHTMLElement, {
-    text: { type: String, default: '' },
+    text: { type: String, default: "" },
   }) {
     connectedCallback(): void {
       super.connectedCallback?.();
@@ -311,32 +313,32 @@ Deno.test('HTMLPropsMixin w/ shadow: signal support with click handler', () => {
     }
   }
 
-  customElements.define('my-signal-click-element', MyElement);
+  customElements.define("my-signal-click-element", MyElement);
 
   const element = new MyElement({
-    text: 'Original text',
+    text: "Original text",
     onclick: (event: Event) => {
       const el = event.currentTarget as MyElement;
-      el.text = 'New text';
+      el.text = "New text";
     },
   });
 
   document.body.appendChild(element);
 
-  assertEquals(element.text, 'Original text');
-  assertEquals(element.textContent, 'Original text');
+  assertEquals(element.text, "Original text");
+  assertEquals(element.textContent, "Original text");
 
   element.click();
 
   // text prop updates, but textContent doesn't auto-update without effect
-  assertEquals(element.text, 'New text');
+  assertEquals(element.text, "New text");
   // textContent still has old value since it's set only in connectedCallback
-  assertEquals(element.textContent, 'Original text');
+  assertEquals(element.textContent, "Original text");
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: signal support with effect', () => {
+Deno.test("HTMLPropsMixin w/ shadow: signal support with effect", () => {
   class MyElement extends HTMLPropsMixin(ShadowHTMLElement, {
-    text: { type: String, default: '' },
+    text: { type: String, default: "" },
   }) {
     connectedCallback(): void {
       super.connectedCallback?.();
@@ -346,32 +348,32 @@ Deno.test('HTMLPropsMixin w/ shadow: signal support with effect', () => {
     }
   }
 
-  customElements.define('my-signal-effect-element', MyElement);
+  customElements.define("my-signal-effect-element", MyElement);
 
   const element = new MyElement({
-    text: 'Original text',
+    text: "Original text",
     onclick: (event: any) => {
       const el = event.currentTarget as MyElement;
-      el.text = 'New text';
+      el.text = "New text";
     },
   });
 
   document.body.appendChild(element);
 
-  assertEquals(element.text, 'Original text');
-  assertEquals(element.textContent, 'Original text');
+  assertEquals(element.text, "Original text");
+  assertEquals(element.textContent, "Original text");
 
   element.click();
 
-  assertEquals(element.text, 'New text');
-  assertEquals(element.textContent, 'New text');
+  assertEquals(element.text, "New text");
+  assertEquals(element.textContent, "New text");
 });
 
 // --- Refs ---
 
-Deno.test('HTMLPropsMixin w/ shadow: refs', () => {
+Deno.test("HTMLPropsMixin w/ shadow: refs", () => {
   class MyButton extends HTMLPropsMixin(HTMLButtonElement) {}
-  customElements.define('my-button-ref', MyButton, { extends: 'button' });
+  customElements.define("my-button-ref", MyButton, { extends: "button" });
 
   class MyElement extends HTMLPropsMixin(ShadowHTMLElement) {
     buttonRef = ref<HTMLButtonElement>(null);
@@ -379,18 +381,18 @@ Deno.test('HTMLPropsMixin w/ shadow: refs', () => {
     render() {
       return new MyButton({
         ref: this.buttonRef,
-        textContent: 'Click me!',
+        textContent: "Click me!",
         onclick: () => {
           const btn = this.buttonRef.current;
           if (btn) {
-            btn.textContent = 'Clicked!';
+            btn.textContent = "Clicked!";
           }
         },
       });
     }
   }
 
-  customElements.define('my-element-ref', MyElement);
+  customElements.define("my-element-ref", MyElement);
 
   const element = new MyElement();
   // Trigger render
@@ -399,18 +401,18 @@ Deno.test('HTMLPropsMixin w/ shadow: refs', () => {
   document.body.appendChild(element);
   const button = element.buttonRef.current;
   assert(button instanceof HTMLButtonElement);
-  assertEquals(button?.textContent, 'Click me!');
+  assertEquals(button?.textContent, "Click me!");
   button?.click();
-  assertEquals(button?.textContent, 'Clicked!');
+  assertEquals(button?.textContent, "Clicked!");
 });
 
 // --- Lifecycle Safety ---
 
-Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - single level (baseline)', () => {
+Deno.test("HTMLPropsMixin w/ shadow: lifecycle safety - single level (baseline)", () => {
   let connectedCallCount = 0;
 
   class Widget extends HTMLPropsMixin(ShadowHTMLElement, {
-    prop: { type: String, default: '' },
+    prop: { type: String, default: "" },
   }) {
     connectedCallback() {
       super.connectedCallback?.();
@@ -418,23 +420,27 @@ Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - single level (baseline)'
     }
   }
 
-  customElements.define('widget-single', Widget);
+  customElements.define("widget-single", Widget);
 
-  const widget = new Widget({ prop: 'test' });
+  const widget = new Widget({ prop: "test" });
   document.body.appendChild(widget);
 
-  assertEquals(connectedCallCount, 1, 'connectedCallback should be called once');
-  assertEquals(widget.prop, 'test');
+  assertEquals(
+    connectedCallCount,
+    1,
+    "connectedCallback should be called once",
+  );
+  assertEquals(widget.prop, "test");
 
   document.body.removeChild(widget);
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - multi-level inheritance', () => {
+Deno.test("HTMLPropsMixin w/ shadow: lifecycle safety - multi-level inheritance", () => {
   let baseConnectCount = 0;
   let extendedConnectCount = 0;
 
   class BaseWidget extends HTMLPropsMixin(ShadowHTMLElement, {
-    baseProp: { type: String, default: '' },
+    baseProp: { type: String, default: "" },
   }) {
     connectedCallback() {
       super.connectedCallback?.();
@@ -442,10 +448,10 @@ Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - multi-level inheritance'
     }
   }
 
-  customElements.define('base-widget', BaseWidget);
+  customElements.define("base-widget", BaseWidget);
 
   class ExtendedWidget extends HTMLPropsMixin(BaseWidget, {
-    extendedProp: { type: String, default: '' },
+    extendedProp: { type: String, default: "" },
   }) {
     connectedCallback() {
       super.connectedCallback?.();
@@ -453,24 +459,35 @@ Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - multi-level inheritance'
     }
   }
 
-  customElements.define('extended-widget', ExtendedWidget);
+  customElements.define("extended-widget", ExtendedWidget);
 
-  const widget = new ExtendedWidget({ baseProp: 'base', extendedProp: 'extended' });
+  const widget = new ExtendedWidget({
+    baseProp: "base",
+    extendedProp: "extended",
+  });
   document.body.appendChild(widget);
 
-  assertEquals(baseConnectCount, 1, 'BaseWidget connectedCallback should be called once');
-  assertEquals(extendedConnectCount, 1, 'ExtendedWidget connectedCallback should be called once');
-  assertEquals(widget.extendedProp, 'extended');
+  assertEquals(
+    baseConnectCount,
+    1,
+    "BaseWidget connectedCallback should be called once",
+  );
+  assertEquals(
+    extendedConnectCount,
+    1,
+    "ExtendedWidget connectedCallback should be called once",
+  );
+  assertEquals(widget.extendedProp, "extended");
 
   document.body.removeChild(widget);
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - children should NOT reconnect', () => {
+Deno.test("HTMLPropsMixin w/ shadow: lifecycle safety - children should NOT reconnect", () => {
   let childConnectCount = 0;
   let childDisconnectCount = 0;
 
   class ChildElement extends HTMLPropsMixin(ShadowHTMLElement, {
-    label: { type: String, default: '' },
+    label: { type: String, default: "" },
   }) {
     connectedCallback() {
       super.connectedCallback?.();
@@ -483,24 +500,24 @@ Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - children should NOT reco
     }
   }
 
-  customElements.define('child-element-test', ChildElement);
+  customElements.define("child-element-test", ChildElement);
 
   class BaseContainer extends HTMLPropsMixin(ShadowHTMLElement, {
-    prop1: { type: String, default: '' },
+    prop1: { type: String, default: "" },
   }) {}
 
-  customElements.define('base-container', BaseContainer);
+  customElements.define("base-container", BaseContainer);
 
   class ExtendedContainer extends HTMLPropsMixin(BaseContainer, {
-    prop2: { type: String, default: '' },
+    prop2: { type: String, default: "" },
   }) {}
 
-  customElements.define('extended-container', ExtendedContainer);
+  customElements.define("extended-container", ExtendedContainer);
 
-  const child = new ChildElement({ label: 'test' });
+  const child = new ChildElement({ label: "test" });
   const container = new ExtendedContainer({
-    prop1: 'a',
-    prop2: 'b',
+    prop1: "a",
+    prop2: "b",
     content: [child],
   });
 
@@ -508,32 +525,42 @@ Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - children should NOT reco
   // Note: happy-dom automatically calls connectedCallback on appendChild,
   // so we don't need to manually call it here
 
-  assertEquals(childConnectCount, 1, 'Child should connect once');
-  assertEquals(childDisconnectCount, 0, 'Child should NOT disconnect during parent connection');
-  assertEquals(child.label, 'test');
+  assertEquals(childConnectCount, 1, "Child should connect once");
+  assertEquals(
+    childDisconnectCount,
+    0,
+    "Child should NOT disconnect during parent connection",
+  );
+  assertEquals(child.label, "test");
 
   document.body.removeChild(container);
   // happy-dom also handles disconnectedCallback automatically
-  assertEquals(childDisconnectCount, 1, 'Child should disconnect once on removal');
+  assertEquals(
+    childDisconnectCount,
+    1,
+    "Child should disconnect once on removal",
+  );
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - deep inheritance chain (4 levels)', () => {
-  class L1 extends HTMLPropsMixin(ShadowHTMLElement, { p1: { type: String, default: '' } }) {}
-  customElements.define('level-1-element', L1);
+Deno.test("HTMLPropsMixin w/ shadow: lifecycle safety - deep inheritance chain (4 levels)", () => {
+  class L1 extends HTMLPropsMixin(ShadowHTMLElement, {
+    p1: { type: String, default: "" },
+  }) {}
+  customElements.define("level-1-element", L1);
 
-  class L2 extends HTMLPropsMixin(L1, { p2: { type: String, default: '' } }) {}
-  customElements.define('level-2-element', L2);
+  class L2 extends HTMLPropsMixin(L1, { p2: { type: String, default: "" } }) {}
+  customElements.define("level-2-element", L2);
 
-  class L3 extends HTMLPropsMixin(L2, { p3: { type: String, default: '' } }) {}
-  customElements.define('level-3-element', L3);
+  class L3 extends HTMLPropsMixin(L2, { p3: { type: String, default: "" } }) {}
+  customElements.define("level-3-element", L3);
 
-  class L4 extends HTMLPropsMixin(L3, { p4: { type: String, default: '' } }) {}
-  customElements.define('level-4-element', L4);
+  class L4 extends HTMLPropsMixin(L3, { p4: { type: String, default: "" } }) {}
+  customElements.define("level-4-element", L4);
 
-  const widget = new L4({ p1: 'a', p2: 'b', p3: 'c', p4: 'd' });
+  const widget = new L4({ p1: "a", p2: "b", p3: "c", p4: "d" });
   document.body.appendChild(widget);
 
-  assertEquals(widget.p4, 'd');
+  assertEquals(widget.p4, "d");
 
   assert(widget instanceof L1);
   assert(widget instanceof L2);
@@ -543,12 +570,12 @@ Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - deep inheritance chain (
   document.body.removeChild(widget);
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - effect cleanup preserved', () => {
+Deno.test("HTMLPropsMixin w/ shadow: lifecycle safety - effect cleanup preserved", () => {
   let effectRunCount = 0;
   let effectCleanupCount = 0;
 
   class ChildWithEffect extends HTMLPropsMixin(ShadowHTMLElement, {
-    value: { type: String, default: '' },
+    value: { type: String, default: "" },
   }) {
     connectedCallback() {
       super.connectedCallback?.();
@@ -562,24 +589,24 @@ Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - effect cleanup preserved
     }
   }
 
-  customElements.define('child-with-effect', ChildWithEffect);
+  customElements.define("child-with-effect", ChildWithEffect);
 
   class BaseContainer extends HTMLPropsMixin(ShadowHTMLElement, {
-    prop1: { type: String, default: '' },
+    prop1: { type: String, default: "" },
   }) {}
 
-  customElements.define('base-container-effect', BaseContainer);
+  customElements.define("base-container-effect", BaseContainer);
 
   class ExtendedContainer extends HTMLPropsMixin(BaseContainer, {
-    prop2: { type: String, default: '' },
+    prop2: { type: String, default: "" },
   }) {}
 
-  customElements.define('extended-container-effect', ExtendedContainer);
+  customElements.define("extended-container-effect", ExtendedContainer);
 
-  const child = new ChildWithEffect({ value: 'initial' });
+  const child = new ChildWithEffect({ value: "initial" });
   const container = new ExtendedContainer({
-    prop1: 'a',
-    prop2: 'b',
+    prop1: "a",
+    prop2: "b",
     content: [child],
   });
 
@@ -587,20 +614,28 @@ Deno.test('HTMLPropsMixin w/ shadow: lifecycle safety - effect cleanup preserved
   // Note: LinkedOM automatically calls connectedCallback on appendChild
 
   // Effect should run once when child connects
-  assertEquals(effectRunCount, 1, 'Effect should run once on connect');
-  assertEquals(effectCleanupCount, 0, 'Effect should not cleanup if child stays connected');
-  assertEquals(child.textContent, 'initial');
+  assertEquals(effectRunCount, 1, "Effect should run once on connect");
+  assertEquals(
+    effectCleanupCount,
+    0,
+    "Effect should not cleanup if child stays connected",
+  );
+  assertEquals(child.textContent, "initial");
 
   // Update the signal
-  child.value = 'updated';
-  assertEquals(effectRunCount, 2, 'Effect should run again after signal update');
-  assertEquals(child.textContent, 'updated');
+  child.value = "updated";
+  assertEquals(
+    effectRunCount,
+    2,
+    "Effect should run again after signal update",
+  );
+  assertEquals(child.textContent, "updated");
 
   document.body.removeChild(container);
   // happy-dom handles disconnectedCallback automatically
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: allows defining update for custom rendering', () => {
+Deno.test("HTMLPropsMixin w/ shadow: allows defining update for custom rendering", () => {
   let renderCount = 0;
   let updateCount = 0;
 
@@ -618,13 +653,13 @@ Deno.test('HTMLPropsMixin w/ shadow: allows defining update for custom rendering
       // Verify we got new content
       const newContent = this.render();
       if (newContent.textContent !== `Count: ${this.count}`) {
-        throw new Error('Content mismatch');
+        throw new Error("Content mismatch");
       }
       this.shadowRoot!.firstChild!.textContent = `Count: ${this.count}`;
     }
   }
 
-  CustomRender.define('custom-render');
+  CustomRender.define("custom-render");
   const el = new CustomRender();
   document.body.appendChild(el);
   // el.connectedCallback(); // Removed: document.body.appendChild triggers it
@@ -632,7 +667,7 @@ Deno.test('HTMLPropsMixin w/ shadow: allows defining update for custom rendering
   // Initial render - update() should NOT be called
   assertEquals(updateCount, 0);
   assertEquals(renderCount, 1); // Default render logic called
-  assertEquals(el.shadowRoot!.innerHTML, 'Count: 0');
+  assertEquals(el.shadowRoot!.innerHTML, "Count: 0");
 
   // Update prop
   el.count = 1;
@@ -641,10 +676,10 @@ Deno.test('HTMLPropsMixin w/ shadow: allows defining update for custom rendering
   assertEquals(updateCount, 1);
   // render IS called again because the mixin calls it to pass to update()
   assertEquals(renderCount, 2);
-  assertEquals(el.shadowRoot!.innerHTML, 'Count: 1');
+  assertEquals(el.shadowRoot!.innerHTML, "Count: 1");
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: reflection works with overridden update', () => {
+Deno.test("HTMLPropsMixin w/ shadow: reflection works with overridden update", () => {
   class ReflectedRender extends HTMLPropsMixin(ShadowHTMLElement, {
     active: { type: Boolean, attribute: true },
     label: { type: String, attribute: true },
@@ -654,18 +689,18 @@ Deno.test('HTMLPropsMixin w/ shadow: reflection works with overridden update', (
     }
   }
 
-  ReflectedRender.define('reflected-render');
+  ReflectedRender.define("reflected-render");
   const el = new ReflectedRender();
   document.body.appendChild(el);
 
   el.active = true;
-  assert(el.hasAttribute('active'));
+  assert(el.hasAttribute("active"));
 
-  el.label = 'test';
-  assertEquals(el.getAttribute('label'), 'test');
+  el.label = "test";
+  assertEquals(el.getAttribute("label"), "test");
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: allows calling defaultUpdate from update', () => {
+Deno.test("HTMLPropsMixin w/ shadow: allows calling defaultUpdate from update", () => {
   class DefaultUpdateRender extends HTMLPropsMixin(ShadowHTMLElement, {
     count: { type: Number, default: 0 },
   }) {
@@ -676,7 +711,7 @@ Deno.test('HTMLPropsMixin w/ shadow: allows calling defaultUpdate from update', 
     update() {
       // Do some custom logic
       if (this.count > 5) {
-        this.shadowRoot!.replaceChildren(document.createTextNode('Too high!'));
+        this.shadowRoot!.replaceChildren(document.createTextNode("Too high!"));
       } else {
         // Fallback to default
         this.defaultUpdate();
@@ -684,35 +719,35 @@ Deno.test('HTMLPropsMixin w/ shadow: allows calling defaultUpdate from update', 
     }
   }
 
-  DefaultUpdateRender.define('default-update-render');
+  DefaultUpdateRender.define("default-update-render");
   const el = new DefaultUpdateRender();
   document.body.appendChild(el);
 
   // Initial render
-  assertEquals(el.shadowRoot!.innerHTML, 'Count: 0');
+  assertEquals(el.shadowRoot!.innerHTML, "Count: 0");
 
   // Update prop < 5
   el.count = 4;
-  assertEquals(el.shadowRoot!.innerHTML, 'Count: 4');
+  assertEquals(el.shadowRoot!.innerHTML, "Count: 4");
 
   // Update prop > 5
   el.count = 6;
-  assertEquals(el.shadowRoot!.innerHTML, 'Too high!');
+  assertEquals(el.shadowRoot!.innerHTML, "Too high!");
 
   // Update prop < 5 again
   el.count = 2;
-  assertEquals(el.shadowRoot!.innerHTML, 'Count: 2');
+  assertEquals(el.shadowRoot!.innerHTML, "Count: 2");
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: requestUpdate triggers rerender', () => {
+Deno.test("HTMLPropsMixin w/ shadow: requestUpdate triggers rerender", () => {
   let renderCount = 0;
   class ManualUpdate extends HTMLPropsMixin(ShadowHTMLElement) {
     render() {
       renderCount++;
-      return document.createTextNode('test');
+      return document.createTextNode("test");
     }
   }
-  ManualUpdate.define('manual-update');
+  ManualUpdate.define("manual-update");
   const el = new ManualUpdate();
   document.body.appendChild(el);
 
@@ -722,31 +757,31 @@ Deno.test('HTMLPropsMixin w/ shadow: requestUpdate triggers rerender', () => {
   assertEquals(renderCount, 2);
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: filters null/undefined/boolean from content', () => {
+Deno.test("HTMLPropsMixin w/ shadow: filters null/undefined/boolean from content", () => {
   class TestContentElement extends HTMLPropsMixin(ShadowHTMLElement) {}
-  TestContentElement.define('test-content-filter');
+  TestContentElement.define("test-content-filter");
 
   const el = new TestContentElement({
-    content: ['Hello', null, undefined, false, true, 'World', 0],
+    content: ["Hello", null, undefined, false, true, "World", 0],
   });
   el.connectedCallback();
 
   // Content goes to Light DOM, not shadowRoot (spec: content -> Light DOM, render -> Shadow DOM)
   assertEquals(el.childNodes.length, 3);
-  assertEquals(el.textContent, 'HelloWorld0');
+  assertEquals(el.textContent, "HelloWorld0");
 });
 
-Deno.test('HTMLPropsMixin w/ shadow: filters null/undefined/boolean from render', () => {
+Deno.test("HTMLPropsMixin w/ shadow: filters null/undefined/boolean from render", () => {
   class MyEl extends HTMLPropsMixin(ShadowHTMLElement) {
     render() {
-      return ['Hello', null, undefined, false, true, 'World', 0];
+      return ["Hello", null, undefined, false, true, "World", 0];
     }
   }
-  MyEl.define('my-el-filter');
+  MyEl.define("my-el-filter");
 
   const el = new MyEl();
   document.body.appendChild(el); // Trigger connectedCallback -> render
 
   assertEquals(el.shadowRoot!.childNodes.length, 3);
-  assertEquals(el.shadowRoot!.innerHTML, 'HelloWorld0');
+  assertEquals(el.shadowRoot!.innerHTML, "HelloWorld0");
 });
