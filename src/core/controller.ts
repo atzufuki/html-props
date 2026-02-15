@@ -1,9 +1,9 @@
-import { batch, effect, type Signal, signal } from "@html-props/signals";
-import type { HTMLElementLike, PropsConfig } from "./types.ts";
+import { batch, effect, type Signal, signal } from '@html-props/signals';
+import type { HTMLElementLike, PropsConfig } from './types.ts';
 
 // Unique symbols to avoid any property name conflicts
-export const PROPS_CONTROLLER = Symbol.for("html-props:controller");
-export const HTML_PROPS_MIXIN = Symbol.for("html-props:mixin");
+export const PROPS_CONTROLLER = Symbol.for('html-props:controller');
+export const HTML_PROPS_MIXIN = Symbol.for('html-props:mixin');
 
 /** Node that may have a PropsController attached */
 interface ManagedNode {
@@ -46,7 +46,7 @@ export class PropsController {
   private firstRenderDone = false;
   private lightDomApplied = false;
   private cleanup: (() => void) | null = null;
-  private ref: Props["ref"] | null = null;
+  private ref: Props['ref'] | null = null;
   private host: HTMLElementLike;
   private propsConfig: PropsConfig | null;
   private customProps: Record<string, Signal<unknown>> = {};
@@ -69,7 +69,7 @@ export class PropsController {
     for (const [key, value] of Object.entries(propsConfig)) {
       if (this.isCustomProp(key)) {
         // Use 'in' check to preserve null as valid default
-        const defaultValue = "default" in value ? value.default : undefined;
+        const defaultValue = 'default' in value ? value.default : undefined;
         this.customProps[key] = signal(defaultValue);
         Object.defineProperty(host, key, {
           get: () => this.customProps[key](),
@@ -78,7 +78,7 @@ export class PropsController {
             if (oldValue !== v) {
               this.customProps[key].set(v);
               // Dispatch event when non-function value changes
-              if (value.event && typeof v !== "function") {
+              if (value.event && typeof v !== 'function') {
                 host.dispatchEvent(new CustomEvent(value.event, { detail: v }));
               }
             }
@@ -106,9 +106,7 @@ export class PropsController {
   merge(
     ...objects: (Record<string, unknown> | undefined | null)[]
   ): Record<string, unknown> {
-    const prepped = objects.filter((item): item is Record<string, unknown> =>
-      !!item
-    );
+    const prepped = objects.filter((item): item is Record<string, unknown> => !!item);
 
     if (prepped.length === 0) {
       return {};
@@ -120,8 +118,8 @@ export class PropsController {
         const existing = result[key];
 
         if (
-          typeof item === "object" && item !== null && !Array.isArray(item) &&
-          typeof existing === "object" && existing !== null &&
+          typeof item === 'object' && item !== null && !Array.isArray(item) &&
+          typeof existing === 'object' && existing !== null &&
           !Array.isArray(existing)
         ) {
           result[key] = this.merge(
@@ -138,10 +136,10 @@ export class PropsController {
 
   isCustomProp(key: string): boolean {
     const cfg = this.propsConfig ? this.propsConfig[key] : null;
-    return cfg && typeof cfg === "object" && (
-      typeof cfg.type === "function" ||
-      "default" in cfg ||
-      "attribute" in cfg
+    return cfg && typeof cfg === 'object' && (
+      typeof cfg.type === 'function' ||
+      'default' in cfg ||
+      'attribute' in cfg
     );
   }
 
@@ -164,7 +162,7 @@ export class PropsController {
       ) {
         continue; // Skip
       }
-      if (typeof item === "string" || typeof item === "number") {
+      if (typeof item === 'string' || typeof item === 'number') {
         result.push(document.createTextNode(String(item)));
       } else if (item instanceof Node) {
         result.push(item);
@@ -216,10 +214,10 @@ export class PropsController {
 
       // Only use render() result if it returns actual Node(s), not Lit/FAST template results
       const isTemplateResult = renderResult &&
-        typeof renderResult === "object" && (
-          "_$litType$" in renderResult || // Lit template result
-          "create" in renderResult || // FAST template result
-          "strings" in renderResult // Tagged template result
+        typeof renderResult === 'object' && (
+          '_$litType$' in renderResult || // Lit template result
+          'create' in renderResult || // FAST template result
+          'strings' in renderResult // Tagged template result
         );
 
       if (!isTemplateResult && renderResult != null) {
@@ -263,22 +261,21 @@ export class PropsController {
   // ============================================
 
   private isEventHandler(key: string): boolean {
-    return key.startsWith("on") && key.length > 2;
+    return key.startsWith('on') && key.length > 2;
   }
 
-  private applyStyle(target: HTMLElementLike, style: Props["style"]) {
+  private applyStyle(target: HTMLElementLike, style: Props['style']) {
     if (!target.style) return;
 
     // Get the controller for this target (may be different from 'this' during morphing)
-    const targetController =
-      (target as unknown as ManagedNode)[PROPS_CONTROLLER];
+    const targetController = (target as unknown as ManagedNode)[PROPS_CONTROLLER];
     const trackedKeys = targetController?.appliedStyleKeys ??
       this.appliedStyleKeys;
 
     // Handle string style - replaces everything
-    if (typeof style === "string") {
+    if (typeof style === 'string') {
       trackedKeys.clear();
-      target.setAttribute("style", style);
+      target.setAttribute('style', style);
       return;
     }
 
@@ -290,10 +287,8 @@ export class PropsController {
     // Merge default styles with incoming styles
     // Incoming styles override defaults
     const mergedStyle: Record<string, string> = {
-      ...(defaultStyle && typeof defaultStyle === "object" ? defaultStyle : {}),
-      ...(style && typeof style === "object"
-        ? (style as Record<string, string>)
-        : {}),
+      ...(defaultStyle && typeof defaultStyle === 'object' ? defaultStyle : {}),
+      ...(style && typeof style === 'object' ? (style as Record<string, string>) : {}),
     };
 
     // Determine new keys from merged style object
@@ -302,7 +297,7 @@ export class PropsController {
     // Clear style properties that were previously applied but are not in the new merged style
     for (const key of trackedKeys) {
       if (!newKeys.has(key)) {
-        (target.style as unknown as Record<string, string>)[key] = "";
+        (target.style as unknown as Record<string, string>)[key] = '';
       }
     }
 
@@ -318,18 +313,18 @@ export class PropsController {
     }
   }
 
-  private applyDataset(target: HTMLElementLike, dataset: Props["dataset"]) {
+  private applyDataset(target: HTMLElementLike, dataset: Props['dataset']) {
     if (!dataset) return;
     if (!target.dataset) return;
     Object.assign(target.dataset, dataset);
   }
 
-  applyRef(target: HTMLElementLike, ref: Props["ref"]) {
+  applyRef(target: HTMLElementLike, ref: Props['ref']) {
     if (!ref) return;
     this.ref = ref;
-    if (typeof ref === "function") {
+    if (typeof ref === 'function') {
       ref(target);
-    } else if (typeof ref === "object" && "current" in ref) {
+    } else if (typeof ref === 'object' && 'current' in ref) {
       ref.current = target;
     }
   }
@@ -344,13 +339,13 @@ export class PropsController {
 
   private applyRestProps(target: HTMLElementLike, props: Props) {
     const reserved = new Set([
-      "ref",
-      "style",
-      "dataset",
-      "innerHTML",
-      "textContent",
-      "children",
-      "content",
+      'ref',
+      'style',
+      'dataset',
+      'innerHTML',
+      'textContent',
+      'children',
+      'content',
     ]);
     for (const [key, value] of Object.entries(props)) {
       if (reserved.has(key)) continue;
@@ -441,7 +436,7 @@ export class PropsController {
   }
 
   // ============================================
-  // Morphlex-inspired reconciliation algorithm
+  // Custom reconciliation algorithm
   // ============================================
 
   private static readonly ELEMENT_NODE = 1;
@@ -471,7 +466,7 @@ export class PropsController {
   private getIdSet(node: ManagedNode): Set<string> {
     const ids = new Set<string>();
     if (node.querySelectorAll) {
-      const elements = Array.from(node.querySelectorAll("[id]"));
+      const elements = Array.from(node.querySelectorAll('[id]'));
       for (const el of elements) {
         if (el.id) ids.add(el.id);
       }
@@ -485,7 +480,7 @@ export class PropsController {
   private getIdArray(node: ManagedNode): string[] {
     const ids: string[] = [];
     if (node.querySelectorAll) {
-      const elements = Array.from(node.querySelectorAll("[id]"));
+      const elements = Array.from(node.querySelectorAll('[id]'));
       for (const el of elements) {
         if (el.id) ids.push(el.id);
       }
@@ -500,50 +495,50 @@ export class PropsController {
   private matchNodes(
     from: ManagedNode | null,
     to: ManagedNode | null,
-  ): "equal" | "same" | "none" {
-    if (!from || !to) return "none";
+  ): 'equal' | 'same' | 'none' {
+    if (!from || !to) return 'none';
 
     // Same object reference
-    if (from === to) return "equal";
+    if (from === to) return 'equal';
 
     // Must be same node type
-    if (from.nodeType !== to.nodeType) return "none";
+    if (from.nodeType !== to.nodeType) return 'none';
 
     // If both have keys but they differ, don't match
     // This prevents morphing between different keyed elements (e.g., empty state -> task card)
     const fromKey = this.getNodeKey(from);
     const toKey = this.getNodeKey(to);
-    if (fromKey && toKey && fromKey !== toKey) return "none";
+    if (fromKey && toKey && fromKey !== toKey) return 'none';
 
     // Text nodes - can morph by updating nodeValue
     if (from.nodeType === PropsController.TEXT_NODE) {
       // If content is same, it's equal
-      if (from.nodeValue === to.nodeValue) return "equal";
-      return "same";
+      if (from.nodeValue === to.nodeValue) return 'equal';
+      return 'same';
     }
 
     // Element nodes - check tag name
     if (from.nodeType === PropsController.ELEMENT_NODE) {
-      if (from.localName !== to.localName) return "none";
+      if (from.localName !== to.localName) return 'none';
 
       // For inputs, also check type attribute
-      if (from.localName === "input" && from.type !== to.type) {
-        return "none";
+      if (from.localName === 'input' && from.type !== to.type) {
+        return 'none';
       }
 
       // If either has PROPS_CONTROLLER, always return 'same' to trigger morphNode
       // This ensures props-based content updates work correctly
       if (from[PROPS_CONTROLLER] || to[PROPS_CONTROLLER]) {
-        return "same";
+        return 'same';
       }
 
       // For standard DOM elements, use isEqualNode
-      if (from.isEqualNode(to as unknown as Node)) return "equal";
+      if (from.isEqualNode(to as unknown as Node)) return 'equal';
 
-      return "same";
+      return 'same';
     }
 
-    return "none";
+    return 'none';
   }
 
   /**
@@ -589,7 +584,7 @@ export class PropsController {
   }
 
   /**
-   * Main reconciliation method - Morphlex-inspired algorithm
+   * Main reconciliation method
    */
   reconcile(
     fromNodes: Node[],
@@ -609,7 +604,7 @@ export class PropsController {
 
     // Track matches: toIndex -> fromIndex
     const matches: (number | undefined)[] = new Array(toChildren.length);
-    const operations: ("equal" | "same" | "new")[] = new Array(
+    const operations: ('equal' | 'same' | 'new')[] = new Array(
       toChildren.length,
     );
 
@@ -629,7 +624,7 @@ export class PropsController {
 
         if (toKey === fromKey) {
           const match = this.matchNodes(fromNode, toNode);
-          if (match !== "none") {
+          if (match !== 'none') {
             matches[toIdx] = fromIdx;
             operations[toIdx] = match;
             unmatchedFrom.delete(fromIdx);
@@ -658,7 +653,7 @@ export class PropsController {
           const hasMatchingId = toIdArray.some((id) => fromIdSet.has(id));
           if (hasMatchingId) {
             const match = this.matchNodes(fromNode, toNode);
-            if (match !== "none") {
+            if (match !== 'none') {
               matches[toIdx] = fromIdx;
               operations[toIdx] = match;
               unmatchedFrom.delete(fromIdx);
@@ -693,7 +688,7 @@ export class PropsController {
 
         if (fromNode.isEqualNode?.(toNode as unknown as Node)) {
           matches[toIdx] = fromIdx;
-          operations[toIdx] = "equal";
+          operations[toIdx] = 'equal';
           unmatchedFrom.delete(fromIdx);
           break;
         }
@@ -710,7 +705,7 @@ export class PropsController {
         const fromNode = fromChildren[fromIdx];
         const match = this.matchNodes(fromNode, toNode);
 
-        if (match !== "none") {
+        if (match !== 'none') {
           matches[toIdx] = fromIdx;
           operations[toIdx] = match;
           unmatchedFrom.delete(fromIdx);
@@ -722,7 +717,7 @@ export class PropsController {
     // Mark unmatched to nodes as 'new'
     for (let toIdx = 0; toIdx < toChildren.length; toIdx++) {
       if (matches[toIdx] === undefined) {
-        operations[toIdx] = "new";
+        operations[toIdx] = 'new';
       }
     }
 
@@ -752,7 +747,7 @@ export class PropsController {
       const fromIdx = matches[toIdx];
       const operation = operations[toIdx];
 
-      if (operation === "new") {
+      if (operation === 'new') {
         // Insert new node
         parent.insertBefore(toNode as unknown as Node, insertionPoint);
         insertionPoint = toNode.nextSibling;
@@ -767,7 +762,7 @@ export class PropsController {
         }
 
         // Morph the node if not equal
-        if (operation === "same") {
+        if (operation === 'same') {
           this.morphNode(fromNode, toNode);
         }
 
@@ -863,13 +858,13 @@ export class PropsController {
    */
   private applyDirectContent(target: HTMLElementLike, props: Props): boolean {
     // innerHTML takes priority (same as applyLightDomContentDirect)
-    if ("innerHTML" in props && props.innerHTML !== undefined) {
+    if ('innerHTML' in props && props.innerHTML !== undefined) {
       target.innerHTML = String(props.innerHTML);
       return true;
     }
 
     // textContent next
-    if ("textContent" in props && props.textContent !== undefined) {
+    if ('textContent' in props && props.textContent !== undefined) {
       target.textContent = String(props.textContent);
       return true;
     }
@@ -913,10 +908,10 @@ export class PropsController {
     if (!props) return;
 
     Object.entries(props).forEach(([key, config]) => {
-      const isPropConfig = config && typeof config === "object" && (
-        typeof config.type === "function" ||
-        "default" in config ||
-        "attribute" in config
+      const isPropConfig = config && typeof config === 'object' && (
+        typeof config.type === 'function' ||
+        'default' in config ||
+        'attribute' in config
       );
       if (!isPropConfig) return;
 
@@ -924,17 +919,15 @@ export class PropsController {
         const s = this.customProps[key];
         if (!s) return;
         const val = s();
-        const attrName = typeof config.attribute === "string"
-          ? config.attribute
-          : key.toLowerCase();
+        const attrName = typeof config.attribute === 'string' ? config.attribute : key.toLowerCase();
 
         const isBoolean = config.type === Boolean ||
-          (typeof config.default === "boolean");
+          (typeof config.default === 'boolean');
 
         if (isBoolean) {
           if (val) {
             if (!host.hasAttribute(attrName)) {
-              host.setAttribute(attrName, "");
+              host.setAttribute(attrName, '');
             }
           } else {
             if (host.hasAttribute(attrName)) {
@@ -964,12 +957,12 @@ export class PropsController {
     if (!props) return;
 
     for (const [key, config] of Object.entries(props)) {
-      if (config && typeof config === "object" && config.event) {
+      if (config && typeof config === 'object' && config.event) {
         const eventName = config.event;
         // Create wrapper handler that calls current prop value
         const handler: EventListener = (e: Event) => {
           const fn = this.customProps[key]?.();
-          if (typeof fn === "function") {
+          if (typeof fn === 'function') {
             fn.call(this.host, e);
           }
         };
@@ -1007,9 +1000,9 @@ export class PropsController {
 
     this.cleanup = () => {
       if (this.ref) {
-        if (typeof this.ref === "function") {
+        if (typeof this.ref === 'function') {
           this.ref(null);
-        } else if (typeof this.ref === "object" && "current" in this.ref) {
+        } else if (typeof this.ref === 'object' && 'current' in this.ref) {
           this.ref.current = null;
         }
       }
@@ -1090,9 +1083,7 @@ export class PropsController {
 
     // Find prop for attribute
     const entry = Object.entries(props).find(([key, config]) => {
-      const attr = typeof config.attribute === "string"
-        ? config.attribute
-        : key.toLowerCase();
+      const attr = typeof config.attribute === 'string' ? config.attribute : key.toLowerCase();
       return attr === name;
     });
 
@@ -1100,10 +1091,10 @@ export class PropsController {
       const [key, config] = entry;
       let val: string | number | boolean | null = newVal;
 
-      if (config.type === Boolean || (typeof config.default === "boolean")) {
+      if (config.type === Boolean || (typeof config.default === 'boolean')) {
         val = newVal !== null;
       } else if (
-        config.type === Number || (typeof config.default === "number")
+        config.type === Number || (typeof config.default === 'number')
       ) {
         val = newVal === null ? null : Number(newVal);
       }

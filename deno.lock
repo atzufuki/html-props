@@ -2932,8 +2932,7 @@
       },
       "src/core": {
         "dependencies": [
-          "jsr:@html-props/signals@^1.0.0-beta.1",
-          "jsr:@phlex/morphlex@^1.0.5"
+          "jsr:@html-props/signals@^1.0.0-beta.1"
         ]
       },
       "src/create/template": {
