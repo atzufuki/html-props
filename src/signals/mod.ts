@@ -98,6 +98,8 @@ export function signal<T>(initialValue: T): Signal<T> {
   };
 
   const set = (nextValue: T): void => {
+    // Skip update if value hasn't changed (prevents infinite loops)
+    if (Object.is(value, nextValue)) return;
     value = nextValue;
     notify();
   };
