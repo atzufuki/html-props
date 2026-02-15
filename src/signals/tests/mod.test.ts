@@ -1,157 +1,313 @@
-import { assert, assertEquals } from '@std/assert';
-import { batch, computed, effect, readonly, signal, untracked } from '../mod.ts';
+/**
+ * Signals Tests (Playwright)
+ *
+ * Tests for signal, computed, effect, batch, untracked, and readonly.
+ *
+ * @module
+ */
 
-Deno.test('signal: get/set', () => {
-  const count = signal(0);
-  assert(count() === 0, 'Initial value failed');
-  count.set(5);
-  assert(count() === 5, 'Set/get failed');
-});
+import { assertEquals } from '@std/assert';
+import { loadTestPage, setupBrowser, teardownBrowser, TEST_OPTIONS, type TestContext } from '../../test-utils/mod.ts';
 
-Deno.test('signal: update method', () => {
-  const count = signal(1);
-  count.update((v) => v + 1);
-  assert(count() === 2, 'Update should increment value');
-  count.update((v) => v * 10);
-  assert(count() === 20, 'Update should multiply value');
-});
+let ctx: TestContext;
 
-Deno.test('effect: runs on signal change', () => {
-  const count = signal(0);
-  let triggered = 0;
-  effect(() => {
-    count();
-    triggered++;
-  });
-  count.set(1);
-  count.set(2);
-  assert(triggered === 3, 'Effect did not run correct number of times');
-});
+Deno.test({
+  name: 'Signals Tests',
+  ...TEST_OPTIONS,
 
-Deno.test('effect: runs once with multiple deps', () => {
-  const count = signal(0);
-  const doubleCount = computed(() => count() * 2);
-  const tripleCount = computed(() => count() * 3);
-  let triggered = 0;
-  effect(() => {
-    count();
-    doubleCount();
-    tripleCount();
-    triggered++;
-  });
-  count.set(1);
-  assert(triggered === 2, 'Effect did not run correct number of times');
-});
+  async fn(t) {
+    // Setup browser once for all tests
+    ctx = await setupBrowser();
 
-Deno.test('effect: cleanup removes effect from subscribers', () => {
-  const s = signal(0);
-  let runs = 0;
-  const dispose = effect(() => {
-    s();
-    runs++;
-  });
-  assert(runs === 1, 'Effect should run initially');
-  dispose();
-  s.set(1);
-  assert(runs === 1, 'Effect should not run after cleanup');
-});
+    await t.step('signal: get/set', async () => {
+      await loadTestPage(ctx.page, {
+        code: `
+          const count = signal(0);
+          const initial = count();
+          count.set(5);
+          const afterSet = count();
 
-Deno.test('effect: cleanup function is called before re-run and on dispose', () => {
-  const s = signal(0);
-  let cleanups = 0;
-  let runs = 0;
-  const dispose = effect(() => {
-    s();
-    runs++;
-    return () => {
-      cleanups++;
-    };
-  });
-  // First run, no cleanup yet
-  assertEquals(runs, 1, 'Effect should run initially');
-  assertEquals(cleanups, 0, 'Cleanup should not run initially');
-  // Trigger re-run
-  s.set(1);
-  assertEquals(runs, 2, 'Effect should run again after signal change');
-  assertEquals(cleanups, 1, 'Cleanup should run before re-run');
-  // Dispose effect
-  dispose();
-  assertEquals(cleanups, 2, 'Cleanup should run on dispose');
-});
+          (window as any).result = { initial, afterSet };
+        `,
+      });
 
-Deno.test('effect: abort signal cancels effect', () => {
-  const s = signal(0);
-  let runs = 0;
-  const controller = new AbortController();
-  effect(() => {
-    s();
-    runs++;
-  }, { signal: controller.signal });
-  assertEquals(runs, 1, 'Effect should run initially');
-  s.set(1);
-  assertEquals(runs, 2, 'Effect should run after signal change');
-  controller.abort();
-  s.set(2);
-  assertEquals(runs, 2, 'Effect should not run after abort');
-});
+      const result = await ctx.page.evaluate(() => (window as any).result);
+      assertEquals(result.initial, 0);
+      assertEquals(result.afterSet, 5);
+    });
 
-Deno.test('effect: already aborted signal does not run effect', () => {
-  const controller = new AbortController();
-  controller.abort();
-  const s = signal(0);
-  let runs = 0;
-  effect(() => {
-    s();
-    runs++;
-  }, { signal: controller.signal });
-  assert(runs === 0, 'Effect should not run if signal already aborted');
-});
+    await t.step('signal: update method', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          const count = signal(1);
+          count.update((v) => v + 1);
+          const afterIncrement = count();
+          count.update((v) => v * 10);
+          const afterMultiply = count();
 
-Deno.test('computed: updates when dependencies change', () => {
-  const a = signal(2);
-  const b = signal(3);
-  const sum = computed(() => a() + b());
-  assert(sum() === 5, 'Initial computed value failed');
-  a.set(5);
-  assert(sum() === 8, 'Computed did not update');
-});
+          (window as any).result = { afterIncrement, afterMultiply };
+        `,
+      });
 
-Deno.test('batch: effects run once after batch', () => {
-  const a = signal(1);
-  const b = signal(2);
-  let runs = 0;
-  effect(() => {
-    a();
-    b();
-    runs++;
-  });
-  batch(() => {
-    a.set(10);
-    b.set(20);
-    b.set(30);
-  });
-  assert(runs === 2, 'Effect ran more than once during batch');
-});
+      const result = await ctx.page.evaluate(() => (window as any).result);
+      assertEquals(result.afterIncrement, 2);
+      assertEquals(result.afterMultiply, 20);
+    });
 
-Deno.test('untracked: does not track dependencies', () => {
-  const a = signal(1);
-  let runs = 0;
-  effect(() => {
-    // This access is untracked
-    untracked(() => a());
-    runs++;
-  });
-  a.set(2);
-  assert(runs === 1, 'Effect should not re-run when untracked signal changes');
+    await t.step('effect: runs on signal change', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          const count = signal(0);
+          let triggered = 0;
+          effect(() => {
+            count();
+            triggered++;
+          });
+          count.set(1);
+          count.set(2);
 
-  // Also works with direct signal
-  assert(untracked(a) === 2, 'untracked(signal) should return signal value');
-});
+          (window as any).result = { triggered };
+        `,
+      });
 
-Deno.test('readonly: cannot set', () => {
-  const s = signal(1);
-  const r = readonly(s);
-  assert(r() === 1, 'Readonly did not return value');
-  // @ts-expect-error
-  assert(typeof r.set !== 'function', 'Readonly should not have set');
+      const result = await ctx.page.evaluate(() => (window as any).result);
+      assertEquals(result.triggered, 3);
+    });
+
+    await t.step('effect: runs once with multiple deps', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          const count = signal(0);
+          const doubleCount = computed(() => count() * 2);
+          const tripleCount = computed(() => count() * 3);
+          let triggered = 0;
+          effect(() => {
+            count();
+            doubleCount();
+            tripleCount();
+            triggered++;
+          });
+          count.set(1);
+
+          (window as any).result = { triggered };
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => (window as any).result);
+      assertEquals(result.triggered, 2);
+    });
+
+    await t.step('effect: cleanup removes effect from subscribers', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          const s = signal(0);
+          let runs = 0;
+          const dispose = effect(() => {
+            s();
+            runs++;
+          });
+          const runsAfterInit = runs;
+          dispose();
+          s.set(1);
+          const runsAfterDispose = runs;
+
+          (window as any).result = { runsAfterInit, runsAfterDispose };
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => (window as any).result);
+      assertEquals(result.runsAfterInit, 1);
+      assertEquals(result.runsAfterDispose, 1);
+    });
+
+    await t.step('effect: cleanup function is called before re-run and on dispose', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          const s = signal(0);
+          let cleanups = 0;
+          let runs = 0;
+          const dispose = effect(() => {
+            s();
+            runs++;
+            return () => {
+              cleanups++;
+            };
+          });
+          const runsAfterInit = runs;
+          const cleanupsAfterInit = cleanups;
+
+          s.set(1);
+          const runsAfterChange = runs;
+          const cleanupsAfterChange = cleanups;
+
+          dispose();
+          const cleanupsAfterDispose = cleanups;
+
+          (window as any).result = {
+            runsAfterInit,
+            cleanupsAfterInit,
+            runsAfterChange,
+            cleanupsAfterChange,
+            cleanupsAfterDispose,
+          };
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => (window as any).result);
+      assertEquals(result.runsAfterInit, 1);
+      assertEquals(result.cleanupsAfterInit, 0);
+      assertEquals(result.runsAfterChange, 2);
+      assertEquals(result.cleanupsAfterChange, 1);
+      assertEquals(result.cleanupsAfterDispose, 2);
+    });
+
+    await t.step('effect: abort signal cancels effect', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          const s = signal(0);
+          let runs = 0;
+          const controller = new AbortController();
+          effect(() => {
+            s();
+            runs++;
+          }, { signal: controller.signal });
+          const runsAfterInit = runs;
+
+          s.set(1);
+          const runsAfterChange = runs;
+
+          controller.abort();
+          s.set(2);
+          const runsAfterAbort = runs;
+
+          (window as any).result = { runsAfterInit, runsAfterChange, runsAfterAbort };
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => (window as any).result);
+      assertEquals(result.runsAfterInit, 1);
+      assertEquals(result.runsAfterChange, 2);
+      assertEquals(result.runsAfterAbort, 2);
+    });
+
+    await t.step('effect: already aborted signal does not run effect', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          const controller = new AbortController();
+          controller.abort();
+          const s = signal(0);
+          let runs = 0;
+          effect(() => {
+            s();
+            runs++;
+          }, { signal: controller.signal });
+
+          (window as any).result = { runs };
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => (window as any).result);
+      assertEquals(result.runs, 0);
+    });
+
+    await t.step('computed: updates when dependencies change', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          const a = signal(2);
+          const b = signal(3);
+          const sum = computed(() => a() + b());
+          const initial = sum();
+          a.set(5);
+          const afterChange = sum();
+
+          (window as any).result = { initial, afterChange };
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => (window as any).result);
+      assertEquals(result.initial, 5);
+      assertEquals(result.afterChange, 8);
+    });
+
+    await t.step('batch: effects run once after batch', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          const a = signal(1);
+          const b = signal(2);
+          let runs = 0;
+          effect(() => {
+            a();
+            b();
+            runs++;
+          });
+          batch(() => {
+            a.set(10);
+            b.set(20);
+            b.set(30);
+          });
+
+          (window as any).result = { runs };
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => (window as any).result);
+      assertEquals(result.runs, 2);
+    });
+
+    await t.step('untracked: does not track dependencies', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          const a = signal(1);
+          let runs = 0;
+          effect(() => {
+            // This access is untracked
+            untracked(() => a());
+            runs++;
+          });
+          a.set(2);
+          const runsAfterChange = runs;
+
+          // Also works with direct signal
+          const untrackedValue = untracked(a);
+
+          (window as any).result = { runsAfterChange, untrackedValue };
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => (window as any).result);
+      assertEquals(result.runsAfterChange, 1);
+      assertEquals(result.untrackedValue, 2);
+    });
+
+    await t.step('readonly: cannot set', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          const s = signal(1);
+          const r = readonly(s);
+          const value = r();
+          const hasSet = typeof r.set === 'function';
+
+          (window as any).result = { value, hasSet };
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => (window as any).result);
+      assertEquals(result.value, 1);
+      assertEquals(result.hasSet, false);
+    });
+
+    // Teardown
+    await teardownBrowser(ctx);
+  },
 });

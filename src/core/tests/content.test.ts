@@ -1,225 +1,383 @@
 /**
- * Content Rendering Specification Tests
+ * Content Rendering Specification Tests (Playwright)
  *
  * These tests validate docs/internal/content-rendering-spec.md
+ *
+ * @module
  */
 
-import { assertEquals } from "jsr:@std/assert";
-import { JSDOM } from "npm:jsdom";
-import { HTMLPropsMixin /*prop*/ } from "../mod.ts";
+import { assertEquals } from '@std/assert';
+import { loadTestPage, setupBrowser, teardownBrowser, TEST_OPTIONS, type TestContext } from '../../test-utils/mod.ts';
 
-// Setup DOM
-const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>");
-globalThis.document = dom.window.document;
-globalThis.HTMLElement = dom.window.HTMLElement;
-globalThis.customElements = dom.window.customElements;
-globalThis.Node = dom.window.Node;
+let ctx: TestContext;
 
-// =============================================================================
-// Test Components
-// =============================================================================
+Deno.test({
+  name: 'Content Rendering Tests',
+  ...TEST_OPTIONS,
 
-/** Simple wrapper without render method */
-class SimpleWrapper extends HTMLPropsMixin(HTMLElement) {}
-SimpleWrapper.define("simple-wrapper");
+  async fn(t) {
+    // Setup browser once for all tests
+    ctx = await setupBrowser();
 
-/** Component with render method */
-class RenderComponent extends HTMLPropsMixin(HTMLElement) {
-  constructor(props?: Record<string, unknown>) {
-    super(props);
-    this.attachShadow({ mode: "open" });
-  }
-  render() {
-    return document.createTextNode("Rendered content");
-  }
-}
-RenderComponent.define("render-component");
+    // =============================================================================
+    // Spec: Content prop maps to replaceChildren()
+    // =============================================================================
 
-/** Component that uses content in render */
-class ContentInRender extends HTMLPropsMixin(HTMLElement) {
-  constructor(props?: Record<string, unknown>) {
-    super(props);
-    this.attachShadow({ mode: "open" });
-  }
-  render() {
-    const span = document.createElement("span");
-    // content getter should be available
-    // @ts-ignore - content comes from getter
-    span.textContent = `Prefix: ${this.content ?? ""}`;
-    return span;
-  }
-}
-ContentInRender.define("content-in-render");
+    await t.step('content-prop: string maps to replaceChildren()', async () => {
+      await loadTestPage(ctx.page, {
+        code: `
+          class SimpleWrapper extends HTMLPropsMixin(HTMLElement) {}
+          SimpleWrapper.define("simple-wrapper");
 
-/** Shadow DOM component */
-class ShadowComponent extends HTMLPropsMixin(HTMLElement) {
-  constructor(props?: Record<string, unknown>) {
-    super(props);
-    this.attachShadow({ mode: "open" });
-  }
-  render() {
-    return document.createTextNode("Shadow content");
-  }
-}
-ShadowComponent.define("shadow-component");
+          const el = new SimpleWrapper({ content: "Hello" });
+          document.body.appendChild(el);
 
-// =============================================================================
-// Spec: Content prop maps to replaceChildren()
-// =============================================================================
+          (window as any).testElement = el;
+        `,
+      });
 
-Deno.test("content-prop: string maps to replaceChildren()", () => {
-  const el = new SimpleWrapper({ content: "Hello" });
-  document.body.appendChild(el);
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return el.textContent;
+      });
 
-  assertEquals(el.textContent, "Hello");
+      assertEquals(result, 'Hello');
+    });
 
-  el.remove();
-});
+    await t.step('content-prop: array maps to replaceChildren()', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class SimpleWrapper extends HTMLPropsMixin(HTMLElement) {}
+          SimpleWrapper.define("simple-wrapper-array");
 
-Deno.test("content-prop: array maps to replaceChildren()", () => {
-  const el = new SimpleWrapper({
-    content: ["Hello", " ", "World"],
-  });
-  document.body.appendChild(el);
+          const el = new SimpleWrapper({
+            content: ["Hello", " ", "World"],
+          });
+          document.body.appendChild(el);
 
-  assertEquals(el.textContent, "Hello World");
+          (window as any).testElement = el;
+        `,
+      });
 
-  el.remove();
-});
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return el.textContent;
+      });
 
-Deno.test("content-prop: Node maps to replaceChildren()", () => {
-  const span = document.createElement("span");
-  span.textContent = "Span content";
+      assertEquals(result, 'Hello World');
+    });
 
-  const el = new SimpleWrapper({ content: span });
-  document.body.appendChild(el);
+    await t.step('content-prop: Node maps to replaceChildren()', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class SimpleWrapper extends HTMLPropsMixin(HTMLElement) {}
+          SimpleWrapper.define("simple-wrapper-node");
 
-  assertEquals(el.children.length, 1);
-  assertEquals(el.children[0].tagName, "SPAN");
-  assertEquals(el.children[0].textContent, "Span content");
+          const span = document.createElement("span");
+          span.textContent = "Span content";
 
-  el.remove();
-});
+          const el = new SimpleWrapper({ content: span });
+          document.body.appendChild(el);
 
-// =============================================================================
-// Spec: Render target (host vs shadowRoot)
-// =============================================================================
+          (window as any).testElement = el;
+        `,
+      });
 
-Deno.test("render-target: without shadowRoot renders to host", () => {
-  const el = new SimpleWrapper({ content: "Host content" });
-  document.body.appendChild(el);
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return {
+          childrenLength: el.children.length,
+          tagName: el.children[0]?.tagName,
+          textContent: el.children[0]?.textContent,
+        };
+      });
 
-  assertEquals(el.textContent, "Host content");
-  assertEquals(el.shadowRoot, null);
+      assertEquals(result.childrenLength, 1);
+      assertEquals(result.tagName, 'SPAN');
+      assertEquals(result.textContent, 'Span content');
+    });
 
-  el.remove();
-});
+    // =============================================================================
+    // Spec: Render target (host vs shadowRoot)
+    // =============================================================================
 
-Deno.test("render-target: with shadowRoot renders to shadowRoot", () => {
-  const el = new ShadowComponent();
-  document.body.appendChild(el);
+    await t.step('render-target: without shadowRoot renders to host', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class SimpleWrapper extends HTMLPropsMixin(HTMLElement) {}
+          SimpleWrapper.define("simple-wrapper-host");
 
-  assertEquals(el.shadowRoot?.textContent, "Shadow content");
-  // Light DOM should be empty
-  assertEquals(el.childNodes.length, 0);
+          const el = new SimpleWrapper({ content: "Host content" });
+          document.body.appendChild(el);
 
-  el.remove();
-});
+          (window as any).testElement = el;
+        `,
+      });
 
-Deno.test("render-target: render() component writes to shadowRoot", () => {
-  const el = new RenderComponent();
-  document.body.appendChild(el);
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return {
+          textContent: el.textContent,
+          hasShadowRoot: el.shadowRoot !== null,
+        };
+      });
 
-  // Render writes to shadowRoot
-  assertEquals(el.shadowRoot?.textContent, "Rendered content");
-  // Light DOM empty
-  assertEquals(el.childNodes.length, 0);
+      assertEquals(result.textContent, 'Host content');
+      assertEquals(result.hasShadowRoot, false);
+    });
 
-  el.remove();
-});
+    await t.step('render-target: with shadowRoot renders to shadowRoot', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class ShadowComponent extends HTMLPropsMixin(HTMLElement) {
+            constructor(props) {
+              super(props);
+              this.attachShadow({ mode: "open" });
+            }
+            render() {
+              return document.createTextNode("Shadow content");
+            }
+          }
+          ShadowComponent.define("shadow-component");
 
-// =============================================================================
-// Spec: Content vs Render (different targets, no conflict)
-// =============================================================================
+          const el = new ShadowComponent();
+          document.body.appendChild(el);
 
-Deno.test("content vs render: both work together", () => {
-  // content goes to Light DOM, render() goes to Shadow DOM
-  const el = new RenderComponent({ content: "Light DOM content" });
-  document.body.appendChild(el);
+          (window as any).testElement = el;
+        `,
+      });
 
-  // render() writes to shadowRoot
-  assertEquals(el.shadowRoot?.textContent, "Rendered content");
-  // content writes to Light DOM
-  assertEquals(el.textContent, "Light DOM content");
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return {
+          shadowTextContent: el.shadowRoot?.textContent,
+          childNodesLength: el.childNodes.length,
+        };
+      });
 
-  el.remove();
-});
+      assertEquals(result.shadowTextContent, 'Shadow content');
+      assertEquals(result.childNodesLength, 0);
+    });
 
-Deno.test("content vs render: wrapper uses content", () => {
-  const el = new SimpleWrapper({ content: "Wrapper content" });
-  document.body.appendChild(el);
+    await t.step('render-target: render() component writes to shadowRoot', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class RenderComponent extends HTMLPropsMixin(HTMLElement) {
+            constructor(props) {
+              super(props);
+              this.attachShadow({ mode: "open" });
+            }
+            render() {
+              return document.createTextNode("Rendered content");
+            }
+          }
+          RenderComponent.define("render-component");
 
-  assertEquals(el.textContent, "Wrapper content");
+          const el = new RenderComponent();
+          document.body.appendChild(el);
 
-  el.remove();
-});
+          (window as any).testElement = el;
+        `,
+      });
 
-Deno.test("content vs render: explicit combination works", () => {
-  const el = new ContentInRender({ content: "User content" });
-  document.body.appendChild(el);
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return {
+          shadowTextContent: el.shadowRoot?.textContent,
+          childNodesLength: el.childNodes.length,
+        };
+      });
 
-  // render() reads content and combines it into shadowRoot
-  assertEquals(el.shadowRoot?.textContent, "Prefix: User content");
+      assertEquals(result.shadowTextContent, 'Rendered content');
+      assertEquals(result.childNodesLength, 0);
+    });
 
-  el.remove();
-});
+    // =============================================================================
+    // Spec: Content vs Render (different targets, no conflict)
+    // =============================================================================
 
-// =============================================================================
-// Spec: CE-spec and HTML upgrade
-// =============================================================================
+    await t.step('content vs render: both work together', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class RenderComponent extends HTMLPropsMixin(HTMLElement) {
+            constructor(props) {
+              super(props);
+              this.attachShadow({ mode: "open" });
+            }
+            render() {
+              return document.createTextNode("Rendered content");
+            }
+          }
+          RenderComponent.define("render-component-both");
 
-Deno.test("html upgrade: preserves existing content if content not provided", () => {
-  // Simulate HTML upgrade: element is in DOM before it gets upgraded
-  const el = document.createElement("simple-wrapper");
-  el.textContent = "Existing content";
-  document.body.appendChild(el);
+          const el = new RenderComponent({ content: "Light DOM content" });
+          document.body.appendChild(el);
 
-  // Check that content was preserved
-  assertEquals(el.textContent, "Existing content");
+          (window as any).testElement = el;
+        `,
+      });
 
-  el.remove();
-});
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return {
+          shadowTextContent: el.shadowRoot?.textContent,
+          textContent: el.textContent,
+        };
+      });
 
-Deno.test("html upgrade: content overwrites existing content", () => {
-  // Simulate situation where content is provided explicitly
-  const el = document.createElement("simple-wrapper") as SimpleWrapper;
-  el.textContent = "Existing content";
-  document.body.appendChild(el);
+      assertEquals(result.shadowTextContent, 'Rendered content');
+      assertEquals(result.textContent, 'Light DOM content');
+    });
 
-  // Set content explicitly
-  // @ts-ignore - content is a dynamic prop
-  el.content = "New content";
+    await t.step('content vs render: wrapper uses content', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class SimpleWrapper extends HTMLPropsMixin(HTMLElement) {}
+          SimpleWrapper.define("simple-wrapper-uses-content");
 
-  assertEquals(el.textContent, "New content");
+          const el = new SimpleWrapper({ content: "Wrapper content" });
+          document.body.appendChild(el);
 
-  el.remove();
-});
+          (window as any).testElement = el;
+        `,
+      });
 
-// =============================================================================
-// Spec: Content updates (setter)
-// =============================================================================
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return el.textContent;
+      });
 
-Deno.test("content-update: setter updates DOM", () => {
-  const el = new SimpleWrapper({ content: "Initial" });
-  document.body.appendChild(el);
+      assertEquals(result, 'Wrapper content');
+    });
 
-  assertEquals(el.textContent, "Initial");
+    await t.step('content vs render: explicit combination works', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class ContentInRender extends HTMLPropsMixin(HTMLElement) {
+            constructor(props) {
+              super(props);
+              this.attachShadow({ mode: "open" });
+            }
+            render() {
+              const span = document.createElement("span");
+              span.textContent = \`Prefix: \${this.content ?? ""}\`;
+              return span;
+            }
+          }
+          ContentInRender.define("content-in-render");
 
-  // Update content with setter
-  // @ts-ignore - content is a dynamic prop
-  el.content = "Updated";
+          const el = new ContentInRender({ content: "User content" });
+          document.body.appendChild(el);
 
-  assertEquals(el.textContent, "Updated");
+          (window as any).testElement = el;
+        `,
+      });
 
-  el.remove();
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return el.shadowRoot?.textContent;
+      });
+
+      assertEquals(result, 'Prefix: User content');
+    });
+
+    // =============================================================================
+    // Spec: CE-spec and HTML upgrade
+    // =============================================================================
+
+    await t.step('html upgrade: preserves existing content if content not provided', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class SimpleWrapper extends HTMLPropsMixin(HTMLElement) {}
+          SimpleWrapper.define("simple-wrapper-upgrade");
+
+          // Simulate HTML upgrade: element is in DOM before it gets upgraded
+          const el = document.createElement("simple-wrapper-upgrade");
+          el.textContent = "Existing content";
+          document.body.appendChild(el);
+
+          (window as any).testElement = el;
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return el.textContent;
+      });
+
+      assertEquals(result, 'Existing content');
+    });
+
+    await t.step('html upgrade: content overwrites existing content', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class SimpleWrapper extends HTMLPropsMixin(HTMLElement) {}
+          SimpleWrapper.define("simple-wrapper-overwrite");
+
+          const el = document.createElement("simple-wrapper-overwrite");
+          el.textContent = "Existing content";
+          document.body.appendChild(el);
+
+          // Set content explicitly
+          el.content = "New content";
+
+          (window as any).testElement = el;
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return el.textContent;
+      });
+
+      assertEquals(result, 'New content');
+    });
+
+    // =============================================================================
+    // Spec: Content updates (setter)
+    // =============================================================================
+
+    await t.step('content-update: setter updates DOM', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class SimpleWrapper extends HTMLPropsMixin(HTMLElement) {}
+          SimpleWrapper.define("simple-wrapper-setter");
+
+          const el = new SimpleWrapper({ content: "Initial" });
+          document.body.appendChild(el);
+
+          (window as any).testElement = el;
+        `,
+      });
+
+      const initial = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return el.textContent;
+      });
+
+      assertEquals(initial, 'Initial');
+
+      const updated = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        el.content = 'Updated';
+        return el.textContent;
+      });
+
+      assertEquals(updated, 'Updated');
+    });
+
+    // Teardown
+    await teardownBrowser(ctx);
+  },
 });

@@ -1,91 +1,119 @@
-import { assertEquals } from "jsr:@std/assert";
-import { HTMLPropsMixin } from "../mixin.ts";
-import { prop } from "../prop.ts";
-import { Window } from "happy-dom";
+/**
+ * Defaults Tests (Playwright)
+ *
+ * Tests for direct default values in HTMLPropsMixin.
+ *
+ * @module
+ */
 
-// Setup environment with happy-dom
-if (!globalThis.document) {
-  const happyWindow = new Window();
+import { assertEquals } from '@std/assert';
+import { loadTestPage, setupBrowser, teardownBrowser, TEST_OPTIONS, type TestContext } from '../../test-utils/mod.ts';
 
-  // deno-lint-ignore no-explicit-any
-  const w = happyWindow as any;
+let ctx: TestContext;
 
-  Object.assign(globalThis, {
-    window: happyWindow,
-    document: w.document,
-    customElements: w.customElements,
-    HTMLElement: w.HTMLElement,
-    Node: w.Node,
-  });
-}
+Deno.test({
+  name: 'Defaults Tests',
+  ...TEST_OPTIONS,
 
-Deno.test("HTMLPropsMixin: direct default values", () => {
-  class DirectDefaultsElement extends HTMLPropsMixin(HTMLElement, {
-    // Direct values
-    tabIndex: 0,
-    title: "Direct Title",
-    hidden: true,
-    style: { color: "blue", fontSize: "16px" },
+  async fn(t) {
+    // Setup browser once for all tests
+    ctx = await setupBrowser();
 
-    // Custom prop (still needs config)
-    count: prop(10),
-  }) {}
+    await t.step('direct default values', async () => {
+      await loadTestPage(ctx.page, {
+        code: `
+          class DirectDefaultsElement extends HTMLPropsMixin(HTMLElement, {
+            // Direct values
+            tabIndex: 0,
+            title: "Direct Title",
+            hidden: true,
+            style: { color: "blue", fontSize: "16px" },
 
-  DirectDefaultsElement.define("direct-defaults");
+            // Custom prop (still needs config)
+            count: prop(10),
+          }) {}
 
-  const el = new DirectDefaultsElement();
-  document.body.appendChild(el);
+          DirectDefaultsElement.define("direct-defaults");
 
-  // Check defaults applied
-  // Note: linkedom might default tabIndex to -1 for custom elements?
-  // Or maybe 0?
-  // Let's check what we expect. We set default: 0.
-  // Debugging:
-  // console.log('tabIndex:', el.tabIndex);
-  // console.log('getAttribute tabindex:', el.getAttribute('tabindex'));
+          const el = new DirectDefaultsElement();
+          document.body.appendChild(el);
 
-  // In linkedom, tabIndex property might not reflect attribute change immediately if not connected?
-  // Or maybe linkedom implementation of tabIndex is weird.
-  // But getAttribute is '0'. So the attribute IS set.
-  // If attribute is '0', tabIndex property SHOULD be 0.
+          (window as any).testElement = el;
+        `,
+      });
 
-  assertEquals(el.getAttribute("tabindex"), "0");
-  // assertEquals(el.tabIndex, 0); // Skipping property check due to potential linkedom quirk or timing
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return {
+          tabIndexAttr: el.getAttribute('tabindex'),
+          title: el.title,
+          titleAttr: el.getAttribute('title'),
+          hidden: el.hidden,
+          hiddenAttr: el.getAttribute('hidden'),
+          styleColor: el.style.color,
+          styleFontSize: el.style.fontSize,
+          count: el.count,
+        };
+      });
 
-  assertEquals(el.title, "Direct Title");
-  assertEquals(el.getAttribute("title"), "Direct Title");
+      assertEquals(result.tabIndexAttr, '0');
+      assertEquals(result.title, 'Direct Title');
+      assertEquals(result.titleAttr, 'Direct Title');
+      assertEquals(result.hidden, true);
+      assertEquals(result.hiddenAttr, '');
+      assertEquals(result.styleColor, 'blue');
+      assertEquals(result.styleFontSize, '16px');
+      assertEquals(result.count, 10);
 
-  assertEquals(el.hidden, true);
-  assertEquals(el.getAttribute("hidden"), "");
+      // Check reactivity
+      const afterUpdate = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        el.tabIndex = -1;
+        el.count = 20;
+        return {
+          tabIndexAttr: el.getAttribute('tabindex'),
+          count: el.count,
+        };
+      });
 
-  assertEquals(el.style.color, "blue");
-  assertEquals(el.style.fontSize, "16px");
+      assertEquals(afterUpdate.tabIndexAttr, '-1');
+      assertEquals(afterUpdate.count, 20);
+    });
 
-  assertEquals(el.count, 10);
+    await t.step('direct defaults override in constructor', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class OverrideElement extends HTMLPropsMixin(HTMLElement, {
+            tabIndex: 0,
+            style: { color: "red" },
+          }) {}
 
-  // Check reactivity of native props (should still work via native setters)
-  el.tabIndex = -1;
-  assertEquals(el.getAttribute("tabindex"), "-1");
+          OverrideElement.define("override-defaults");
 
-  // Check reactivity of custom prop
-  el.count = 20;
-  assertEquals(el.count, 20);
-});
+          const el = new OverrideElement({
+            tabIndex: 1,
+            style: { color: "blue" },
+          });
+          el.connectedCallback();
 
-Deno.test("HTMLPropsMixin: direct defaults override in constructor", () => {
-  class OverrideElement extends HTMLPropsMixin(HTMLElement, {
-    tabIndex: 0,
-    style: { color: "red" },
-  }) {}
+          (window as any).testElement = el;
+        `,
+      });
 
-  OverrideElement.define("override-defaults");
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return {
+          tabIndex: el.tabIndex,
+          styleColor: el.style.color,
+        };
+      });
 
-  const el = new OverrideElement({
-    tabIndex: 1,
-    style: { color: "blue" },
-  });
-  el.connectedCallback(); // Props applied on connect
+      assertEquals(result.tabIndex, 1);
+      assertEquals(result.styleColor, 'blue');
+    });
 
-  assertEquals(el.tabIndex, 1);
-  assertEquals(el.style.color, "blue");
+    // Teardown
+    await teardownBrowser(ctx);
+  },
 });
