@@ -4,17 +4,12 @@
  * Provides browser setup/teardown helpers and page loading utilities
  * for testing html-props components in real browsers.
  *
+ * Uses Deno.bundle() to compile TypeScript components for browser execution.
+ *
  * @module
  */
 
-import {
-  chromium,
-  firefox,
-  webkit,
-  type Browser,
-  type BrowserContext,
-  type Page,
-} from "playwright";
+import { type Browser, type BrowserContext, chromium, firefox, type Page, webkit } from 'playwright';
 
 // =============================================================================
 // Types
@@ -32,14 +27,14 @@ export interface SetupOptions {
   /** Slow down actions by this many milliseconds (default: 0) */
   slowMo?: number;
   /** Browser to use: 'chromium' | 'firefox' | 'webkit' (default: 'chromium') */
-  browserType?: "chromium" | "firefox" | "webkit";
+  browserType?: 'chromium' | 'firefox' | 'webkit';
 }
 
 export interface LoadPageOptions {
-  /** Additional imports to include in the page */
-  imports?: string[];
-  /** Component class definitions to include */
-  components?: string[];
+  /** Entry point file to bundle (relative to project root) */
+  entryPoint?: string;
+  /** Inline TypeScript/JavaScript code to bundle and execute */
+  code?: string;
   /** Initial body HTML content */
   body?: string;
   /** Additional head content (styles, etc.) */
@@ -50,12 +45,12 @@ export interface LoadPageOptions {
 // Configuration
 // =============================================================================
 
-const DEFAULT_HEADLESS = Deno.env.get("HEADLESS") !== "false";
-const DEFAULT_SLOW_MO = parseInt(Deno.env.get("SLOW_MO") ?? "0", 10);
-const DEFAULT_BROWSER = (Deno.env.get("BROWSER") ?? "chromium") as
-  | "chromium"
-  | "firefox"
-  | "webkit";
+const DEFAULT_HEADLESS = Deno.env.get('HEADLESS') !== 'false';
+const DEFAULT_SLOW_MO = parseInt(Deno.env.get('SLOW_MO') ?? '0', 10);
+const DEFAULT_BROWSER = (Deno.env.get('BROWSER') ?? 'chromium') as
+  | 'chromium'
+  | 'firefox'
+  | 'webkit';
 
 // =============================================================================
 // Browser Setup
@@ -72,7 +67,7 @@ const DEFAULT_BROWSER = (Deno.env.get("BROWSER") ?? "chromium") as
  * ```
  */
 export async function setupBrowser(
-  options: SetupOptions = {}
+  options: SetupOptions = {},
 ): Promise<TestContext> {
   const {
     headless = DEFAULT_HEADLESS,
@@ -80,12 +75,7 @@ export async function setupBrowser(
     browserType = DEFAULT_BROWSER,
   } = options;
 
-  const browserLauncher =
-    browserType === "firefox"
-      ? firefox
-      : browserType === "webkit"
-        ? webkit
-        : chromium;
+  const browserLauncher = browserType === 'firefox' ? firefox : browserType === 'webkit' ? webkit : chromium;
 
   const browser = await browserLauncher.launch({
     headless,
@@ -117,22 +107,100 @@ export async function freshPage(ctx: TestContext): Promise<Page> {
 }
 
 // =============================================================================
+// Bundling
+// =============================================================================
+
+/**
+ * Bundle TypeScript code using Deno.bundle().
+ * Returns JavaScript code that can be executed in the browser.
+ */
+export async function bundleCode(code: string): Promise<string> {
+  // Create a temporary file in the project's src directory so relative imports work
+  const projectRoot = new URL('../../', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1');
+  const tempFileName = `_test_bundle_${Date.now()}_${Math.random().toString(36).slice(2)}.ts`;
+  const tempFile = `${projectRoot}${tempFileName}`;
+
+  try {
+    // Write the code to the temp file
+    await Deno.writeTextFile(tempFile, code);
+
+    // Bundle with Deno.bundle()
+    // @ts-ignore - Deno.bundle is unstable
+    const result = await Deno.bundle({
+      entrypoints: [tempFile],
+    });
+
+    if (!result.success) {
+      throw new Error(`Bundle failed: ${JSON.stringify(result.errors)}`);
+    }
+
+    return result.outputFiles[0].text();
+  } finally {
+    // Clean up temp file
+    try {
+      await Deno.remove(tempFile);
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
+}
+
+/**
+ * Bundle a file using Deno.bundle().
+ */
+export async function bundleFile(entryPoint: string): Promise<string> {
+  // @ts-ignore - Deno.bundle is unstable
+  const result = await Deno.bundle({
+    entrypoints: [entryPoint],
+  });
+
+  if (!result.success) {
+    throw new Error(`Bundle failed: ${JSON.stringify(result.errors)}`);
+  }
+
+  return result.outputFiles[0].text();
+}
+
+// =============================================================================
 // Page Loading
 // =============================================================================
 
 /**
+ * Default imports that are prepended to test code.
+ */
+const DEFAULT_IMPORTS = `
+import { HTMLPropsMixin, prop, ref } from "./src/core/mod.ts";
+import { Div, Span, Button, Input, Ul, Li } from "./src/built-ins/mod.ts";
+import { signal, computed, effect } from "./src/signals/mod.ts";
+import { Row, Column, Container } from "./src/layout/mod.ts";
+
+// Make imports available globally for page.evaluate()
+(window as any).HTMLPropsMixin = HTMLPropsMixin;
+(window as any).prop = prop;
+(window as any).ref = ref;
+(window as any).signal = signal;
+(window as any).computed = computed;
+(window as any).effect = effect;
+(window as any).Div = Div;
+(window as any).Span = Span;
+(window as any).Button = Button;
+(window as any).Input = Input;
+(window as any).Ul = Ul;
+(window as any).Li = Li;
+(window as any).Row = Row;
+(window as any).Column = Column;
+(window as any).Container = Container;
+`;
+
+/**
  * Load a test page with html-props components.
  *
- * This sets up the page with:
- * - Import map for @html-props/* packages
- * - Default imports (HTMLPropsMixin, prop, ref, built-ins)
- * - Custom component definitions
- * - Initial body content
+ * Uses Deno.bundle() to compile TypeScript code for the browser.
  *
  * @example
  * ```typescript
  * await loadTestPage(page, {
- *   components: [`
+ *   code: `
  *     class Counter extends HTMLPropsMixin(HTMLElement, {
  *       count: prop(0),
  *     }) {
@@ -141,31 +209,34 @@ export async function freshPage(ctx: TestContext): Promise<Page> {
  *       }
  *     }
  *     customElements.define("test-counter", Counter);
- *   `],
+ *   `,
  * });
  * ```
  */
 export async function loadTestPage(
   page: Page,
-  options: LoadPageOptions = {}
+  options: LoadPageOptions = {},
 ): Promise<void> {
-  const {
-    imports = [],
-    components = [],
-    body = "",
-    head = "",
-  } = options;
+  const { code = '', body = '', head = '', entryPoint } = options;
 
-  // Default imports that are always included
-  const defaultImports = [
-    `import { HTMLPropsMixin, prop, ref } from "/src/core/mod.ts";`,
-    `import { Div, Span, Button, Input, Ul, Li } from "/src/built-ins/mod.ts";`,
-    `import { signal, computed, effect } from "/src/signals/mod.ts";`,
-    `import { Row, Column, Container } from "/src/layout/mod.ts";`,
-  ];
+  let bundledCode: string;
 
-  const allImports = [...defaultImports, ...imports].join("\n");
-  const allComponents = components.join("\n");
+  if (entryPoint) {
+    // Bundle from file
+    bundledCode = await bundleFile(entryPoint);
+  } else {
+    // Bundle inline code with default imports
+    const fullCode = `
+${DEFAULT_IMPORTS}
+
+${code}
+
+// Signal that the page is ready
+(window as any).__TEST_READY__ = true;
+window.dispatchEvent(new CustomEvent("test-ready"));
+`;
+    bundledCode = await bundleCode(fullCode);
+  }
 
   const html = `
 <!DOCTYPE html>
@@ -175,62 +246,30 @@ export async function loadTestPage(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>html-props Test</title>
     ${head}
-    <script type="module">
-      ${allImports}
-
-      // Make imports available globally for page.evaluate()
-      window.HTMLPropsMixin = HTMLPropsMixin;
-      window.prop = prop;
-      window.ref = ref;
-      window.signal = signal;
-      window.computed = computed;
-      window.effect = effect;
-      window.Div = Div;
-      window.Span = Span;
-      window.Button = Button;
-      window.Input = Input;
-      window.Ul = Ul;
-      window.Li = Li;
-      window.Row = Row;
-      window.Column = Column;
-      window.Container = Container;
-
-      // Component definitions
-      ${allComponents}
-
-      // Signal that the page is ready
-      window.__TEST_READY__ = true;
-      window.dispatchEvent(new CustomEvent("test-ready"));
-    </script>
   </head>
   <body>
     ${body}
+    <script type="module">
+      ${bundledCode}
+    </script>
   </body>
 </html>
   `.trim();
 
-  // Navigate to the project root to resolve imports
-  // We need a base URL for module resolution
-  const cwd = Deno.cwd();
-
-  // Use a file:// URL as base, then set content
-  await page.goto(`file://${cwd}/index.html`);
-  await page.setContent(html, { waitUntil: "domcontentloaded" });
+  await page.setContent(html, { waitUntil: 'domcontentloaded' });
 
   // Wait for modules to load and components to be defined
-  await page.waitForFunction(() => window.__TEST_READY__ === true, {
-    timeout: 10000,
-  });
+  await page.waitForFunction(
+    () => (window as any).__TEST_READY__ === true,
+    { timeout: 10000 },
+  );
 }
 
 /**
  * Load a minimal test page without any imports.
  * Useful for testing basic DOM operations.
  */
-export async function loadMinimalPage(
-  page: Page,
-  body = ""
-): Promise<void> {
+export async function loadMinimalPage(page: Page, body = ''): Promise<void> {
   await page.setContent(`
 <!DOCTYPE html>
 <html>
@@ -253,12 +292,12 @@ export async function loadMinimalPage(
 export async function waitForElement(
   page: Page,
   tagName: string,
-  timeout = 5000
+  timeout = 5000,
 ): Promise<void> {
   await page.waitForFunction(
     (tag) => customElements.get(tag) !== undefined,
     tagName,
-    { timeout }
+    { timeout },
   );
 }
 
@@ -267,7 +306,7 @@ export async function waitForElement(
  */
 export async function getTextContent(
   page: Page,
-  selector: string
+  selector: string,
 ): Promise<string | null> {
   return page.locator(selector).textContent();
 }
@@ -278,7 +317,7 @@ export async function getTextContent(
 export async function getAttribute(
   page: Page,
   selector: string,
-  attribute: string
+  attribute: string,
 ): Promise<string | null> {
   return page.locator(selector).getAttribute(attribute);
 }
@@ -288,10 +327,38 @@ export async function getAttribute(
  */
 export async function elementExists(
   page: Page,
-  selector: string
+  selector: string,
 ): Promise<boolean> {
   const count = await page.locator(selector).count();
   return count > 0;
+}
+
+/**
+ * Get inline style value from an element.
+ */
+export async function getStyleValue(
+  page: Page,
+  selector: string,
+  property: string,
+): Promise<string> {
+  return page.locator(selector).evaluate(
+    (el, prop) => (el as HTMLElement).style.getPropertyValue(prop),
+    property,
+  );
+}
+
+/**
+ * Get computed style value from an element.
+ */
+export async function getComputedStyleValue(
+  page: Page,
+  selector: string,
+  property: string,
+): Promise<string> {
+  return page.locator(selector).evaluate(
+    (el, prop) => getComputedStyle(el).getPropertyValue(prop),
+    property,
+  );
 }
 
 /**

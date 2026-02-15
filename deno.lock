@@ -30,6 +30,7 @@
     "npm:marked@^17.0.1": "17.0.1",
     "npm:node-html-parser@^7.0.1": "7.0.2",
     "npm:npm-run-all@^4.1.5": "4.1.5",
+    "npm:playwright@1.48.0": "1.48.0",
     "npm:typescript-eslint@^8.46.3": "8.52.0_eslint@9.39.2_typescript@5.9.3_@typescript-eslint+parser@8.52.0__eslint@9.39.2__typescript@5.9.3",
     "npm:typescript@^5.9.3": "5.9.3"
   },
@@ -1406,8 +1407,8 @@
         "signal-exit"
       ]
     },
-    "fsevents@2.3.3": {
-      "integrity": "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==",
+    "fsevents@2.3.2": {
+      "integrity": "sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==",
       "os": ["darwin"],
       "scripts": true
     },
@@ -2190,6 +2191,20 @@
     "pify@3.0.0": {
       "integrity": "sha512-C3FsVNH1udSEX48gGX1xfvwTWfsYWj5U+8/uK15BGzIGrKoUpghX8hWZwa/OFnakBiiVNmBvemTJR5mcy7iPcg=="
     },
+    "playwright-core@1.48.0": {
+      "integrity": "sha512-RBvzjM9rdpP7UUFrQzRwR8L/xR4HyC1QXMzGYTbf1vjw25/ya9NRAVnXi/0fvFopjebvyPzsmoK58xxeEOaVvA==",
+      "bin": true
+    },
+    "playwright@1.48.0": {
+      "integrity": "sha512-qPqFaMEHuY/ug8o0uteYJSRfMGFikhUysk8ZvAtfKmUK3kc/6oNl/y3EczF8OFGYIi/Ex2HspMfzYArk6+XQSA==",
+      "dependencies": [
+        "playwright-core"
+      ],
+      "optionalDependencies": [
+        "fsevents"
+      ],
+      "bin": true
+    },
     "possible-typed-array-names@1.1.0": {
       "integrity": "sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg=="
     },
@@ -2918,7 +2933,8 @@
       "jsr:@luca/esbuild-deno-loader@~0.11.1",
       "jsr:@std/assert@^1.0.11",
       "npm:esbuild@0.25",
-      "npm:happy-dom@^20.1.0"
+      "npm:happy-dom@^20.1.0",
+      "npm:playwright@1.48.0"
     ],
     "members": {
       "src/builder": {
@@ -2947,7 +2963,8 @@
       "src/core": {
         "dependencies": [
           "jsr:@html-props/signals@^1.0.0-beta.1",
-          "jsr:@phlex/morphlex@^1.0.5"
+          "jsr:@phlex/morphlex@^1.0.5",
+          "npm:happy-dom@^20.3.4"
         ]
       },
       "src/create/template": {
