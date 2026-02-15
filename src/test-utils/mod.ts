@@ -171,7 +171,7 @@ export async function bundleFile(entryPoint: string): Promise<string> {
 const DEFAULT_IMPORTS = `
 import { HTMLPropsMixin, prop, ref } from "./src/core/mod.ts";
 import { Div, Span, Button, Input, Ul, Li } from "./src/built-ins/mod.ts";
-import { signal, computed, effect } from "./src/signals/mod.ts";
+import { signal, computed, effect, batch } from "./src/signals/mod.ts";
 import { Row, Column, Container } from "./src/layout/mod.ts";
 
 // Make imports available globally for page.evaluate()
@@ -181,6 +181,7 @@ import { Row, Column, Container } from "./src/layout/mod.ts";
 (window as any).signal = signal;
 (window as any).computed = computed;
 (window as any).effect = effect;
+(window as any).batch = batch;
 (window as any).Div = Div;
 (window as any).Span = Span;
 (window as any).Button = Button;

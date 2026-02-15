@@ -1,257 +1,257 @@
-import { assertEquals } from "jsr:@std/assert";
-import { HTMLPropsMixin } from "../mixin.ts";
-import { prop } from "../prop.ts";
-import { batch, effect, signal } from "@html-props/signals";
-import { PROPS_CONTROLLER } from "../controller.ts";
+/**
+ * Batching Tests (Playwright)
+ *
+ * Tests for batch updates and signal batching behavior.
+ *
+ * @module
+ */
 
-import { Window } from "happy-dom";
+import { assertEquals } from '@std/assert';
+import { loadTestPage, setupBrowser, teardownBrowser, TEST_OPTIONS, type TestContext } from '../../test-utils/mod.ts';
 
-// Setup environment with happy-dom
-if (!globalThis.document) {
-  const happyWindow = new Window();
+let ctx: TestContext;
 
-  // deno-lint-ignore no-explicit-any
-  const w = happyWindow as any;
+Deno.test({
+  name: 'Batching Tests',
+  ...TEST_OPTIONS,
 
-  Object.assign(globalThis, {
-    window: happyWindow,
-    document: w.document,
-    customElements: w.customElements,
-    HTMLElement: w.HTMLElement,
-    HTMLButtonElement: w.HTMLButtonElement || w.HTMLElement,
-    Node: w.Node,
-    CustomEvent: w.CustomEvent,
-    MutationObserver: w.MutationObserver,
-  });
-}
+  async fn(t) {
+    // Setup browser once for all tests
+    ctx = await setupBrowser();
 
-// ============================================
-// BATCHING BUG TESTS
-// ============================================
+    await t.step('render() is called once when multiple signal props are updated via applyCustomProps', async () => {
+      await loadTestPage(ctx.page, {
+        code: `
+          let renderCount = 0;
+          let renderSnapshots = [];
 
-Deno.test("BATCHING BUG: render() is called multiple times when multiple signal props are updated via applyCustomProps", () => {
-  let renderCount = 0;
-  let renderSnapshots: { variant: string; label: string; value: number }[] = [];
+          class MultiPropElement extends HTMLPropsMixin(HTMLElement, {
+            variant: prop("default"),
+            label: prop(""),
+            value: prop(0),
+          }) {
+            render() {
+              renderCount++;
+              renderSnapshots.push({
+                variant: this.variant,
+                label: this.label,
+                value: this.value,
+              });
+              return null;
+            }
+          }
 
-  class MultiPropElement extends HTMLPropsMixin(HTMLElement, {
-    variant: prop<string>("default"),
-    label: prop<string>(""),
-    value: prop<number>(0),
-  }) {
-    render() {
-      renderCount++;
-      // Capture the state at each render call
-      renderSnapshots.push({
-        variant: this.variant,
-        label: this.label,
-        value: this.value,
+          customElements.define("multi-prop-element", MultiPropElement);
+
+          const el = new MultiPropElement({
+            variant: "initial",
+            label: "Initial Label",
+            value: 100,
+          });
+          document.body.appendChild(el);
+
+          // Reset counters after initial render
+          renderCount = 0;
+          renderSnapshots = [];
+
+          // Create a new element with updated props - this simulates morphNode scenario
+          const newEl = new MultiPropElement({
+            variant: "updated",
+            label: "Updated Label",
+            value: 200,
+          });
+
+          // Get the controller and apply custom props
+          const PROPS_CONTROLLER = Symbol.for("html-props:controller");
+          const controller = el[PROPS_CONTROLLER];
+          controller.applyCustomProps(newEl[PROPS_CONTROLLER].props);
+
+          (window as any).result = {
+            renderCount,
+            renderSnapshots,
+            variant: el.variant,
+            label: el.label,
+            value: el.value,
+          };
+        `,
       });
-      return null;
-    }
-  }
 
-  customElements.define("multi-prop-element", MultiPropElement);
+      const result = await ctx.page.evaluate(() => (window as any).result);
 
-  const el = new MultiPropElement({
-    variant: "initial",
-    label: "Initial Label",
-    value: 100,
-  });
-  document.body.appendChild(el);
-
-  // Reset counters after initial render
-  renderCount = 0;
-  renderSnapshots = [];
-
-  // Create a new element with updated props - this simulates morphNode scenario
-  const newEl = new MultiPropElement({
-    variant: "updated",
-    label: "Updated Label",
-    value: 200,
-  });
-
-  // Now apply custom props from new element to existing element
-  // This is what morphNode does internally
-  // deno-lint-ignore no-explicit-any
-  const controller = (el as any)[PROPS_CONTROLLER];
-  // deno-lint-ignore no-explicit-any
-  controller.applyCustomProps((newEl as any)[PROPS_CONTROLLER].props);
-
-  // BUG: Without batching, render() is called 3 times (once per prop)
-  // EXPECTED: render() should only be called ONCE after all props are set
-  console.log(`Render count after applyCustomProps: ${renderCount}`);
-  console.log("Render snapshots:", JSON.stringify(renderSnapshots, null, 2));
-
-  // This assertion will FAIL if the bug exists (renderCount will be > 1)
-  assertEquals(
-    renderCount,
-    1,
-    "render() should only be called once when multiple props are updated via applyCustomProps",
-  );
-
-  // Also verify the final state has all updated values
-  assertEquals(el.variant, "updated");
-  assertEquals(el.label, "Updated Label");
-  assertEquals(el.value, 200);
-
-  // Cleanup
-  document.body.removeChild(el);
-});
-
-Deno.test("BATCHING BUG: effects see partially updated state during applyCustomProps", () => {
-  let effectRunCount = 0;
-  let effectSnapshots: { a: number; b: number; c: number }[] = [];
-
-  class EffectTestElement extends HTMLPropsMixin(HTMLElement, {
-    a: prop<number>(0),
-    b: prop<number>(0),
-    c: prop<number>(0),
-  }) {
-    render() {
-      return null;
-    }
-  }
-
-  customElements.define("effect-test-element", EffectTestElement);
-
-  const el = new EffectTestElement({ a: 1, b: 2, c: 3 });
-  document.body.appendChild(el);
-
-  // Set up an effect that tracks all three props
-  effect(() => {
-    effectRunCount++;
-    effectSnapshots.push({
-      a: el.a,
-      b: el.b,
-      c: el.c,
+      assertEquals(
+        result.renderCount,
+        1,
+        'render() should only be called once when multiple props are updated via applyCustomProps',
+      );
+      assertEquals(result.variant, 'updated');
+      assertEquals(result.label, 'Updated Label');
+      assertEquals(result.value, 200);
     });
-  });
 
-  // Reset after initial effect run
-  effectRunCount = 0;
-  effectSnapshots = [];
+    await t.step('effects see complete state during applyCustomProps', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          let effectRunCount = 0;
+          let effectSnapshots = [];
 
-  // Apply new props
-  // deno-lint-ignore no-explicit-any
-  const controller = (el as any)[PROPS_CONTROLLER];
-  controller.applyCustomProps({ a: 10, b: 20, c: 30 });
+          class EffectTestElement extends HTMLPropsMixin(HTMLElement, {
+            a: prop(0),
+            b: prop(0),
+            c: prop(0),
+          }) {
+            render() {
+              return null;
+            }
+          }
 
-  console.log(`Effect run count: ${effectRunCount}`);
-  console.log("Effect snapshots:", JSON.stringify(effectSnapshots, null, 2));
+          customElements.define("effect-test-element", EffectTestElement);
 
-  // BUG: Without batching, the effect runs multiple times with partial state
-  // e.g., { a: 10, b: 2, c: 3 }, { a: 10, b: 20, c: 3 }, { a: 10, b: 20, c: 30 }
-  // EXPECTED: Effect should only run ONCE with final state { a: 10, b: 20, c: 30 }
-  assertEquals(
-    effectRunCount,
-    1,
-    "Effect should only run once when multiple props are updated",
-  );
+          const el = new EffectTestElement({ a: 1, b: 2, c: 3 });
+          document.body.appendChild(el);
 
-  // Verify the snapshot has the complete final state
-  if (effectSnapshots.length > 0) {
-    const lastSnapshot = effectSnapshots[effectSnapshots.length - 1];
-    assertEquals(
-      lastSnapshot,
-      { a: 10, b: 20, c: 30 },
-      "Effect should see complete updated state",
-    );
-  }
+          // Set up an effect that tracks all three props
+          effect(() => {
+            effectRunCount++;
+            effectSnapshots.push({
+              a: el.a,
+              b: el.b,
+              c: el.c,
+            });
+          });
 
-  // Cleanup
-  document.body.removeChild(el);
-});
+          // Reset after initial effect run
+          effectRunCount = 0;
+          effectSnapshots = [];
 
-Deno.test("BATCHING BUG: render sees inconsistent state when props are updated sequentially", () => {
-  // This test demonstrates that without batching, render() can be called
-  // with some props updated and others still having old values
-  let renderCount = 0;
-  const stateAtEachRender: { x: number; y: number }[] = [];
+          // Apply new props
+          const PROPS_CONTROLLER = Symbol.for("html-props:controller");
+          const controller = el[PROPS_CONTROLLER];
+          controller.applyCustomProps({ a: 10, b: 20, c: 30 });
 
-  class TwoPropsElement extends HTMLPropsMixin(HTMLElement, {
-    x: prop<number>(0),
-    y: prop<number>(0),
-  }) {
-    render() {
-      renderCount++;
-      stateAtEachRender.push({ x: this.x, y: this.y });
-      return null;
-    }
-  }
+          (window as any).result = {
+            effectRunCount,
+            effectSnapshots,
+          };
+        `,
+      });
 
-  customElements.define("two-props-element", TwoPropsElement);
+      const result = await ctx.page.evaluate(() => (window as any).result);
 
-  // Start with x=1, y=1
-  const el = new TwoPropsElement({ x: 1, y: 1 });
-  document.body.appendChild(el);
+      assertEquals(
+        result.effectRunCount,
+        1,
+        'Effect should only run once when multiple props are updated',
+      );
 
-  // Reset after initial render
-  renderCount = 0;
-  stateAtEachRender.length = 0;
+      if (result.effectSnapshots.length > 0) {
+        const lastSnapshot = result.effectSnapshots[result.effectSnapshots.length - 1];
+        assertEquals(
+          lastSnapshot,
+          { a: 10, b: 20, c: 30 },
+          'Effect should see complete updated state',
+        );
+      }
+    });
 
-  // Update both props to x=10, y=10
-  // deno-lint-ignore no-explicit-any
-  const controller = (el as any)[PROPS_CONTROLLER];
-  controller.applyCustomProps({ x: 10, y: 10 });
+    await t.step('render sees consistent state when props are updated', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          let renderCount = 0;
+          const stateAtEachRender = [];
 
-  console.log(`Render count: ${renderCount}`);
-  console.log("State at each render:", JSON.stringify(stateAtEachRender));
+          class TwoPropsElement extends HTMLPropsMixin(HTMLElement, {
+            x: prop(0),
+            y: prop(0),
+          }) {
+            render() {
+              renderCount++;
+              stateAtEachRender.push({ x: this.x, y: this.y });
+              return null;
+            }
+          }
 
-  // BUG: Without batching, we might see:
-  //   render #1: { x: 10, y: 1 }  <- INCONSISTENT! y is still old value
-  //   render #2: { x: 10, y: 10 } <- final state
-  // EXPECTED: Only one render with { x: 10, y: 10 }
+          customElements.define("two-props-element", TwoPropsElement);
 
-  assertEquals(renderCount, 1, "Should only render once");
+          const el = new TwoPropsElement({ x: 1, y: 1 });
+          document.body.appendChild(el);
 
-  // The single render should see both values updated
-  if (stateAtEachRender.length > 0) {
-    assertEquals(
-      stateAtEachRender[0],
-      { x: 10, y: 10 },
-      "Render should see both props updated, not partial state",
-    );
-  }
+          // Reset after initial render
+          renderCount = 0;
+          stateAtEachRender.length = 0;
 
-  // Cleanup
-  document.body.removeChild(el);
-});
+          // Update both props
+          const PROPS_CONTROLLER = Symbol.for("html-props:controller");
+          const controller = el[PROPS_CONTROLLER];
+          controller.applyCustomProps({ x: 10, y: 10 });
 
-Deno.test("BATCHING: verify batch() from signals package works correctly", () => {
-  // This test verifies that the batch() function from signals works as expected
-  // If this passes but the above tests fail, the fix is to use batch() in applyCustomProps
+          (window as any).result = {
+            renderCount,
+            stateAtEachRender,
+          };
+        `,
+      });
 
-  const a = signal(1);
-  const b = signal(2);
-  const c = signal(3);
+      const result = await ctx.page.evaluate(() => (window as any).result);
 
-  let effectRuns = 0;
-  let snapshots: { a: number; b: number; c: number }[] = [];
+      assertEquals(result.renderCount, 1, 'Should only render once');
 
-  const dispose = effect(() => {
-    effectRuns++;
-    snapshots.push({ a: a(), b: b(), c: c() });
-  });
+      if (result.stateAtEachRender.length > 0) {
+        assertEquals(
+          result.stateAtEachRender[0],
+          { x: 10, y: 10 },
+          'Render should see both props updated, not partial state',
+        );
+      }
+    });
 
-  // Reset after initial run
-  effectRuns = 0;
-  snapshots = [];
+    await t.step('batch() from signals package works correctly', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          const a = signal(1);
+          const b = signal(2);
+          const c = signal(3);
 
-  // Update with batching
-  batch(() => {
-    a.set(10);
-    b.set(20);
-    c.set(30);
-  });
+          let effectRuns = 0;
+          let snapshots = [];
 
-  assertEquals(effectRuns, 1, "Effect should only run once with batch()");
-  assertEquals(snapshots.length, 1, "Should only have one snapshot");
-  assertEquals(
-    snapshots[0],
-    { a: 10, b: 20, c: 30 },
-    "Snapshot should have all updated values",
-  );
+          effect(() => {
+            effectRuns++;
+            snapshots.push({ a: a(), b: b(), c: c() });
+          });
 
-  // Cleanup
-  dispose();
+          // Reset after initial run
+          effectRuns = 0;
+          snapshots = [];
+
+          // Update with batching
+          batch(() => {
+            a.set(10);
+            b.set(20);
+            c.set(30);
+          });
+
+          (window as any).result = {
+            effectRuns,
+            snapshots,
+          };
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => (window as any).result);
+
+      assertEquals(result.effectRuns, 1, 'Effect should only run once with batch()');
+      assertEquals(result.snapshots.length, 1, 'Should only have one snapshot');
+      assertEquals(
+        result.snapshots[0],
+        { a: 10, b: 20, c: 30 },
+        'Snapshot should have all updated values',
+      );
+    });
+
+    // Teardown
+    await teardownBrowser(ctx);
+  },
 });
