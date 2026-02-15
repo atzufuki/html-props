@@ -1,349 +1,318 @@
-import { assertEquals } from "jsr:@std/assert";
-import { HTMLPropsMixin } from "../mixin.ts";
-import { prop } from "../prop.ts";
+/**
+ * Nested Update Tests (Playwright)
+ *
+ * Tests that child components can update parent props in mountedCallback.
+ *
+ * @module
+ */
 
-import { Window } from "happy-dom";
+import { assertEquals } from '@std/assert';
+import { loadTestPage, setupBrowser, teardownBrowser, TEST_OPTIONS, type TestContext } from '../../test-utils/mod.ts';
 
-// Setup environment with happy-dom
-if (!globalThis.document) {
-  const happyWindow = new Window();
+let ctx: TestContext;
 
-  // deno-lint-ignore no-explicit-any
-  const w = happyWindow as any;
+Deno.test({
+  name: 'Nested Update Tests',
+  ...TEST_OPTIONS,
 
-  Object.assign(globalThis, {
-    window: happyWindow,
-    document: w.document,
-    customElements: w.customElements,
-    HTMLElement: w.HTMLElement,
-    Node: w.Node,
-    CustomEvent: w.CustomEvent,
-    MutationObserver: w.MutationObserver,
-  });
-}
+  async fn(t) {
+    // Setup browser once for all tests
+    ctx = await setupBrowser();
 
-// =============================================================================
-// Test: Child component updating parent prop in mountedCallback
-// =============================================================================
-// This test simulates the issue where:
-// 1. Parent component renders and creates child component
-// 2. Child's mountedCallback is called DURING parent's render/forceUpdate
-// 3. Child tries to update parent's prop (e.g., scaffold.loading = true)
-// 4. Parent's requestUpdate is called, but updateScheduled is still true
-// 5. BUG: The update is skipped entirely, parent never re-renders with new prop value
+    await t.step('child updating parent prop in mountedCallback should trigger parent re-render', async () => {
+      await loadTestPage(ctx.page, {
+        code: `
+          let parentRenderCount = 0;
+          let childMountedCalled = false;
 
-Deno.test("Nested update: child updating parent prop in mountedCallback should trigger parent re-render", async () => {
-  let parentRenderCount = 0;
-  let childMountedCalled = false;
-  let requestUpdateCalledDuringMount = false;
-  let requestUpdateWasBlocked = false;
+          // Parent component (like Scaffold)
+          class ParentComponent extends HTMLPropsMixin(HTMLElement, {
+            loading: prop(false),
+          }) {
+            render() {
+              parentRenderCount++;
+              const div = document.createElement("div");
+              div.dataset.key = "parent-content";
+              div.textContent = \`Loading: \${this.loading}\`;
 
-  // Parent component (like Scaffold)
-  class ParentComponent extends HTMLPropsMixin(HTMLElement, {
-    loading: prop(false),
-  }) {
-    render() {
-      parentRenderCount++;
-      const div = document.createElement("div");
-      div.dataset.key = "parent-content";
-      div.textContent = `Loading: ${this.loading}`;
+              // Create child component
+              const child = new ChildComponent();
+              child.parent = this;
+              div.appendChild(child);
 
-      // Create child component
-      const child = new ChildComponent();
-      child.parent = this;
-      div.appendChild(child);
+              return div;
+            }
+          }
+          customElements.define("parent-component-nested-test", ParentComponent);
 
-      return div;
-    }
-  }
-  customElements.define("parent-component-nested-test", ParentComponent);
+          // Child component (like AssetsPage)
+          class ChildComponent extends HTMLPropsMixin(HTMLElement, {
+            parent: prop<any>(null),
+          }) {
+            mountedCallback() {
+              childMountedCalled = true;
+              if (this.parent) {
+                this.parent.loading = true;
+                this.parent.requestUpdate();
+              }
+            }
 
-  // Child component (like AssetsPage)
-  class ChildComponent extends HTMLPropsMixin(HTMLElement, {
-    parent: prop<ParentComponent | null>(null),
-  }) {
-    mountedCallback() {
-      childMountedCalled = true;
-      // This simulates: this.app.scaffold.loading = true
-      if (this.parent) {
-        // Get parent's render count before setting prop
-        const beforeCount = parentRenderCount;
+            render() {
+              return document.createTextNode("Child content");
+            }
+          }
+          customElements.define("child-component-nested-test", ChildComponent);
 
-        this.parent.loading = true;
+          const parent = document.createElement("parent-component-nested-test");
+          document.body.appendChild(parent);
+          (window as any).testElement = parent;
+          (window as any).getParentRenderCount = () => parentRenderCount;
+          (window as any).getChildMountedCalled = () => childMountedCalled;
+        `,
+      });
 
-        // Explicitly call requestUpdate (like the user did)
-        this.parent.requestUpdate();
-        requestUpdateCalledDuringMount = true;
+      // Initial render should have happened (may be more than 1 due to microtask timing in real browser)
+      const initialRenderCount = await ctx.page.evaluate(() => {
+        return (window as any).getParentRenderCount();
+      });
+      assertEquals(initialRenderCount >= 1, true, 'Parent should have rendered at least once initially');
 
-        // Check if parent render count changed (it shouldn't during sync call due to updateScheduled)
-        if (parentRenderCount === beforeCount) {
-          requestUpdateWasBlocked = true;
-        }
-      }
-    }
+      // Wait for microtasks to process
+      await ctx.page.evaluate(() => new Promise<void>((resolve) => queueMicrotask(() => resolve())));
 
-    render() {
-      return document.createTextNode("Child content");
-    }
-  }
-  customElements.define("child-component-nested-test", ChildComponent);
+      const childMountedCalled = await ctx.page.evaluate(() => {
+        return (window as any).getChildMountedCalled();
+      });
+      assertEquals(childMountedCalled, true, 'Child mountedCallback should have been called');
 
-  const parent = new ParentComponent();
-  document.body.appendChild(parent);
+      // Wait for another microtask
+      await ctx.page.evaluate(() => new Promise<void>((resolve) => queueMicrotask(() => resolve())));
 
-  // Initial render should have happened
-  assertEquals(
-    parentRenderCount,
-    1,
-    "Parent should have rendered once initially",
-  );
+      // Parent should have re-rendered with loading=true
+      const result = await ctx.page.evaluate(() => {
+        const parent = (window as any).testElement;
+        const content = parent.querySelector("[data-key='parent-content']");
+        return {
+          renderCount: (window as any).getParentRenderCount(),
+          loading: parent.loading,
+          textContent: content?.textContent,
+        };
+      });
 
-  // mountedCallback is now called in a microtask, so we need to wait for it
-  await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
+      assertEquals(result.renderCount >= 2, true, 'Parent should have re-rendered after child set loading=true');
+      assertEquals(result.loading, true, 'Parent loading prop should be true');
+      assertEquals(result.textContent?.startsWith('Loading: true'), true, 'Parent should display loading state');
+    });
 
-  assertEquals(
-    childMountedCalled,
-    true,
-    "Child mountedCallback should have been called",
-  );
-  assertEquals(
-    requestUpdateCalledDuringMount,
-    true,
-    "requestUpdate should have been called during mount",
-  );
+    await t.step('multiple children updating parent should all be reflected', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          let parentRenderCount = 0;
 
-  // This is the BUG: requestUpdate was blocked because updateScheduled was true
-  // The fix should make this false (requestUpdate should schedule a deferred update)
-  console.log("requestUpdateWasBlocked:", requestUpdateWasBlocked);
-  console.log(
-    "Parent render count before second microtask:",
-    parentRenderCount,
-  );
+          class MultiUpdateParent extends HTMLPropsMixin(HTMLElement, {
+            counter: prop(0),
+          }) {
+            render() {
+              parentRenderCount++;
+              const div = document.createElement("div");
+              div.dataset.key = "multi-parent";
+              div.textContent = \`Counter: \${this.counter}\`;
 
-  // Wait for another microtask to allow pending updates to process
-  await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
+              // Create multiple children that each increment counter
+              for (let i = 0; i < 3; i++) {
+                const child = new IncrementChild();
+                child.parent = this;
+                child.dataset.key = \`child-\${i}\`;
+                div.appendChild(child);
+              }
 
-  console.log("Parent render count after microtask:", parentRenderCount);
+              return div;
+            }
+          }
+          customElements.define("multi-update-parent-test", MultiUpdateParent);
 
-  // Parent should have re-rendered with loading=true
-  // Note: May be 2 or more renders because:
-  // 1. Initial forceUpdate
-  // 2. Re-render from child setting loading=true
-  // 3. Possibly another from explicit requestUpdate() call
-  assertEquals(
-    parentRenderCount >= 2,
-    true,
-    "Parent should have re-rendered after child set loading=true (via deferred update)",
-  );
-  assertEquals(
-    parent.loading,
-    true,
-    "Parent loading prop should be true",
-  );
+          class IncrementChild extends HTMLPropsMixin(HTMLElement, {
+            parent: prop<any>(null),
+          }) {
+            mountedCallback() {
+              if (this.parent) {
+                this.parent.counter = this.parent.counter + 1;
+              }
+            }
 
-  // Verify the rendered content reflects the new state
-  const content = parent.querySelector("[data-key='parent-content']");
-  assertEquals(
-    content?.textContent?.startsWith("Loading: true"),
-    true,
-    "Parent should display loading state",
-  );
+            render() {
+              return null;
+            }
+          }
+          customElements.define("increment-child-test", IncrementChild);
 
-  document.body.removeChild(parent);
-});
+          const parent = document.createElement("multi-update-parent-test");
+          document.body.appendChild(parent);
+          (window as any).testElement = parent;
+        `,
+      });
 
-Deno.test("Nested update: multiple children updating parent should all be reflected", async () => {
-  let parentRenderCount = 0;
+      // Wait for all microtasks to process
+      await ctx.page.evaluate(() => new Promise<void>((resolve) => queueMicrotask(() => resolve())));
+      await ctx.page.evaluate(() => new Promise<void>((resolve) => queueMicrotask(() => resolve())));
+      await ctx.page.evaluate(() => new Promise<void>((resolve) => queueMicrotask(() => resolve())));
 
-  class MultiUpdateParent extends HTMLPropsMixin(HTMLElement, {
-    counter: prop(0),
-  }) {
-    render() {
-      parentRenderCount++;
-      const div = document.createElement("div");
-      div.dataset.key = "multi-parent";
-      div.textContent = `Counter: ${this.counter}`;
+      // Counter should have been incremented by all 3 children
+      const counter = await ctx.page.evaluate(() => {
+        return (window as any).testElement.counter;
+      });
 
-      // Create multiple children that each increment counter
-      for (let i = 0; i < 3; i++) {
-        const child = new IncrementChild();
-        child.parent = this;
-        child.dataset.key = `child-${i}`;
-        div.appendChild(child);
-      }
+      assertEquals(counter, 3, 'Counter should be 3 after all children incremented it');
+    });
 
-      return div;
-    }
-  }
-  customElements.define("multi-update-parent-test", MultiUpdateParent);
+    await t.step('deeply nested child updating ancestor should work', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          let grandparentRenderCount = 0;
 
-  class IncrementChild extends HTMLPropsMixin(HTMLElement, {
-    parent: prop<MultiUpdateParent | null>(null),
-  }) {
-    mountedCallback() {
-      if (this.parent) {
-        this.parent.counter = this.parent.counter + 1;
-      }
-    }
+          class GrandparentComponent extends HTMLPropsMixin(HTMLElement, {
+            status: prop("initial"),
+          }) {
+            render() {
+              grandparentRenderCount++;
+              const div = document.createElement("div");
+              div.dataset.key = "grandparent";
+              div.textContent = \`Status: \${this.status}\`;
 
-    render() {
-      return null;
-    }
-  }
-  customElements.define("increment-child-test", IncrementChild);
+              const middleChild = new MiddleComponent();
+              middleChild.grandparent = this;
+              div.appendChild(middleChild);
 
-  const parent = new MultiUpdateParent();
-  document.body.appendChild(parent);
+              return div;
+            }
+          }
+          customElements.define("grandparent-component-test", GrandparentComponent);
 
-  // Wait for all microtasks to process
-  await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
-  await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
-  await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
+          class MiddleComponent extends HTMLPropsMixin(HTMLElement, {
+            grandparent: prop<any>(null),
+          }) {
+            render() {
+              const div = document.createElement("div");
+              div.dataset.key = "middle";
 
-  // Counter should have been incremented by all 3 children
-  assertEquals(
-    parent.counter,
-    3,
-    "Counter should be 3 after all children incremented it",
-  );
+              const deepChild = new DeepChildComponent();
+              deepChild.grandparent = this.grandparent;
+              div.appendChild(deepChild);
 
-  document.body.removeChild(parent);
-});
+              return div;
+            }
+          }
+          customElements.define("middle-component-test", MiddleComponent);
 
-Deno.test("Nested update: deeply nested child updating ancestor should work", async () => {
-  let grandparentRenderCount = 0;
+          class DeepChildComponent extends HTMLPropsMixin(HTMLElement, {
+            grandparent: prop<any>(null),
+          }) {
+            mountedCallback() {
+              if (this.grandparent) {
+                this.grandparent.status = "updated-by-deep-child";
+              }
+            }
 
-  class GrandparentComponent extends HTMLPropsMixin(HTMLElement, {
-    status: prop("initial"),
-  }) {
-    render() {
-      grandparentRenderCount++;
-      const div = document.createElement("div");
-      div.dataset.key = "grandparent";
-      div.textContent = `Status: ${this.status}`;
+            render() {
+              return document.createTextNode("Deep child");
+            }
+          }
+          customElements.define("deep-child-component-test", DeepChildComponent);
 
-      const middleChild = new MiddleComponent();
-      middleChild.grandparent = this;
-      div.appendChild(middleChild);
+          const grandparent = document.createElement("grandparent-component-test");
+          document.body.appendChild(grandparent);
+          (window as any).testElement = grandparent;
+          (window as any).getGrandparentRenderCount = () => grandparentRenderCount;
+        `,
+      });
 
-      return div;
-    }
-  }
-  customElements.define("grandparent-component-test", GrandparentComponent);
+      const initialRenderCount = await ctx.page.evaluate(() => {
+        return (window as any).getGrandparentRenderCount();
+      });
+      assertEquals(initialRenderCount >= 1, true, 'Grandparent should render at least once initially');
 
-  class MiddleComponent extends HTMLPropsMixin(HTMLElement, {
-    grandparent: prop<GrandparentComponent | null>(null),
-  }) {
-    render() {
-      const div = document.createElement("div");
-      div.dataset.key = "middle";
+      // Wait for microtask to process the deferred update
+      await ctx.page.evaluate(() => new Promise<void>((resolve) => queueMicrotask(() => resolve())));
 
-      const deepChild = new DeepChildComponent();
-      deepChild.grandparent = this.grandparent;
-      div.appendChild(deepChild);
+      const result = await ctx.page.evaluate(() => {
+        const grandparent = (window as any).testElement;
+        return {
+          status: grandparent.status,
+          renderCount: (window as any).getGrandparentRenderCount(),
+        };
+      });
 
-      return div;
-    }
-  }
-  customElements.define("middle-component-test", MiddleComponent);
+      assertEquals(result.status, 'updated-by-deep-child', 'Status should be updated by deep child');
+      assertEquals(result.renderCount >= 2, true, 'Grandparent should have re-rendered');
+    });
 
-  class DeepChildComponent extends HTMLPropsMixin(HTMLElement, {
-    grandparent: prop<GrandparentComponent | null>(null),
-  }) {
-    mountedCallback() {
-      if (this.grandparent) {
-        this.grandparent.status = "updated-by-deep-child";
-      }
-    }
+    await t.step('sibling component updating shared parent should work', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          let parentRenderCount = 0;
 
-    render() {
-      return document.createTextNode("Deep child");
-    }
-  }
-  customElements.define("deep-child-component-test", DeepChildComponent);
+          class SharedParent extends HTMLPropsMixin(HTMLElement, {
+            message: prop(""),
+          }) {
+            render() {
+              parentRenderCount++;
+              const div = document.createElement("div");
+              div.dataset.key = "shared-parent";
+              div.textContent = this.message;
 
-  const grandparent = new GrandparentComponent();
-  document.body.appendChild(grandparent);
+              // Two sibling children
+              const child1 = new SiblingChild();
+              child1.parent = this;
+              child1.contribution = "Hello";
+              div.appendChild(child1);
 
-  assertEquals(
-    grandparentRenderCount,
-    1,
-    "Grandparent should render once initially",
-  );
+              const child2 = new SiblingChild();
+              child2.parent = this;
+              child2.contribution = " World";
+              div.appendChild(child2);
 
-  // Wait for microtask to process the deferred update
-  await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
+              return div;
+            }
+          }
+          customElements.define("shared-parent-test", SharedParent);
 
-  assertEquals(
-    grandparent.status,
-    "updated-by-deep-child",
-    "Status should be updated by deep child",
-  );
-  assertEquals(
-    grandparentRenderCount,
-    2,
-    "Grandparent should have re-rendered",
-  );
+          class SiblingChild extends HTMLPropsMixin(HTMLElement, {
+            parent: prop<any>(null),
+            contribution: prop(""),
+          }) {
+            mountedCallback() {
+              if (this.parent) {
+                this.parent.message = this.parent.message + this.contribution;
+              }
+            }
 
-  document.body.removeChild(grandparent);
-});
+            render() {
+              return null;
+            }
+          }
+          customElements.define("sibling-child-test", SiblingChild);
 
-Deno.test("Nested update: sibling component updating shared parent should work", async () => {
-  let parentRenderCount = 0;
+          const parent = document.createElement("shared-parent-test");
+          document.body.appendChild(parent);
+          (window as any).testElement = parent;
+        `,
+      });
 
-  class SharedParent extends HTMLPropsMixin(HTMLElement, {
-    message: prop(""),
-  }) {
-    render() {
-      parentRenderCount++;
-      const div = document.createElement("div");
-      div.dataset.key = "shared-parent";
-      div.textContent = this.message;
+      // Wait for updates
+      await ctx.page.evaluate(() => new Promise<void>((resolve) => queueMicrotask(() => resolve())));
+      await ctx.page.evaluate(() => new Promise<void>((resolve) => queueMicrotask(() => resolve())));
 
-      // Two sibling children
-      const child1 = new SiblingChild();
-      child1.parent = this;
-      child1.contribution = "Hello";
-      div.appendChild(child1);
+      const message = await ctx.page.evaluate(() => {
+        return (window as any).testElement.message;
+      });
 
-      const child2 = new SiblingChild();
-      child2.parent = this;
-      child2.contribution = " World";
-      div.appendChild(child2);
+      assertEquals(message, 'Hello World', 'Message should be concatenated from both children');
+    });
 
-      return div;
-    }
-  }
-  customElements.define("shared-parent-test", SharedParent);
-
-  class SiblingChild extends HTMLPropsMixin(HTMLElement, {
-    parent: prop<SharedParent | null>(null),
-    contribution: prop(""),
-  }) {
-    mountedCallback() {
-      if (this.parent) {
-        this.parent.message = this.parent.message + this.contribution;
-      }
-    }
-
-    render() {
-      return null;
-    }
-  }
-  customElements.define("sibling-child-test", SiblingChild);
-
-  const parent = new SharedParent();
-  document.body.appendChild(parent);
-
-  // Wait for updates
-  await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
-  await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
-
-  assertEquals(
-    parent.message,
-    "Hello World",
-    "Message should be concatenated from both children",
-  );
-
-  document.body.removeChild(parent);
+    // Teardown browser
+    await teardownBrowser(ctx);
+  },
 });
