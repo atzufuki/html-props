@@ -37,6 +37,12 @@ new MyElement({ text: 'Hello', count: 5, onclick: () => {} })
 ```
 Constructor accepts props object; applies style, class, content, refs, event listeners.
 
+**DOM Reconciliation**: Components use a custom reconciliation algorithm for efficient updates.
+- Compares previous and new render output, applies only necessary changes.
+- Preserves focus, scroll position, and animation state.
+- Uses `dataset.key` for stable element identity in lists.
+- `forceUpdate()` bypasses reconciliation for full re-render when needed.
+
 ## Critical Developer Workflows
 
 ### Testing
@@ -83,7 +89,7 @@ MyElement.define('my-element');
 ```
 
 - `render()` returns `Node | Node[] | null`. Called whenever props change.
-- Optional: `onMount()` and `onUnmount()` lifecycle hooks.
+- Optional: `mountedCallback()` and `unmountedCallback()` lifecycle hooks.
 - Props are inferred from the config object passed to the mixin.
 
 ### Props Configuration
@@ -134,9 +140,44 @@ render() {
 }
 ```
 
+### List Rendering with Keys
+
+**Always use `dataset.key` for list items** to help the reconciler match DOM nodes correctly:
+
+```typescript
+render() {
+  return new Ul({
+    content: this.items.map(item =>
+      new Li({
+        dataset: { key: `item-${item.id}` },  // Required for lists!
+        textContent: item.name,
+      })
+    ),
+  });
+}
+```
+
+**Key requirements:**
+- Keys must be **unique** within the list
+- Keys must be **stable** - use item IDs, not array indices
+- Keys should be **strings** - prefix with context (e.g., `item-`, `user-`)
+
+Without `dataset.key`, the reconciler may reuse DOM elements incorrectly when items are added, removed, or reordered.
+
+### Update Methods
+
+| Method | Behavior |
+|--------|----------|
+| `requestUpdate()` | Schedules an update (calls `update()` or `defaultUpdate()`) |
+| `defaultUpdate()` | Uses reconciliation algorithm (DOM diffing) |
+| `forceUpdate()` | Bypasses reconciliation, replaces all children |
+
+Use `forceUpdate()` when you need a clean slate (e.g., resetting third-party widgets).
+
 ## Key Files & Locations
 
 - **Core mixin implementation**: `src/core/mixin.ts` - Props initialization, lifecycle, rendering logic.
+- **Reconciliation algorithm**: `src/core/controller.ts` - DOM diffing, key matching, morphing.
 - **Signal implementation**: `src/signals/mod.ts` - Reactive primitives (subscribe/notify pattern).
 - **Type definitions**: `src/core/types.ts` - PropsConfig, PropType, HTMLPropsInterface.
 - **Test templates**: `src/core/tests/mod.test.ts`, `src/signals/tests/mod.test.ts` - DOM mocking patterns.
@@ -160,11 +201,12 @@ render() {
 
 ## Common Pitfalls
 
-1. **Prop reflection**: kebab-case in HTML, camelCase in JS. Use `attr` config if custom mapping needed.
-2. **Signal scope**: Effects run synchronously on signal change; batch updates in effects with `.update()` to avoid cascades.
-3. **Mixin inheritance**: If extending a component that already uses mixins, mixins auto-compose (don't re-apply).
-4. **Render return**: Must return Node/Node[]/null, not strings. Use `document.createTextNode()` for text.
-5. **Tests**: Mock DOM elements (see `src/core/tests/setup.ts`); tests don't run in real browser.
+1. **Missing keys in lists**: Always use `dataset.key` for list items, or reconciler may reuse elements incorrectly.
+2. **Prop reflection**: kebab-case in HTML, camelCase in JS. Use `attr` config if custom mapping needed.
+3. **Signal scope**: Effects run synchronously on signal change; batch updates in effects with `.update()` to avoid cascades.
+4. **Mixin inheritance**: If extending a component that already uses mixins, mixins auto-compose (don't re-apply).
+5. **Render return**: Must return Node/Node[]/null, not strings. Use `document.createTextNode()` for text.
+6. **Tests**: Tests run in Playwright (real Chromium), not mocked DOM.
 
 ## Publishing & Versions
 

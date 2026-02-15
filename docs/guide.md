@@ -163,12 +163,35 @@ class Timer extends HTMLPropsMixin(HTMLElement) {
 
 ## Custom Rendering
 
-By default, components re-render their entire content when properties change. You can optimize this by implementing a
-custom update strategy.
+By default, components use a **reconciliation algorithm** to efficiently update the DOM when properties change. Instead
+of replacing all children, HTML Props compares the previous and new render output and applies only the necessary
+changes. This preserves focus, scroll position, and animation state.
+
+For lists of items, use `dataset.key` to help the reconciler identify elements:
+
+```typescript
+render() {
+  return new Ul({
+    content: this.items.map(item =>
+      new Li({
+        dataset: { key: `item-${item.id}` },  // Stable key
+        textContent: item.name,
+      })
+    ),
+  });
+}
+```
+
+See the [Reconciliation Guide](reconciliation.md) for details on how matching works and when to use keys.
+
+### Controlling Updates
+
+You can customize how updates are applied by implementing an `update()` method or using `forceUpdate()`.
 
 ### The update() Method
 
-Define an `update()` method to take control of subsequent renders. The initial render is always handled automatically.
+Define an `update()` method to take full control of subsequent renders. The initial render is always handled
+automatically. When defined, this method is called instead of the default reconciliation.
 
 ```typescript
 import { HTMLPropsMixin, prop } from '@html-props/core';
@@ -193,19 +216,32 @@ class MyElement extends HTMLPropsMixin(HTMLElement, {
 }
 ```
 
-### Fallback to Default
+### Fallback to Reconciliation
 
-You can call `this.defaultUpdate()` to fall back to the default behavior (replacing all children) if needed.
+You can call `this.defaultUpdate()` to fall back to the default reconciliation behavior:
 
 ```typescript
 update() {
-  if (this.shouldOptimize) {
-    // Custom logic
-    const newContent = this.render();
-    this.applyOptimization(newContent);
+  if (this.needsCustomLogic) {
+    // Custom DOM manipulation
+    this.updateSpecificParts();
   } else {
-    // Fallback
+    // Use reconciliation (default)
     this.defaultUpdate();
+  }
+}
+```
+
+### Force Full Re-render
+
+If you need to bypass reconciliation entirely and replace all children (e.g., to reset third-party widgets or trigger
+CSS animations), use `forceUpdate()`:
+
+```typescript
+class MyComponent extends HTMLPropsMixin(HTMLElement) {
+  resetContent() {
+    // Bypasses reconciliation, replaces all children
+    this.forceUpdate();
   }
 }
 ```
