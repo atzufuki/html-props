@@ -259,6 +259,9 @@ window.dispatchEvent(new CustomEvent("test-ready"));
 </html>
   `.trim();
 
+  // Navigate to about:blank first to reset the page state (including customElements registry)
+  // This is necessary because page.setContent() doesn't fully reset the page
+  await page.goto('about:blank');
   await page.setContent(html, { waitUntil: 'domcontentloaded' });
 
   // Wait for modules to load and components to be defined
