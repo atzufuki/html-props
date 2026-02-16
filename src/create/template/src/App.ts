@@ -2,7 +2,6 @@ import { HTMLPropsMixin, prop } from '@html-props/core';
 import { Anchor, Button, Code, Heading1, Image, Paragraph } from '@html-props/built-ins';
 import { Column, Row } from '@html-props/layout';
 
-// Using prop() for reactive state - reconciliation handles efficient DOM updates
 export default class App extends HTMLPropsMixin(HTMLElement, {
   count: prop(0),
 }) {
