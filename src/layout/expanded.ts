@@ -9,10 +9,10 @@ import {
 
 const config: {
   flex: Prop<number>;
-  style: { minWidth: string; minHeight: string };
+  style: { display: string; minWidth: string; minHeight: string };
 } = {
   flex: prop(1),
-  style: { minWidth: '0', minHeight: '0' },
+  style: { display: 'flex', minWidth: '0', minHeight: '0' },
 };
 
 const ExpandedBase:
