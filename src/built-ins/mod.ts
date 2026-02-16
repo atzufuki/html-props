@@ -2,6 +2,15 @@ import { type HTMLPropsElementConstructor, HTMLPropsMixin } from '@html-props/co
 
 type BuiltIn<T extends new (...args: any[]) => any> = HTMLPropsElementConstructor<T, {}> & Pick<T, keyof T>;
 
+// Document Metadata (Shadow DOM relevant)
+export const Style: BuiltIn<typeof HTMLStyleElement> = HTMLPropsMixin(HTMLStyleElement).define('html-style', {
+  extends: 'style',
+});
+export const Link: BuiltIn<typeof HTMLLinkElement> = HTMLPropsMixin(HTMLLinkElement).define('html-link', {
+  extends: 'link',
+});
+
+// Sections
 export const Div: BuiltIn<typeof HTMLDivElement> = HTMLPropsMixin(HTMLDivElement).define('html-div', {
   extends: 'div',
 });
@@ -122,6 +131,8 @@ export const Italic: BuiltIn<typeof HTMLElement> = HTMLPropsMixin(HTMLElement).d
 export const Bold: BuiltIn<typeof HTMLElement> = HTMLPropsMixin(HTMLElement).define('html-b', { extends: 'b' });
 export const Underline: BuiltIn<typeof HTMLElement> = HTMLPropsMixin(HTMLElement).define('html-u', { extends: 'u' });
 export const Mark: BuiltIn<typeof HTMLElement> = HTMLPropsMixin(HTMLElement).define('html-mark', { extends: 'mark' });
+export const Abbr: BuiltIn<typeof HTMLElement> = HTMLPropsMixin(HTMLElement).define('html-abbr', { extends: 'abbr' });
+export const Dfn: BuiltIn<typeof HTMLElement> = HTMLPropsMixin(HTMLElement).define('html-dfn', { extends: 'dfn' });
 export const Ruby: BuiltIn<typeof HTMLElement> = HTMLPropsMixin(HTMLElement).define('html-ruby', { extends: 'ruby' });
 export const RubyText: BuiltIn<typeof HTMLElement> = HTMLPropsMixin(HTMLElement).define('html-rt', { extends: 'rt' });
 export const RubyParenthesis: BuiltIn<typeof HTMLElement> = HTMLPropsMixin(HTMLElement).define('html-rp', {
