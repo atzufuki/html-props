@@ -136,7 +136,7 @@ class CounterApp extends HTMLPropsMixin(HTMLElement, {
         crossAxisAlignment: 'center',
         gap: '1rem',
         content: [
-          new Div({ 
+          new Div({
             textContent: \`Count is: \${this.count}\`,
             style: { fontSize: '1.2rem' }
           }),

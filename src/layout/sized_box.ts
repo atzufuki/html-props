@@ -6,7 +6,6 @@ import {
   type Prop,
   prop,
 } from '@html-props/core';
-import { effect } from '@html-props/signals';
 
 const config: {
   width: Prop<string>;
@@ -27,28 +26,12 @@ const SizedBoxBase:
   & Pick<typeof HTMLElement, keyof typeof HTMLElement> = HTMLPropsMixin(HTMLElement, config);
 
 export class SizedBox extends SizedBoxBase {
-  private _dispose: (() => void) | null = null;
+  render() {
+    const w = this.width;
+    const h = this.height;
 
-  connectedCallback() {
-    super.connectedCallback();
-    this._dispose = effect(() => {
-      const w = this.width;
-      const h = this.height;
-
-      if (w) this.style.width = w;
-      if (h) this.style.height = h;
-
-      // If both are empty, it's just a 0x0 box?
-      // Flutter SizedBox can be used as a spacer.
-    });
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    if (this._dispose) {
-      this._dispose();
-      this._dispose = null;
-    }
+    if (w) this.style.width = w;
+    if (h) this.style.height = h;
   }
 }
 SizedBox.define('layout-sized-box');

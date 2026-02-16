@@ -13,7 +13,7 @@ A reactive props & state layer for native Custom Elements powered by signals.
 ## Usage
 
 ```typescript
-import { HTMLPropsMixin, prop } from '@html-props/core';
+import { HTMLPropsMixin, prop } from "@html-props/core";
 
 class MyElement extends HTMLPropsMixin(HTMLElement, {
   count: prop(0, { attribute: true }),
@@ -23,13 +23,14 @@ class MyElement extends HTMLPropsMixin(HTMLElement, {
   }
 }
 
-customElements.define('my-element', MyElement);
+customElements.define("my-element", MyElement);
 ```
 
 ## Custom Rendering
 
-By default, the mixin re-renders the entire component content when props change. You can override this behavior for
-fine-grained updates using the `update()` method.
+By default, the mixin re-renders the entire component content when props change.
+You can override this behavior for fine-grained updates using the `update()`
+method.
 
 ```typescript
 class MyElement extends HTMLPropsMixin(HTMLElement, {
@@ -56,7 +57,8 @@ class MyElement extends HTMLPropsMixin(HTMLElement, {
 
 ### Manual Updates
 
-If you need to trigger a re-render manually (e.g., when external state changes), you can call `requestUpdate()`.
+If you need to trigger a re-render manually (e.g., when external state changes),
+you can call `requestUpdate()`.
 
 ```typescript
 // Trigger a re-render

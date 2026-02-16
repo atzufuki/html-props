@@ -11,6 +11,7 @@ providing:
 
 - **Type-Safe Props**: Create components which can take in objects, arrays, functions and even elements as props.
 - **Declarative Layouts**: Build your UI with a clean, nested, and fully typed API. No more imperative spaghetti.
+- **Efficient Reconciliation**: Smart DOM diffing preserves focus, scroll position, and animations during updates.
 - **Native Standards**: Relies on Custom Element standards. No opinionated patterns or paradigms.
 - **Zero Dependencies**: No framework lock-in. Just a simple mixin for your native HTMLElement classes.
 
@@ -168,6 +169,7 @@ deno task dev
 For full documentation, visit [html-props.dev](https://html-props.dev) or check the guides below:
 
 - [**Guide**](docs/guide.md): Core concepts, properties, lifecycle, and rendering.
+- [**Reconciliation**](docs/reconciliation.md): How DOM updates work and using keys for lists.
 - [**Signals**](docs/signals.md): Fine-grained reactivity system.
 - [**Layout System**](docs/layout.md): Flutter-inspired layout components.
 - [**Built-in Elements**](docs/built-ins.md): Type-safe HTML element wrappers.

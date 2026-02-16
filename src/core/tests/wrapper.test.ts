@@ -1,225 +1,238 @@
-import { assert, assertEquals } from 'jsr:@std/assert';
-import { HTMLPropsMixin } from '../mixin.ts';
-import { parseHTML } from 'linkedom';
+/**
+ * Wrapper Tests (Playwright)
+ *
+ * Tests for HTMLPropsMixin wrapping various element types.
+ *
+ * @module
+ */
 
-if (!globalThis.document) {
-  const {
-    window,
-    document,
-    customElements,
-    HTMLElement,
-    HTMLDivElement,
-    HTMLSpanElement,
-    HTMLButtonElement,
-    HTMLParagraphElement,
-    HTMLAnchorElement,
-    HTMLImageElement,
-    HTMLInputElement,
-    HTMLLabelElement,
-    HTMLHeadingElement,
-    HTMLUListElement,
-    HTMLOListElement,
-    HTMLLIElement,
-    HTMLTableElement,
-    HTMLTableSectionElement,
-    HTMLTableRowElement,
-    HTMLTableCellElement,
-    HTMLFormElement,
-    HTMLSelectElement,
-    HTMLOptionElement,
-    HTMLPreElement,
-    Node,
-    CustomEvent,
-    Event,
-    MutationObserver,
-  } = parseHTML('<!DOCTYPE html><html><body></body></html>');
+import { assert, assertEquals } from '@std/assert';
+import { loadTestPage, setupBrowser, teardownBrowser, TEST_OPTIONS, type TestContext } from '../../test-utils/mod.ts';
 
-  const HTMLTableSectionElementPolyfill = HTMLTableSectionElement ||
-    class HTMLTableSectionElement extends HTMLElement {};
+let ctx: TestContext;
 
-  // Polyfill missing elements
-  const missingElements = [
-    'HTMLHRElement',
-    'HTMLQuoteElement',
-    'HTMLDListElement',
-    'HTMLDataElement',
-    'HTMLTimeElement',
-    'HTMLBRElement',
-    'HTMLAudioElement',
-    'HTMLVideoElement',
-    'HTMLSourceElement',
-    'HTMLTrackElement',
-    'HTMLMapElement',
-    'HTMLAreaElement',
-    'HTMLIFrameElement',
-    'HTMLEmbedElement',
-    'HTMLObjectElement',
-    'HTMLParamElement',
-    'HTMLPictureElement',
-    'HTMLCanvasElement',
-    'HTMLScriptElement',
-    'HTMLModElement',
-    'HTMLTableCaptionElement',
-    'HTMLTableColElement',
-    'HTMLDataListElement',
-    'HTMLFieldSetElement',
-    'HTMLLegendElement',
-    'HTMLMeterElement',
-    'HTMLOptGroupElement',
-    'HTMLOutputElement',
-    'HTMLProgressElement',
-    'HTMLTextAreaElement',
-    'HTMLDetailsElement',
-    'HTMLDialogElement',
-    'HTMLMenuElement',
-    'HTMLSlotElement',
-    'HTMLTemplateElement',
-  ];
+Deno.test({
+  name: 'Wrapper Tests',
+  ...TEST_OPTIONS,
 
-  const polyfills: Record<string, any> = {};
-  missingElements.forEach((name) => {
-    if (!(window as any)[name]) {
-      polyfills[name] = class extends HTMLElement {};
-    } else {
-      polyfills[name] = (window as any)[name];
-    }
-  });
+  async fn(t) {
+    // Setup browser once for all tests
+    ctx = await setupBrowser();
 
-  Object.assign(globalThis, {
-    window,
-    document,
-    customElements,
-    HTMLElement,
-    HTMLDivElement,
-    HTMLSpanElement,
-    HTMLButtonElement,
-    HTMLParagraphElement,
-    HTMLAnchorElement,
-    HTMLImageElement,
-    HTMLInputElement,
-    HTMLLabelElement,
-    HTMLHeadingElement,
-    HTMLUListElement,
-    HTMLOListElement,
-    HTMLLIElement,
-    HTMLTableElement,
-    HTMLTableSectionElement: HTMLTableSectionElementPolyfill,
-    HTMLTableRowElement,
-    HTMLTableCellElement,
-    HTMLFormElement,
-    HTMLSelectElement,
-    HTMLOptionElement,
-    HTMLPreElement,
-    Node,
-    CustomEvent,
-    MutationObserver,
-    ...polyfills,
-    // Extra mocks for WiredElements
-    Document: window.Document,
-    SVGSVGElement: HTMLElement,
-    CSSStyleSheet: class CSSStyleSheet {
-      replaceSync() {}
-    },
-    requestAnimationFrame: (cb: any) => setTimeout(cb, 0),
-    cancelAnimationFrame: (id: any) => clearTimeout(id),
-  });
+    await t.step('wraps custom element without props config', async () => {
+      await loadTestPage(ctx.page, {
+        code: `
+          // Create a base custom element to wrap
+          class BaseElement extends HTMLElement {
+            elevation = 1;
+            disabled = false;
+          }
+          customElements.define("base-element", BaseElement);
 
-  // Mock Canvas getContext for WiredElements/RoughJS
-  if ((globalThis as any).HTMLCanvasElement) {
-    (globalThis as any).HTMLCanvasElement.prototype.getContext = ((contextId: string) => {
-      return {
-        beginPath: () => {},
-        moveTo: () => {},
-        lineTo: () => {},
-        stroke: () => {},
-        fill: () => {},
-        clearRect: () => {},
-        fillRect: () => {},
-        save: () => {},
-        restore: () => {},
-        translate: () => {},
-        rotate: () => {},
-        scale: () => {},
-        arc: () => {},
-        bezierCurveTo: () => {},
-      };
-    }) as any;
-  }
-}
+          // Wrap without config - should use simple wrapper mode
+          const Wrapped = HTMLPropsMixin(BaseElement);
+          Wrapped.define("wrapped-base-element");
 
-Deno.test('HTMLPropsMixin: wraps WiredButton without props config', async () => {
-  // Dynamic import to ensure DOM is ready before Lit loads
-  const { WiredButton } = await import('https://esm.sh/wired-elements@3.0.0-rc.6?target=es2022');
+          const el = new Wrapped();
+          document.body.appendChild(el);
 
-  // Wrap without config - should use simple wrapper mode
-  const Wrapped = HTMLPropsMixin(WiredButton);
+          // Check constructor props API
+          const el2 = new Wrapped({
+            elevation: 3,
+            disabled: false,
+          });
+          document.body.appendChild(el2);
 
-  const tagName = 'wrapped-wired-button-1';
-  if (!customElements.get(tagName)) {
-    Wrapped.define(tagName);
-  }
+          (window as any).el = el;
+          (window as any).el2 = el2;
+          (window as any).BaseElement = BaseElement;
+          (window as any).Wrapped = Wrapped;
+        `,
+      });
 
-  const el = new Wrapped();
-  document.body.appendChild(el);
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).el;
+        const el2 = (window as any).el2;
+        const BaseElement = (window as any).BaseElement;
+        const Wrapped = (window as any).Wrapped;
 
-  // Check if it didn't crash
-  assert(el instanceof WiredButton);
-  assert(el instanceof Wrapped);
+        const isBaseElement = el instanceof BaseElement;
+        const isWrapped = el instanceof Wrapped;
 
-  // Check that we can set properties (WiredButton's native API)
-  el.elevation = 5;
-  assertEquals(el.elevation, 5);
+        // Set property via native setter
+        el.elevation = 5;
+        const elevationAfter = el.elevation;
 
-  // Check constructor props API
-  const el2 = new Wrapped({
-    elevation: 3,
-    disabled: false,
-    onclick: () => {},
-  });
-  document.body.appendChild(el2);
-  assertEquals(el2.elevation, 3);
-});
+        return {
+          isBaseElement,
+          isWrapped,
+          elevationAfter,
+          el2Elevation: el2.elevation,
+        };
+      });
 
-Deno.test('HTMLPropsMixin: wraps WiredButton with props API', async () => {
-  // Dynamic import to ensure DOM is ready before Lit loads
-  const { WiredButton } = await import('https://esm.sh/wired-elements@3.0.0-rc.6?target=es2022');
+      assertEquals(result.isBaseElement, true);
+      assertEquals(result.isWrapped, true);
+      assertEquals(result.elevationAfter, 5);
+      assertEquals(result.el2Elevation, 3);
+    });
 
-  // Import prop config for custom props
-  const { prop } = await import('../prop.ts');
+    await t.step('wraps custom element with props API', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          // Create a base custom element
+          class BaseButton extends HTMLElement {
+            elevation = 1;
+            disabled = false;
+          }
+          customElements.define("base-button", BaseButton);
 
-  // Wrap WITH custom props - add custom reactive props alongside native ones
-  const Wrapped = HTMLPropsMixin(WiredButton, {
-    label: prop('Click me'),
-    count: prop(0),
-  });
+          // Wrap WITH custom props
+          const Wrapped = HTMLPropsMixin(BaseButton, {
+            label: prop("Click me"),
+            count: prop(0),
+          });
+          Wrapped.define("wrapped-base-button");
 
-  const tagName = 'wrapped-wired-button-2';
-  if (!customElements.get(tagName)) {
-    Wrapped.define(tagName);
-  }
+          const el = new Wrapped({
+            elevation: 2,
+            disabled: false,
+            label: "Submit Form",
+            count: 5,
+          });
+          document.body.appendChild(el);
 
-  // Use props API to set both native and custom properties
-  const el = new Wrapped({
-    elevation: 2,
-    disabled: false,
-    label: 'Submit Form',
-    count: 5,
-  });
-  document.body.appendChild(el);
+          (window as any).el = el;
+        `,
+      });
 
-  // Verify native props were set via constructor
-  assertEquals(el.elevation, 2);
-  assertEquals(el.disabled, false);
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).el;
 
-  // Verify custom props were set
-  assertEquals(el.label, 'Submit Form');
-  assertEquals(el.count, 5);
+        const initial = {
+          elevation: el.elevation,
+          disabled: el.disabled,
+          label: el.label,
+          count: el.count,
+        };
 
-  // Update custom prop via property setter
-  el.count = 10;
-  assertEquals(el.count, 10);
+        // Update custom prop
+        el.count = 10;
+        const countAfter = el.count;
 
-  // Update native prop
-  el.elevation = 4;
-  assertEquals(el.elevation, 4);
+        // Update native prop
+        el.elevation = 4;
+        const elevationAfter = el.elevation;
+
+        return { initial, countAfter, elevationAfter };
+      });
+
+      assertEquals(result.initial.elevation, 2);
+      assertEquals(result.initial.disabled, false);
+      assertEquals(result.initial.label, 'Submit Form');
+      assertEquals(result.initial.count, 5);
+      assertEquals(result.countAfter, 10);
+      assertEquals(result.elevationAfter, 4);
+    });
+
+    await t.step('handles elements with null/undefined style property', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          // Simulate an element where style might be null/undefined
+          class ElementWithNullStyle extends HTMLElement {
+            _style = null;
+
+            get style() {
+              return this._style;
+            }
+
+            set style(value) {
+              // Ignore for this test
+            }
+          }
+
+          customElements.define("element-with-null-style", ElementWithNullStyle);
+
+          const Wrapped = HTMLPropsMixin(ElementWithNullStyle);
+          Wrapped.define("wrapped-null-style");
+
+          let noError = true;
+          try {
+            const el = new Wrapped({
+              style: { backgroundColor: "red", padding: "10px" },
+            });
+            document.body.appendChild(el);
+            (window as any).el = el;
+          } catch (e) {
+            noError = false;
+          }
+
+          (window as any).noError = noError;
+          (window as any).ElementWithNullStyle = ElementWithNullStyle;
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).el;
+        const ElementWithNullStyle = (window as any).ElementWithNullStyle;
+        return {
+          noError: (window as any).noError,
+          isInstance: el instanceof ElementWithNullStyle,
+        };
+      });
+
+      assertEquals(result.noError, true);
+      assertEquals(result.isInstance, true);
+    });
+
+    await t.step('handles elements with undefined dataset property', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          // Simulate element where dataset might be undefined
+          class ElementWithNoDataset extends HTMLElement {
+            get dataset() {
+              return undefined;
+            }
+          }
+
+          customElements.define("element-with-no-dataset", ElementWithNoDataset);
+
+          const Wrapped = HTMLPropsMixin(ElementWithNoDataset);
+          Wrapped.define("wrapped-no-dataset");
+
+          let noError = true;
+          try {
+            const el = new Wrapped({
+              dataset: { key: "value" },
+            });
+            document.body.appendChild(el);
+            (window as any).el = el;
+          } catch (e) {
+            noError = false;
+          }
+
+          (window as any).noError = noError;
+          (window as any).ElementWithNoDataset = ElementWithNoDataset;
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).el;
+        const ElementWithNoDataset = (window as any).ElementWithNoDataset;
+        return {
+          noError: (window as any).noError,
+          isInstance: el instanceof ElementWithNoDataset,
+        };
+      });
+
+      assertEquals(result.noError, true);
+      assertEquals(result.isInstance, true);
+    });
+
+    // Teardown
+    await teardownBrowser(ctx);
+  },
 });

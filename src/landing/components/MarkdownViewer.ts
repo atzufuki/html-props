@@ -24,118 +24,60 @@ import {
 import { CodeBlock } from './CodeBlock.ts';
 import { MarkdownService } from '../services/MarkdownService.ts';
 import { theme } from '../theme.ts';
-import { effect } from '@html-props/signals';
+import { effect, signal } from '@html-props/signals';
 
 export class MarkdownViewer extends HTMLPropsMixin(HTMLElement, {
   src: prop(''),
   version: prop('local'),
   markdown: prop(''), // Add markdown prop
 }) {
+  private aborter = new AbortController();
   private service = MarkdownService.getInstance();
   private loading = false;
   private error: string | null = null;
-  private tokens: any[] = [];
-  private _lastSrc = '';
-  private _lastVersion = '';
-  private _lastMarkdown = ''; // Track markdown changes
-  private _disposeEffect: (() => void) | null = null;
+  private tokens = signal<any[]>([]);
 
-  connectedCallback() {
-    // Pre-load content if available to prevent flash of empty state
+  mountedCallback(): void {
+    effect(this.fetch.bind(this), { signal: this.aborter.signal });
+  }
+
+  unmountedCallback(): void {
+    this.aborter.abort();
+  }
+
+  async fetch(): Promise<void> {
+    // If markdown prop is provided, use it instead of fetching
     if (this.markdown) {
-      this.tokens = this.service.parse(this.markdown);
-      this._lastMarkdown = this.markdown;
-    } else if (this.src) {
-      const cached = this.service.getDocSync(this.src, this.version);
-      if (cached) {
-        this.tokens = cached.tokens;
-        this._lastSrc = this.src;
-        this._lastVersion = this.version;
-      } else {
-        // Do not set loading=true here, let loadDoc handle it to avoid race conditions
-        // or just rely on loadDoc being called by effect
-      }
+      const tokens = this.service.parse(this.markdown);
+      this.tokens.set(tokens);
+      return;
     }
 
-    super.connectedCallback();
+    // Only fetch if src is provided
+    if (!this.src) return;
 
-    this._disposeEffect = effect(() => {
-      const markdown = this.markdown;
-      const src = this.src;
-      const version = this.version;
-
-      if (markdown) {
-        // Avoid infinite loops if parseMarkdown triggers update which triggers effect?
-        // parseMarkdown calls requestUpdate, which triggers render effect, not this effect.
-        // But we should check if value actually changed to avoid redundant work if effect runs for other reasons.
-        if (markdown !== this._lastMarkdown) {
-          this.parseMarkdown(markdown);
-        }
-      } else if (src) {
-        if (src !== this._lastSrc || version !== this._lastVersion) {
-          this.loadDoc();
-        }
-      }
-    });
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    if (this._disposeEffect) {
-      this._disposeEffect();
-      this._disposeEffect = null;
-    }
-  }
-
-  async loadDoc() {
-    if (this.loading) return;
-    this._lastSrc = this.src;
-    this._lastVersion = this.version;
-
-    const isCached = this.service.hasDoc(this.src, this.version);
-
-    if (!isCached) {
-      this.loading = true;
-      this.tokens = [];
-      this.requestUpdate();
-    }
-
-    this.error = null;
-
-    try {
-      const content = await this.service.fetchDoc(this.src, this.version);
-      this.tokens = content.tokens;
-    } catch (e: any) {
-      this.error = e.message;
-    } finally {
-      this.loading = false;
-      this.requestUpdate();
-    }
-  }
-
-  // Helper to parse direct markdown
-  private parseMarkdown(content: string) {
-    this._lastMarkdown = content;
-    this.tokens = this.service.parse(content);
-    this.requestUpdate();
+    await this.service.fetchDoc(this.src, this.version);
+    const doc = this.service.getDocSync(this.src, this.version);
+    this.tokens.set(doc ? doc.tokens : []);
   }
 
   render() {
+    const tokens = this.tokens();
+
     if (this.loading) {
       return this.renderSkeleton();
     }
 
     if (this.error) {
-      return new Div({ textContent: `Error: ${this.error}`, style: { color: 'red', padding: '2rem' } });
-    }
-
-    if (!this.tokens.length) {
-      return new Div({ textContent: 'No content found.', style: { padding: '2rem', color: theme.colors.text } });
+      return new Div({
+        textContent: `Error: ${this.error}`,
+        style: { color: 'red', padding: '2rem' },
+      });
     }
 
     return new Div({
       className: 'markdown-content',
-      content: this.tokens.map((t) => this.renderToken(t)),
+      content: tokens.map((t) => this.renderToken(t)),
     });
   }
 

@@ -1,10 +1,10 @@
-import { HTMLPropsMixin } from '@html-props/core';
+import { HTMLPropsMixin, prop } from '@html-props/core';
 import { LandingPage } from './views/LandingPage.ts';
 import { DocsPage } from './views/DocsPage.ts';
 import { ThemeService } from './services/ThemeService.ts';
 
 export class App extends HTMLPropsMixin(HTMLElement, {
-  route: { type: String, default: '/' },
+  route: prop(window.location.pathname),
 }) {
   connectedCallback() {
     // Initialize theme
@@ -13,12 +13,9 @@ export class App extends HTMLPropsMixin(HTMLElement, {
     // @ts-ignore: Mixin implements connectedCallback
     super.connectedCallback();
 
-    const handlePopState = () => {
+    window.addEventListener('popstate', () => {
       this.route = window.location.pathname;
-      window.scrollTo(0, 0);
-    };
-
-    window.addEventListener('popstate', handlePopState);
+    });
 
     // Intercept link clicks
     this.addEventListener('click', (e: MouseEvent) => {
@@ -33,17 +30,13 @@ export class App extends HTMLPropsMixin(HTMLElement, {
         const path = target.pathname;
         if (path !== window.location.pathname) {
           window.history.pushState({}, '', path);
-          handlePopState();
+          this.route = window.location.pathname;
         }
       }
     });
-
-    // Initial route
-    handlePopState();
   }
 
   render(): Node | Node[] | null {
-    // Simple router
     if (this.route.startsWith('/docs')) {
       return new DocsPage({ route: this.route });
     }

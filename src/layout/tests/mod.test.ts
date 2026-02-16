@@ -1,199 +1,303 @@
+/**
+ * Tests for layout components using Playwright.
+ *
+ * Tests run in a real browser via Playwright while using Deno.test() as the runner.
+ */
+
 import { assertEquals } from 'jsr:@std/assert';
-import { parseHTML } from 'npm:linkedom';
+import { loadTestPage, setupBrowser, teardownBrowser, TEST_OPTIONS, type TestContext } from '../../test-utils/mod.ts';
 
-let Row: any;
-let Column: any;
-let Center: any;
-let Stack: any;
-let Container: any;
-let MediaQuery: any;
-let Responsive: any;
-let LayoutBuilder: any;
+let ctx: TestContext;
 
-// @ts-ignore: Deno.test.beforeAll is available in Deno 2+
-Deno.test.beforeAll(async () => {
-  // Setup environment
-  if (!globalThis.document) {
-    const {
-      window,
-      document,
-      customElements,
-      HTMLElement,
-      Node,
-      CustomEvent,
-      MutationObserver,
-    } = parseHTML('<!DOCTYPE html><html><body></body></html>');
+Deno.test({
+  name: 'Layout Tests',
+  ...TEST_OPTIONS,
+  async fn(t) {
+    ctx = await setupBrowser();
 
-    // Mock ResizeObserver
-    class ResizeObserver {
-      callback: any;
-      constructor(callback: any) {
-        this.callback = callback;
-      }
-      observe(target: any) {
-        (globalThis as any).__resizeObservers = (globalThis as any).__resizeObservers || [];
-        (globalThis as any).__resizeObservers.push({ target, callback: this.callback });
-      }
-      disconnect() {}
-      unobserve() {}
-    }
+    await t.step('Row applies flex styles', async () => {
+      await loadTestPage(ctx.page, {
+        code: `
+          const row = new Row({
+            mainAxisAlignment: 'center',
+            gap: '10px',
+          });
+          document.body.appendChild(row);
+          (window as any).testRow = row;
+        `,
+      });
 
-    Object.assign(globalThis, {
-      window,
-      document,
-      customElements,
-      HTMLElement,
-      Node,
-      CustomEvent,
-      MutationObserver,
-      ResizeObserver,
+      const result = await ctx.page.evaluate(() => {
+        const row = (window as any).testRow;
+        return {
+          display: row.style.display,
+          flexDirection: row.style.flexDirection,
+          justifyContent: row.style.justifyContent,
+          gap: row.style.gap,
+        };
+      });
+
+      assertEquals(result.display, 'flex');
+      assertEquals(result.flexDirection, 'row');
+      assertEquals(result.justifyContent, 'center');
+      assertEquals(result.gap, '10px');
     });
 
-    // Helper to trigger resize observer
-    (globalThis as any).triggerResize = (target: any, rect: any) => {
-      const observers = (globalThis as any).__resizeObservers || [];
-      for (const obs of observers) {
-        if (obs.target === target) {
-          obs.callback([{ contentRect: rect, target }]);
-        }
-      }
-    };
+    await t.step('Column applies flex styles', async () => {
+      await loadTestPage(ctx.page, {
+        code: `
+          const col = new Column({
+            crossAxisAlignment: 'center',
+          });
+          document.body.appendChild(col);
+          (window as any).testCol = col;
+        `,
+      });
 
-    // Ensure innerWidth/Height are writable for tests
-    Object.defineProperty(window, 'innerWidth', { value: 1024, writable: true });
-    Object.defineProperty(window, 'innerHeight', { value: 768, writable: true });
-  }
+      const result = await ctx.page.evaluate(() => {
+        const col = (window as any).testCol;
+        return {
+          display: col.style.display,
+          flexDirection: col.style.flexDirection,
+          alignItems: col.style.alignItems,
+        };
+      });
 
-  const mod = await import('../mod.ts');
-  Row = mod.Row;
-  Column = mod.Column;
-  Center = mod.Center;
-  Stack = mod.Stack;
-  Container = mod.Container;
-  MediaQuery = mod.MediaQuery;
-  Responsive = mod.Responsive;
-  LayoutBuilder = mod.LayoutBuilder;
-});
+      assertEquals(result.display, 'flex');
+      assertEquals(result.flexDirection, 'column');
+      assertEquals(result.alignItems, 'center');
+    });
 
-Deno.test('Row applies flex styles', () => {
-  const row = new Row({
-    mainAxisAlignment: 'center',
-    gap: '10px',
-  });
-  document.body.appendChild(row);
+    await t.step('Center applies centering styles', async () => {
+      await loadTestPage(ctx.page, {
+        code: `
+          import { Center } from "./src/layout/mod.ts";
+          const center = new Center({});
+          document.body.appendChild(center);
+          (window as any).testCenter = center;
+        `,
+      });
 
-  assertEquals(row.style.display, 'flex');
-  assertEquals(row.style.flexDirection, 'row');
-  assertEquals(row.style.justifyContent, 'center');
-  assertEquals(row.style.gap, '10px');
-});
+      const result = await ctx.page.evaluate(() => {
+        const center = (window as any).testCenter;
+        return {
+          display: center.style.display,
+          justifyContent: center.style.justifyContent,
+          alignItems: center.style.alignItems,
+        };
+      });
 
-Deno.test('Column applies flex styles', () => {
-  const col = new Column({
-    crossAxisAlignment: 'center',
-  });
-  document.body.appendChild(col);
+      assertEquals(result.display, 'flex');
+      assertEquals(result.justifyContent, 'center');
+      assertEquals(result.alignItems, 'center');
+    });
 
-  assertEquals(col.style.display, 'flex');
-  assertEquals(col.style.flexDirection, 'column');
-  assertEquals(col.style.alignItems, 'center');
-});
+    await t.step('Stack applies grid styles', async () => {
+      await loadTestPage(ctx.page, {
+        code: `
+          import { Stack } from "./src/layout/mod.ts";
+          const stack = new Stack({
+            alignment: 'center',
+          });
+          document.body.appendChild(stack);
+          (window as any).testStack = stack;
+        `,
+      });
 
-Deno.test('Center applies centering styles', () => {
-  const center = new Center();
-  document.body.appendChild(center);
+      const result = await ctx.page.evaluate(() => {
+        const stack = (window as any).testStack;
+        return {
+          display: stack.style.display,
+          gridTemplateAreas: stack.style.gridTemplateAreas,
+          placeItems: stack.style.placeItems,
+        };
+      });
 
-  assertEquals(center.style.display, 'flex');
-  assertEquals(center.style.justifyContent, 'center');
-  assertEquals(center.style.alignItems, 'center');
-});
+      assertEquals(result.display, 'grid');
+      assertEquals(result.gridTemplateAreas, '"stack"');
+      // Browser may normalize "center center" to just "center"
+      assertEquals(result.placeItems === 'center center' || result.placeItems === 'center', true);
+    });
 
-Deno.test('Stack applies grid styles', () => {
-  const stack = new Stack({
-    alignment: 'center',
-  });
-  document.body.appendChild(stack);
+    await t.step('Container applies styles', async () => {
+      await loadTestPage(ctx.page, {
+        code: `
+          const container = new Container({
+            width: '100px',
+            height: '100px',
+            color: 'red',
+            padding: '10px',
+          });
+          document.body.appendChild(container);
+          (window as any).testContainer = container;
+        `,
+      });
 
-  assertEquals(stack.style.display, 'grid');
-  assertEquals(stack.style.gridTemplateAreas, '"stack"');
-  assertEquals(stack.style.placeItems, 'center center');
-});
+      const result = await ctx.page.evaluate(() => {
+        const container = (window as any).testContainer;
+        return {
+          width: container.style.width,
+          height: container.style.height,
+          backgroundColor: container.style.backgroundColor,
+          padding: container.style.padding,
+        };
+      });
 
-Deno.test('Container applies styles', () => {
-  const container = new Container({
-    width: '100px',
-    height: '100px',
-    color: 'red',
-    padding: '10px',
-  });
-  document.body.appendChild(container);
+      assertEquals(result.width, '100px');
+      assertEquals(result.height, '100px');
+      assertEquals(result.backgroundColor, 'red');
+      assertEquals(result.padding, '10px');
+    });
 
-  assertEquals(container.style.width, '100px');
-  assertEquals(container.style.height, '100px');
-  assertEquals(container.style.backgroundColor, 'red');
-  assertEquals(container.style.padding, '10px');
-});
+    await t.step('MediaQuery updates on resize', async () => {
+      await loadTestPage(ctx.page, {
+        code: `
+          import { MediaQuery } from "./src/layout/mod.ts";
+          (window as any).MediaQuery = MediaQuery;
+        `,
+      });
 
-Deno.test('MediaQuery updates on resize', () => {
-  // Reset to desktop
-  (window as any).innerWidth = 1024;
-  window.dispatchEvent(new CustomEvent('resize'));
+      // Set to desktop size and check
+      await ctx.page.setViewportSize({ width: 1024, height: 768 });
 
-  assertEquals(MediaQuery.isDesktop(), true);
-  assertEquals(MediaQuery.isMobile(), false);
+      // Trigger resize event
+      await ctx.page.evaluate(() => {
+        window.dispatchEvent(new Event('resize'));
+      });
 
-  // Change to mobile
-  (window as any).innerWidth = 500;
-  window.dispatchEvent(new CustomEvent('resize'));
+      // Small delay for resize handler
+      await new Promise((r) => setTimeout(r, 50));
 
-  assertEquals(MediaQuery.isDesktop(), false);
-  assertEquals(MediaQuery.isMobile(), true);
-});
+      const desktopResult = await ctx.page.evaluate(() => {
+        const MQ = (window as any).MediaQuery;
+        return {
+          isDesktop: MQ.isDesktop(),
+          isMobile: MQ.isMobile(),
+        };
+      });
 
-Deno.test('Responsive renders correct child', () => {
-  const mobile = document.createElement('div');
-  mobile.id = 'mobile';
-  const desktop = document.createElement('div');
-  desktop.id = 'desktop';
+      assertEquals(desktopResult.isDesktop, true);
+      assertEquals(desktopResult.isMobile, false);
 
-  const responsive = new Responsive({
-    mobile,
-    desktop,
-  });
+      // Change to mobile size
+      await ctx.page.setViewportSize({ width: 500, height: 800 });
 
-  document.body.appendChild(responsive);
+      await ctx.page.evaluate(() => {
+        window.dispatchEvent(new Event('resize'));
+      });
 
-  // Set to mobile
-  (window as any).innerWidth = 500;
-  window.dispatchEvent(new CustomEvent('resize'));
+      await new Promise((r) => setTimeout(r, 50));
 
-  assertEquals(responsive.firstElementChild?.id, 'mobile');
+      const mobileResult = await ctx.page.evaluate(() => {
+        const MQ = (window as any).MediaQuery;
+        return {
+          isDesktop: MQ.isDesktop(),
+          isMobile: MQ.isMobile(),
+        };
+      });
 
-  // Set to desktop
-  (window as any).innerWidth = 1200;
-  window.dispatchEvent(new CustomEvent('resize'));
+      assertEquals(mobileResult.isDesktop, false);
+      assertEquals(mobileResult.isMobile, true);
+    });
 
-  assertEquals(responsive.firstElementChild?.id, 'desktop');
+    await t.step('Responsive renders correct child based on viewport', async () => {
+      await loadTestPage(ctx.page, {
+        code: `
+          import { Responsive } from "./src/layout/mod.ts";
 
-  responsive.remove();
-});
+          const mobile = document.createElement('div');
+          mobile.id = 'mobile';
+          mobile.textContent = 'Mobile View';
 
-Deno.test('LayoutBuilder provides constraints', () => {
-  let constraints: any = null;
-  const builder = new LayoutBuilder({
-    builder: (c: any) => {
-      constraints = c;
-      return document.createElement('div');
-    },
-  });
+          const desktop = document.createElement('div');
+          desktop.id = 'desktop';
+          desktop.textContent = 'Desktop View';
 
-  document.body.appendChild(builder);
+          const responsive = new Responsive({
+            mobile,
+            desktop,
+          });
 
-  // Trigger resize observer
-  (globalThis as any).triggerResize(builder, { width: 500, height: 300 });
+          document.body.appendChild(responsive);
+          (window as any).testResponsive = responsive;
+        `,
+      });
 
-  assertEquals(constraints?.width, 500);
-  assertEquals(constraints?.height, 300);
+      // Set to mobile viewport
+      await ctx.page.setViewportSize({ width: 500, height: 800 });
+      await ctx.page.evaluate(() => {
+        window.dispatchEvent(new Event('resize'));
+      });
+      await new Promise((r) => setTimeout(r, 50));
 
-  builder.remove();
+      const mobileChild = await ctx.page.evaluate(() => {
+        const responsive = (window as any).testResponsive;
+        return responsive.firstElementChild?.id;
+      });
+
+      assertEquals(mobileChild, 'mobile');
+
+      // Set to desktop viewport
+      await ctx.page.setViewportSize({ width: 1200, height: 800 });
+      await ctx.page.evaluate(() => {
+        window.dispatchEvent(new Event('resize'));
+      });
+      await new Promise((r) => setTimeout(r, 50));
+
+      const desktopChild = await ctx.page.evaluate(() => {
+        const responsive = (window as any).testResponsive;
+        return responsive.firstElementChild?.id;
+      });
+
+      assertEquals(desktopChild, 'desktop');
+    });
+
+    await t.step('LayoutBuilder provides constraints via ResizeObserver', async () => {
+      await loadTestPage(ctx.page, {
+        code: `
+          import { LayoutBuilder } from "./src/layout/mod.ts";
+
+          (window as any).capturedConstraints = null;
+
+          const builder = new LayoutBuilder({
+            builder: (constraints: any) => {
+              (window as any).capturedConstraints = constraints;
+              const div = document.createElement('div');
+              div.textContent = \`\${constraints.width}x\${constraints.height}\`;
+              return div;
+            },
+          });
+
+          document.body.appendChild(builder);
+          (window as any).testBuilder = builder;
+        `,
+      });
+
+      // Wait for ResizeObserver to fire
+      await new Promise((r) => setTimeout(r, 100));
+
+      const result = await ctx.page.evaluate(() => {
+        const constraints = (window as any).capturedConstraints;
+        return constraints
+          ? {
+            hasConstraints: true,
+            // Just check that we got numeric dimensions
+            hasWidth: typeof constraints.width === 'number' && constraints.width > 0,
+            hasHeight: typeof constraints.height === 'number' && constraints.height >= 0,
+          }
+          : {
+            hasConstraints: false,
+            hasWidth: false,
+            hasHeight: false,
+          };
+      });
+
+      assertEquals(result.hasConstraints, true);
+      // ResizeObserver should capture some dimensions (actual values depend on viewport)
+      assertEquals(result.hasWidth, true);
+    });
+
+    // Cleanup
+    await teardownBrowser(ctx);
+  },
 });

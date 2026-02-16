@@ -6,7 +6,6 @@ import {
   type Prop,
   prop,
 } from '@html-props/core';
-import { effect } from '@html-props/signals';
 
 const config: {
   columns: Prop<string>;
@@ -29,20 +28,10 @@ const GridBase:
   & Pick<typeof HTMLElement, keyof typeof HTMLElement> = HTMLPropsMixin(HTMLElement, config);
 
 export class Grid extends GridBase {
-  private _cleanup?: () => void;
-
-  connectedCallback() {
-    super.connectedCallback();
-    this._cleanup = effect(() => {
-      this.style.gridTemplateColumns = this.columns;
-      this.style.gridTemplateRows = this.rows;
-      this.style.gap = this.gap;
-    });
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this._cleanup?.();
+  render() {
+    this.style.gridTemplateColumns = this.columns;
+    this.style.gridTemplateRows = this.rows;
+    this.style.gap = this.gap;
   }
 }
 

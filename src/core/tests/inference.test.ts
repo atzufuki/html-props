@@ -1,127 +1,196 @@
-import { assertEquals } from 'jsr:@std/assert';
-import { HTMLPropsMixin } from '../mixin.ts';
-import { prop } from '../prop.ts';
-import { parseHTML } from 'linkedom';
+/**
+ * Type Inference Tests (Playwright)
+ *
+ * Tests for type inference and optional types in HTMLPropsMixin.
+ *
+ * @module
+ */
 
-// Setup environment
-if (!globalThis.document) {
-  const {
-    window,
-    document,
-    customElements,
-    HTMLElement,
-    Node,
-    CustomEvent,
-  } = parseHTML('<!DOCTYPE html><html><body></body></html>');
+import { assertEquals } from '@std/assert';
+import { loadTestPage, setupBrowser, teardownBrowser, TEST_OPTIONS, type TestContext } from '../../test-utils/mod.ts';
 
-  Object.assign(globalThis, {
-    window,
-    document,
-    customElements,
-    HTMLElement,
-    Node,
-    CustomEvent,
-  });
-}
+let ctx: TestContext;
 
-Deno.test('HTMLPropsMixin: Type Inference & Optional Types', async (t) => {
-  await t.step('infers types from default values when type is omitted', () => {
-    class InferredElement extends HTMLPropsMixin(HTMLElement, {
-      count: prop(0, { attribute: true }), // Inferred Number
-      active: prop(false, { attribute: true }), // Inferred Boolean
-      label: prop('start', { attribute: true }), // Inferred String
-    }) {}
+Deno.test({
+  name: 'Type Inference Tests',
+  ...TEST_OPTIONS,
 
-    InferredElement.define('inferred-el');
-    const el = new InferredElement();
-    document.body.appendChild(el);
+  async fn(t) {
+    // Setup browser once for all tests
+    ctx = await setupBrowser();
 
-    // Check initial values
-    assertEquals(el.count, 0);
-    assertEquals(el.active, false);
-    assertEquals(el.label, 'start');
+    await t.step('infers types from default values when type is omitted', async () => {
+      await loadTestPage(ctx.page, {
+        code: `
+          class InferredElement extends HTMLPropsMixin(HTMLElement, {
+            count: prop(0, { attribute: true }),
+            active: prop(false, { attribute: true }),
+            label: prop("start", { attribute: true }),
+          }) {}
 
-    // Check attribute reflection (initial)
-    assertEquals(el.getAttribute('count'), '0');
-    assertEquals(el.hasAttribute('active'), false);
-    assertEquals(el.getAttribute('label'), 'start');
+          InferredElement.define("inferred-el");
+          const el = new InferredElement();
+          document.body.appendChild(el);
 
-    // Check attribute parsing (String -> Prop)
+          (window as any).testElement = el;
+        `,
+      });
 
-    // Number parsing
-    el.setAttribute('count', '42');
-    assertEquals(el.count, 42);
+      // Check initial values
+      const initial = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return {
+          count: el.count,
+          active: el.active,
+          label: el.label,
+          countAttr: el.getAttribute('count'),
+          hasActiveAttr: el.hasAttribute('active'),
+          labelAttr: el.getAttribute('label'),
+        };
+      });
 
-    // Boolean parsing
-    el.setAttribute('active', '');
-    assertEquals(el.active, true);
-    el.removeAttribute('active');
-    assertEquals(el.active, false);
+      assertEquals(initial.count, 0);
+      assertEquals(initial.active, false);
+      assertEquals(initial.label, 'start');
+      assertEquals(initial.countAttr, '0');
+      assertEquals(initial.hasActiveAttr, false);
+      assertEquals(initial.labelAttr, 'start');
 
-    // String parsing
-    el.setAttribute('label', 'changed');
-    assertEquals(el.label, 'changed');
+      // Check attribute parsing
+      const afterAttrChanges = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
 
-    document.body.removeChild(el);
-  });
+        // Number parsing
+        el.setAttribute('count', '42');
+        const countAfter = el.count;
 
-  await t.step('handles null defaults with explicit types', () => {
-    class NullExplicitElement extends HTMLPropsMixin(HTMLElement, {
-      count: prop<number | null>(null, { type: Number, attribute: true }),
-      active: prop<boolean | null>(null, { type: Boolean, attribute: true }),
-    }) {}
+        // Boolean parsing
+        el.setAttribute('active', '');
+        const activeTrue = el.active;
+        el.removeAttribute('active');
+        const activeFalse = el.active;
 
-    NullExplicitElement.define('null-explicit-el');
-    const el = new NullExplicitElement();
-    document.body.appendChild(el);
+        // String parsing
+        el.setAttribute('label', 'changed');
+        const labelAfter = el.label;
 
-    // Initial
-    assertEquals(el.count, null);
-    assertEquals(el.active, null);
+        return { countAfter, activeTrue, activeFalse, labelAfter };
+      });
 
-    // Attribute parsing should still work based on explicit type
-    el.setAttribute('count', '123');
-    assertEquals(el.count, 123);
+      assertEquals(afterAttrChanges.countAfter, 42);
+      assertEquals(afterAttrChanges.activeTrue, true);
+      assertEquals(afterAttrChanges.activeFalse, false);
+      assertEquals(afterAttrChanges.labelAfter, 'changed');
+    });
 
-    el.setAttribute('active', '');
-    assertEquals(el.active, true);
+    await t.step('handles null defaults with explicit types', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class NullExplicitElement extends HTMLPropsMixin(HTMLElement, {
+            count: prop(null, { type: Number, attribute: true }),
+            active: prop(null, { type: Boolean, attribute: true }),
+          }) {}
 
-    document.body.removeChild(el);
-  });
+          NullExplicitElement.define("null-explicit-el");
+          const el = new NullExplicitElement();
+          document.body.appendChild(el);
 
-  await t.step('handles null defaults without explicit types (fallback to String)', () => {
-    class NullImplicitElement extends HTMLPropsMixin(HTMLElement, {
-      // No type, default null -> treated as String/Any
-      data: prop(null, { attribute: true }),
-    }) {}
+          (window as any).testElement = el;
+        `,
+      });
 
-    NullImplicitElement.define('null-implicit-el');
-    const el = new NullImplicitElement();
-    document.body.appendChild(el);
+      const initial = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return {
+          count: el.count,
+          active: el.active,
+        };
+      });
 
-    assertEquals(el.data, null);
+      assertEquals(initial.count, null);
+      assertEquals(initial.active, null);
 
-    // Should treat attribute as string
-    el.setAttribute('data', '123');
-    assertEquals(el.data, '123'); // Not parsed as number
+      const afterAttrChanges = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        el.setAttribute('count', '123');
+        el.setAttribute('active', '');
+        return {
+          count: el.count,
+          active: el.active,
+        };
+      });
 
-    document.body.removeChild(el);
-  });
+      assertEquals(afterAttrChanges.count, 123);
+      assertEquals(afterAttrChanges.active, true);
+    });
 
-  await t.step('handles Enum-like defaults', () => {
-    class EnumElement extends HTMLPropsMixin(HTMLElement, {
-      variant: { default: 'primary', attribute: true },
-    }) {}
+    await t.step('handles null defaults without explicit types (fallback to String)', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class NullImplicitElement extends HTMLPropsMixin(HTMLElement, {
+            data: prop(null, { attribute: true }),
+          }) {}
 
-    EnumElement.define('enum-el');
-    const el = new EnumElement();
-    document.body.appendChild(el);
+          NullImplicitElement.define("null-implicit-el");
+          const el = new NullImplicitElement();
+          document.body.appendChild(el);
 
-    assertEquals(el.variant, 'primary');
+          (window as any).testElement = el;
+        `,
+      });
 
-    el.variant = 'secondary';
-    assertEquals(el.getAttribute('variant'), 'secondary');
+      const initial = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return el.data;
+      });
 
-    document.body.removeChild(el);
-  });
+      assertEquals(initial, null);
+
+      const afterAttrChange = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        el.setAttribute('data', '123');
+        return el.data;
+      });
+
+      // Should treat attribute as string (not parsed as number)
+      assertEquals(afterAttrChange, '123');
+    });
+
+    await t.step('handles Enum-like defaults', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class EnumElement extends HTMLPropsMixin(HTMLElement, {
+            variant: { default: "primary", attribute: true },
+          }) {}
+
+          EnumElement.define("enum-el");
+          const el = new EnumElement();
+          document.body.appendChild(el);
+
+          (window as any).testElement = el;
+        `,
+      });
+
+      const initial = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        return el.variant;
+      });
+
+      assertEquals(initial, 'primary');
+
+      const afterChange = await ctx.page.evaluate(() => {
+        const el = (window as any).testElement;
+        el.variant = 'secondary';
+        return el.getAttribute('variant');
+      });
+
+      assertEquals(afterChange, 'secondary');
+    });
+
+    // Teardown
+    await teardownBrowser(ctx);
+  },
 });

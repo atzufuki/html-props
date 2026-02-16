@@ -1,83 +1,81 @@
 {
   "version": "5",
   "specifiers": {
-    "jsr:@html-props/core@0.5": "0.5.0",
-    "jsr:@std/cli@^1.0.21": "1.0.22",
-    "jsr:@std/encoding@^1.0.10": "1.0.10",
-    "jsr:@std/fmt@^1.0.8": "1.0.8",
-    "jsr:@std/fs@^1.0.19": "1.0.19",
-    "jsr:@std/html@^1.0.4": "1.0.4",
-    "jsr:@std/http@^1.0.20": "1.0.20",
-    "jsr:@std/internal@^1.0.10": "1.0.10",
-    "jsr:@std/internal@^1.0.9": "1.0.10",
-    "jsr:@std/media-types@^1.1.0": "1.1.0",
-    "jsr:@std/net@^1.0.4": "1.0.6",
-    "jsr:@std/path@^1.1.1": "1.1.2",
-    "jsr:@std/path@^1.1.2": "1.1.2",
-    "jsr:@std/streams@^1.0.10": "1.0.12"
+    "jsr:@std/internal@^1.0.12": "1.0.12",
+    "jsr:@std/path@^1.1.2": "1.1.4"
   },
   "jsr": {
-    "@html-props/core@0.5.0": {
-      "integrity": "a8341af157e5963f9ffeee04f6f673d5b8bcc1c671b0b1e091e2e6f349a6b5ab"
+    "@std/internal@1.0.12": {
+      "integrity": "972a634fd5bc34b242024402972cd5143eac68d8dffaca5eaa4dba30ce17b027"
     },
-    "@std/cli@1.0.22": {
-      "integrity": "50d1e4f87887cb8a8afa29b88505ab5081188f5cad3985460c3b471fa49ff21a"
-    },
-    "@std/encoding@1.0.10": {
-      "integrity": "8783c6384a2d13abd5e9e87a7ae0520a30e9f56aeeaa3bdf910a3eaaf5c811a1"
-    },
-    "@std/fmt@1.0.8": {
-      "integrity": "71e1fc498787e4434d213647a6e43e794af4fd393ef8f52062246e06f7e372b7"
-    },
-    "@std/fs@1.0.19": {
-      "integrity": "051968c2b1eae4d2ea9f79a08a3845740ef6af10356aff43d3e2ef11ed09fb06",
+    "@std/path@1.1.4": {
+      "integrity": "1d2d43f39efb1b42f0b1882a25486647cb851481862dc7313390b2bb044314b5",
       "dependencies": [
-        "jsr:@std/internal@^1.0.9",
-        "jsr:@std/path@^1.1.1"
+        "jsr:@std/internal"
       ]
-    },
-    "@std/html@1.0.4": {
-      "integrity": "eff3497c08164e6ada49b7f81a28b5108087033823153d065e3f89467dd3d50e"
-    },
-    "@std/http@1.0.20": {
-      "integrity": "b5cc33fc001bccce65ed4c51815668c9891c69ccd908295997e983d8f56070a1",
-      "dependencies": [
-        "jsr:@std/cli",
-        "jsr:@std/encoding",
-        "jsr:@std/fmt",
-        "jsr:@std/fs",
-        "jsr:@std/html",
-        "jsr:@std/media-types",
-        "jsr:@std/net",
-        "jsr:@std/path@^1.1.1",
-        "jsr:@std/streams"
-      ]
-    },
-    "@std/internal@1.0.10": {
-      "integrity": "e3be62ce42cab0e177c27698e5d9800122f67b766a0bea6ca4867886cbde8cf7"
-    },
-    "@std/media-types@1.1.0": {
-      "integrity": "c9d093f0c05c3512932b330e3cc1fe1d627b301db33a4c2c2185c02471d6eaa4"
-    },
-    "@std/net@1.0.6": {
-      "integrity": "110735f93e95bb9feb95790a8b1d1bf69ec0dc74f3f97a00a76ea5efea25500c"
-    },
-    "@std/path@1.1.2": {
-      "integrity": "c0b13b97dfe06546d5e16bf3966b1cadf92e1cc83e56ba5476ad8b498d9e3038",
-      "dependencies": [
-        "jsr:@std/internal@^1.0.10"
-      ]
-    },
-    "@std/streams@1.0.12": {
-      "integrity": "ae925fa1dc459b1abf5cbaa28cc5c7b0485853af3b2a384b0dc22d86e59dfbf4"
     }
   },
   "workspace": {
     "dependencies": [
-      "jsr:@html-props/core@0.5",
-      "jsr:@std/fs@^1.0.19",
-      "jsr:@std/http@^1.0.20",
-      "jsr:@std/path@^1.1.2"
-    ]
+      "jsr:@luca/esbuild-deno-loader@~0.11.1",
+      "jsr:@std/assert@^1.0.11",
+      "npm:esbuild@0.25",
+      "npm:playwright@1.48.0"
+    ],
+    "members": {
+      "src/builder": {
+        "packageJson": {
+          "dependencies": [
+            "npm:@types/mocha@^10.0.10",
+            "npm:@types/node@22",
+            "npm:@types/vscode@^1.106.0",
+            "npm:@vscode/codicons@^0.0.42",
+            "npm:@vscode/test-cli@^0.0.12",
+            "npm:@vscode/test-electron@^2.5.2",
+            "npm:esbuild@0.27",
+            "npm:eslint@^9.39.1",
+            "npm:node-html-parser@^7.0.1",
+            "npm:npm-run-all@^4.1.5",
+            "npm:typescript-eslint@^8.46.3",
+            "npm:typescript@^5.9.3"
+          ]
+        }
+      },
+      "src/built-ins": {
+        "dependencies": [
+          "jsr:@html-props/core@^1.0.0-beta.6"
+        ]
+      },
+      "src/core": {
+        "dependencies": [
+          "jsr:@html-props/signals@^1.0.0-beta.2"
+        ]
+      },
+      "src/create/template": {
+        "dependencies": [
+          "jsr:@html-props/built-ins@^1.0.0-beta.6",
+          "jsr:@html-props/core@^1.0.0-beta.6",
+          "jsr:@html-props/layout@^1.0.0-beta.7",
+          "jsr:@html-props/signals@^1.0.0-beta.2",
+          "jsr:@std/http@^1.0.20"
+        ]
+      },
+      "src/landing": {
+        "dependencies": [
+          "jsr:@html-props/built-ins@^1.0.0-beta.5",
+          "jsr:@html-props/core@^1.0.0-beta.5",
+          "jsr:@html-props/layout@^1.0.0-beta.6",
+          "jsr:@html-props/signals@^1.0.0-beta.1",
+          "npm:marked@^17.0.1"
+        ]
+      },
+      "src/layout": {
+        "dependencies": [
+          "jsr:@html-props/built-ins@^1.0.0-beta.6",
+          "jsr:@html-props/core@^1.0.0-beta.6",
+          "jsr:@html-props/signals@^1.0.0-beta.2"
+        ]
+      }
+    }
   }
 }
