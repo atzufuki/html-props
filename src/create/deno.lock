@@ -1,0 +1,81 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@std/internal@^1.0.12": "1.0.12",
+    "jsr:@std/path@^1.1.2": "1.1.4"
+  },
+  "jsr": {
+    "@std/internal@1.0.12": {
+      "integrity": "972a634fd5bc34b242024402972cd5143eac68d8dffaca5eaa4dba30ce17b027"
+    },
+    "@std/path@1.1.4": {
+      "integrity": "1d2d43f39efb1b42f0b1882a25486647cb851481862dc7313390b2bb044314b5",
+      "dependencies": [
+        "jsr:@std/internal"
+      ]
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@luca/esbuild-deno-loader@~0.11.1",
+      "jsr:@std/assert@^1.0.11",
+      "npm:esbuild@0.25",
+      "npm:playwright@1.48.0"
+    ],
+    "members": {
+      "src/builder": {
+        "packageJson": {
+          "dependencies": [
+            "npm:@types/mocha@^10.0.10",
+            "npm:@types/node@22",
+            "npm:@types/vscode@^1.106.0",
+            "npm:@vscode/codicons@^0.0.42",
+            "npm:@vscode/test-cli@^0.0.12",
+            "npm:@vscode/test-electron@^2.5.2",
+            "npm:esbuild@0.27",
+            "npm:eslint@^9.39.1",
+            "npm:node-html-parser@^7.0.1",
+            "npm:npm-run-all@^4.1.5",
+            "npm:typescript-eslint@^8.46.3",
+            "npm:typescript@^5.9.3"
+          ]
+        }
+      },
+      "src/built-ins": {
+        "dependencies": [
+          "jsr:@html-props/core@^1.0.0-beta.6"
+        ]
+      },
+      "src/core": {
+        "dependencies": [
+          "jsr:@html-props/signals@^1.0.0-beta.2"
+        ]
+      },
+      "src/create/template": {
+        "dependencies": [
+          "jsr:@html-props/built-ins@^1.0.0-beta.6",
+          "jsr:@html-props/core@^1.0.0-beta.6",
+          "jsr:@html-props/layout@^1.0.0-beta.7",
+          "jsr:@html-props/signals@^1.0.0-beta.2",
+          "jsr:@std/http@^1.0.20"
+        ]
+      },
+      "src/landing": {
+        "dependencies": [
+          "jsr:@html-props/built-ins@^1.0.0-beta.5",
+          "jsr:@html-props/core@^1.0.0-beta.5",
+          "jsr:@html-props/layout@^1.0.0-beta.6",
+          "jsr:@html-props/signals@^1.0.0-beta.1",
+          "npm:marked@^17.0.1"
+        ]
+      },
+      "src/layout": {
+        "dependencies": [
+          "jsr:@html-props/built-ins@^1.0.0-beta.6",
+          "jsr:@html-props/core@^1.0.0-beta.6",
+          "jsr:@html-props/signals@^1.0.0-beta.2"
+        ]
+      }
+    }
+  }
+}
