@@ -1,5 +1,6 @@
 export * from './flex_types.ts';
 export * from './row.ts';
+export * from './expanded.ts';
 export * from './stack.ts';
 export * from './center.ts';
 export * from './padding.ts';
