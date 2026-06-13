@@ -6,7 +6,7 @@
  * @module
  */
 
-import { assert, assertEquals } from '@std/assert';
+import { type assert, assertEquals } from '@std/assert';
 import { loadTestPage, setupBrowser, teardownBrowser, TEST_OPTIONS, type TestContext } from '../../test-utils/mod.ts';
 
 let ctx: TestContext;
