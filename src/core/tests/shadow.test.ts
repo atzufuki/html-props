@@ -1335,6 +1335,37 @@ Deno.test({
       assertEquals(result.shadowText, 'Static Shadow!');
     });
 
+    await t.step('shadow option from default prop config attaches shadow root', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class MyElConfig extends HTMLPropsMixin(HTMLElement, {
+            shadow: prop("open", { attribute: "shadow" }),
+          }) {
+            render() {
+              return "Config Shadow!";
+            }
+          }
+          MyElConfig.define("my-el-config-shadow");
+
+          const el = new MyElConfig();
+          document.body.appendChild(el);
+          (window as any).el = el;
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).el;
+        return {
+          hasShadow: el.shadowRoot !== null,
+          shadowText: el.shadowRoot?.textContent,
+        };
+      });
+
+      assertEquals(result.hasShadow, true);
+      assertEquals(result.shadowText, 'Config Shadow!');
+    });
+
     // Teardown
     await teardownBrowser(ctx);
   },

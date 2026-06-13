@@ -84,15 +84,31 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
 
       const props = args[0] ?? {};
 
+      // Create controller with props config
+      const propsConfig = (this.constructor as any).__propsConfig as PropsConfig || {};
+
       // Handle declarative shadow DOM option
-      const shadowOpt = props.shadow ?? (this.constructor as any).shadow;
+      const shadowPropConfig = propsConfig.shadow;
+      let defaultShadow: any = undefined;
+      if (shadowPropConfig !== undefined) {
+        if (
+          shadowPropConfig && typeof shadowPropConfig === 'object' &&
+          ('default' in shadowPropConfig || 'type' in shadowPropConfig || 'attribute' in shadowPropConfig)
+        ) {
+          defaultShadow = shadowPropConfig.default;
+        } else {
+          defaultShadow = shadowPropConfig;
+        }
+      }
+
+      const shadowOpt = props.shadow ?? (this.constructor as any).shadow ?? defaultShadow;
       if (shadowOpt && !this.shadowRoot) {
-        const shadowInit = typeof shadowOpt === 'object' ? shadowOpt : { mode: 'open' };
+        const shadowInit = typeof shadowOpt === 'object'
+          ? shadowOpt
+          : { mode: (shadowOpt === 'closed' || shadowOpt === 'open') ? shadowOpt : 'open' };
         this.attachShadow(shadowInit);
       }
 
-      // Create controller with props config
-      const propsConfig = (this.constructor as any).__propsConfig as PropsConfig || {};
       this[PROPS_CONTROLLER] = new PropsController(this, propsConfig, props);
     }
 
