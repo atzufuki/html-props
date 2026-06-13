@@ -1,5 +1,5 @@
-import { serveFile } from 'jsr:@std/http/file-server';
-import { dirname, fromFileUrl, join } from 'jsr:@std/path';
+import { serveFile } from 'jsr:@std/http@^1.0.20/file-server';
+import { dirname, fromFileUrl, join } from 'jsr:@std/path@^1.1.2';
 
 const BASE_DIR = dirname(fromFileUrl(import.meta.url));
 const DIST_DIR = join(BASE_DIR, 'dist');

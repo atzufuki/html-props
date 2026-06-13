@@ -22,6 +22,7 @@ export interface HTMLElementLike {
   dataset: DOMStringMap;
   textContent: string | null;
   shadowRoot: ShadowRoot | null;
+  attachShadow(init: ShadowRootInit): ShadowRoot;
   childNodes: NodeListOf<ChildNode>;
   firstChild: ChildNode | null;
   insertBefore<T extends Node>(node: T, child: Node | null): T;
@@ -108,27 +109,24 @@ type RawInferConstructorProps<C extends PropsConfig> =
   & {
     // Required: PropConfig without default
     [
-      K in keyof C as IsPropConfig<C[K]> extends true
-        ? (HasDefault<C[K]> extends true ? never : K)
+      K in keyof C as IsPropConfig<C[K]> extends true ? (HasDefault<C[K]> extends true ? never : K)
         : never
     ]: GetPropType<C[K]>;
   }
   & {
     // Optional: PropConfig with default OR Direct Value
     [
-      K in keyof C as IsPropConfig<C[K]> extends true
-        ? (HasDefault<C[K]> extends true ? K : never)
+      K in keyof C as IsPropConfig<C[K]> extends true ? (HasDefault<C[K]> extends true ? K : never)
         : K
     ]?: IsPropConfig<C[K]> extends true ? GetPropType<C[K]> : C[K];
   };
 
 export type InferConstructorProps<C extends PropsConfig> = Omit<
   RawInferConstructorProps<C>,
-  "style"
+  'style'
 >;
 
-export interface TypedPropConfig<T>
-  extends Omit<PropConfig, "type" | "default"> {
+export interface TypedPropConfig<T> extends Omit<PropConfig, 'type' | 'default'> {
   type: InferPropType<T>;
   default?: T;
 }
@@ -139,8 +137,7 @@ export interface HTMLPropsInterface {
 
 // Helper to get the expected type for a native property
 // We allow Partial<CSSStyleDeclaration> | string for style
-export type NativePropertyType<T, K extends keyof T> = K extends "style"
-  ? Partial<CSSStyleDeclaration> | string
+export type NativePropertyType<T, K extends keyof T> = K extends 'style' ? Partial<CSSStyleDeclaration> | string
   : T[K];
 
 // Validator type to enforce:
@@ -151,7 +148,7 @@ export type PropsConfigValidator<T, C> = {
     : PropConfig;
 };
 
-export type HTMLProps<T> = Omit<Partial<T>, "style"> & {
+export type HTMLProps<T> = Omit<Partial<T>, 'style'> & {
   style?: Partial<CSSStyleDeclaration> | string;
 } & {
   [key: string]: any;

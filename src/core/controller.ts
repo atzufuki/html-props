@@ -346,6 +346,7 @@ export class PropsController {
       'textContent',
       'children',
       'content',
+      'shadow',
     ]);
     for (const [key, value] of Object.entries(props)) {
       if (reserved.has(key)) continue;

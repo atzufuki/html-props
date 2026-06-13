@@ -1,16 +1,6 @@
-import {
-  HTML_PROPS_MIXIN,
-  PROPS_CONTROLLER,
-  PropsController,
-} from "./controller.ts";
-import type { RefObject } from "./ref.ts";
-import type {
-  Constructor,
-  InferConstructorProps,
-  InferProps,
-  PropsConfig,
-  PropsConfigValidator,
-} from "./types.ts";
+import { HTML_PROPS_MIXIN, PROPS_CONTROLLER, PropsController } from './controller.ts';
+import type { RefObject } from './ref.ts';
+import type { Constructor, InferConstructorProps, InferProps, PropsConfig, PropsConfigValidator } from './types.ts';
 
 export interface HTMLPropsElementConstructor<
   T extends Constructor,
@@ -18,11 +8,12 @@ export interface HTMLPropsElementConstructor<
   IP = P,
 > {
   new (
-    props?: Omit<Partial<InstanceType<T>>, "style" | "children"> & {
+    props?: Omit<Partial<InstanceType<T>>, 'style' | 'children'> & {
       style?: Partial<CSSStyleDeclaration> | string;
       ref?: RefObject<any> | ((el: InstanceType<T>) => void);
       children?: any;
       content?: any;
+      shadow?: boolean | ShadowRootInit;
     } & P,
     ...args: any[]
   ): InstanceType<T> & IP & {
@@ -78,23 +69,30 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
       return Object.entries(propsConfig)
         .filter(([_, cfg]) => cfg.attribute)
         .map(([key, cfg]) => {
-          if (typeof cfg.attribute === "string") return cfg.attribute;
+          if (typeof cfg.attribute === 'string') return cfg.attribute;
           return key.toLowerCase();
         });
     }
 
     constructor(...args: any[]) {
       // @ts-ignore
-      if ("props" in Base) {
+      if ('props' in Base) {
         super(...args);
       } else {
         super();
       }
 
-      // Create controller with props config
-      const propsConfig =
-        (this.constructor as any).__propsConfig as PropsConfig || {};
       const props = args[0] ?? {};
+
+      // Handle declarative shadow DOM option
+      const shadowOpt = props.shadow ?? (this.constructor as any).shadow;
+      if (shadowOpt && !this.shadowRoot) {
+        const shadowInit = typeof shadowOpt === 'object' ? shadowOpt : { mode: 'open' };
+        this.attachShadow(shadowInit);
+      }
+
+      // Create controller with props config
+      const propsConfig = (this.constructor as any).__propsConfig as PropsConfig || {};
       this[PROPS_CONTROLLER] = new PropsController(this, propsConfig, props);
     }
 
@@ -186,7 +184,7 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
     }
   }
 
-  if (config && typeof config === "object") {
+  if (config && typeof config === 'object') {
     const parentConfig = (Base as any).__propsConfig || {};
     const mergedConfig: Record<string, any> = { ...parentConfig };
 
@@ -195,15 +193,15 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
     for (const [key, value] of Object.entries(config)) {
       const parentValue = parentConfig[key];
       const isParentPropConfig = parentValue &&
-        typeof parentValue === "object" && (
-          typeof parentValue.type === "function" ||
-          "default" in parentValue ||
-          "attribute" in parentValue
+        typeof parentValue === 'object' && (
+          typeof parentValue.type === 'function' ||
+          'default' in parentValue ||
+          'attribute' in parentValue
         );
-      const isChildPropConfig = value && typeof value === "object" && (
-        typeof (value as any).type === "function" ||
-        "default" in (value as any) ||
-        "attribute" in (value as any)
+      const isChildPropConfig = value && typeof value === 'object' && (
+        typeof (value as any).type === 'function' ||
+        'default' in (value as any) ||
+        'attribute' in (value as any)
       );
 
       if (isParentPropConfig && !isChildPropConfig) {
