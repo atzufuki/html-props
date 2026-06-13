@@ -17,6 +17,7 @@
     "npm:marked@^17.0.1": "17.0.2",
     "npm:node-html-parser@^7.0.1": "7.0.2",
     "npm:npm-run-all@^4.1.5": "4.1.5",
+    "npm:playwright@*": "1.48.0",
     "npm:playwright@1.48.0": "1.48.0",
     "npm:typescript-eslint@^8.46.3": "8.55.0_eslint@9.39.2_typescript@5.9.3_@typescript-eslint+parser@8.55.0__eslint@9.39.2__typescript@5.9.3",
     "npm:typescript@^5.9.3": "5.9.3"

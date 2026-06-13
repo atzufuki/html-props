@@ -1276,6 +1276,65 @@ Deno.test({
       assertEquals(result.innerHTML, 'HelloWorld0');
     });
 
+    await t.step('constructor shadow: true attaches open shadow root', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class MyEl extends HTMLPropsMixin(HTMLElement) {
+            render() {
+              return "In Shadow!";
+            }
+          }
+          MyEl.define("my-el-shadow-true");
+
+          const el = new MyEl({ shadow: true });
+          document.body.appendChild(el);
+          (window as any).el = el;
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).el;
+        return {
+          hasShadow: el.shadowRoot !== null,
+          shadowText: el.shadowRoot?.textContent,
+        };
+      });
+
+      assertEquals(result.hasShadow, true);
+      assertEquals(result.shadowText, 'In Shadow!');
+    });
+
+    await t.step('static shadow = true attaches open shadow root', async () => {
+      await ctx.page.reload();
+      await loadTestPage(ctx.page, {
+        code: `
+          class MyElStatic extends HTMLPropsMixin(HTMLElement) {
+            static shadow = true;
+            render() {
+              return "Static Shadow!";
+            }
+          }
+          MyElStatic.define("my-el-static-shadow");
+
+          const el = new MyElStatic();
+          document.body.appendChild(el);
+          (window as any).el = el;
+        `,
+      });
+
+      const result = await ctx.page.evaluate(() => {
+        const el = (window as any).el;
+        return {
+          hasShadow: el.shadowRoot !== null,
+          shadowText: el.shadowRoot?.textContent,
+        };
+      });
+
+      assertEquals(result.hasShadow, true);
+      assertEquals(result.shadowText, 'Static Shadow!');
+    });
+
     // Teardown
     await teardownBrowser(ctx);
   },

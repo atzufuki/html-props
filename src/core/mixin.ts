@@ -23,6 +23,7 @@ export interface HTMLPropsElementConstructor<
       ref?: RefObject<any> | ((el: InstanceType<T>) => void);
       children?: any;
       content?: any;
+      shadow?: boolean | ShadowRootInit;
     } & P,
     ...args: any[]
   ): InstanceType<T> & IP & {
@@ -91,10 +92,20 @@ export function HTMLPropsMixin<T extends Constructor, POrConfig = {}>(
         super();
       }
 
+      const props = args[0] ?? {};
+
+      // Handle declarative shadow DOM option
+      const shadowOpt = props.shadow ?? (this.constructor as any).shadow;
+      if (shadowOpt && !this.shadowRoot) {
+        const shadowInit = typeof shadowOpt === "object"
+          ? shadowOpt
+          : { mode: "open" };
+        this.attachShadow(shadowInit);
+      }
+
       // Create controller with props config
       const propsConfig =
         (this.constructor as any).__propsConfig as PropsConfig || {};
-      const props = args[0] ?? {};
       this[PROPS_CONTROLLER] = new PropsController(this, propsConfig, props);
     }
 
