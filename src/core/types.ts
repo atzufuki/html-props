@@ -22,6 +22,7 @@ export interface HTMLElementLike {
   dataset: DOMStringMap;
   textContent: string | null;
   shadowRoot: ShadowRoot | null;
+  attachShadow(init: ShadowRootInit): ShadowRoot;
   childNodes: NodeListOf<ChildNode>;
   firstChild: ChildNode | null;
   insertBefore<T extends Node>(node: T, child: Node | null): T;
