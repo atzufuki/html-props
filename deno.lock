@@ -2688,7 +2688,7 @@
       },
       "src/built-ins": {
         "dependencies": [
-          "jsr:@html-props/core@^1.0.0-beta.6"
+          "jsr:@html-props/core@^1.0.0-beta.7"
         ]
       },
       "src/core": {
@@ -2698,26 +2698,26 @@
       },
       "src/create/template": {
         "dependencies": [
-          "jsr:@html-props/built-ins@^1.0.0-beta.6",
-          "jsr:@html-props/core@^1.0.0-beta.6",
-          "jsr:@html-props/layout@^1.0.0-beta.7",
+          "jsr:@html-props/built-ins@^1.0.0-beta.8",
+          "jsr:@html-props/core@^1.0.0-beta.7",
+          "jsr:@html-props/layout@^1.0.0-beta.11",
           "jsr:@html-props/signals@^1.0.0-beta.2",
           "jsr:@std/http@^1.0.20"
         ]
       },
       "src/landing": {
         "dependencies": [
-          "jsr:@html-props/built-ins@^1.0.0-beta.5",
-          "jsr:@html-props/core@^1.0.0-beta.5",
-          "jsr:@html-props/layout@^1.0.0-beta.6",
-          "jsr:@html-props/signals@^1.0.0-beta.1",
+          "jsr:@html-props/built-ins@^1.0.0-beta.8",
+          "jsr:@html-props/core@^1.0.0-beta.7",
+          "jsr:@html-props/layout@^1.0.0-beta.11",
+          "jsr:@html-props/signals@^1.0.0-beta.2",
           "npm:marked@^17.0.1"
         ]
       },
       "src/layout": {
         "dependencies": [
-          "jsr:@html-props/built-ins@^1.0.0-beta.6",
-          "jsr:@html-props/core@^1.0.0-beta.6",
+          "jsr:@html-props/built-ins@^1.0.0-beta.8",
+          "jsr:@html-props/core@^1.0.0-beta.7",
           "jsr:@html-props/signals@^1.0.0-beta.2"
         ]
       }
